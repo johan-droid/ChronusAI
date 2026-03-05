@@ -41,9 +41,14 @@ class OAuth2Provider:
         # Create code challenge
         code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
         code_challenge = base64.urlsafe_b64encode(code_challenge).decode('utf-8')
-        code_challenge = code_challenge.rstrip('=')
+        code_challenge = code_challenge.replace('=', '')
         
         return code_verifier, code_challenge
+    
+    @staticmethod
+    def _get_oauth_provider(provider: str) -> "OAuth2Provider":
+        """Get OAuth provider instance."""
+        return OAuth2Provider(provider)
     
     def get_authorization_url(self, code_challenge: str, state: str) -> str:
         """Get the authorization URL for OAuth flow."""
@@ -104,3 +109,5 @@ class OAuth2Provider:
 def get_oauth_provider(provider: str) -> OAuth2Provider:
     """Get OAuth provider instance."""
     return OAuth2Provider(provider)
+
+

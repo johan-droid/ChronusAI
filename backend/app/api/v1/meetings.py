@@ -89,18 +89,18 @@ async def update_meeting(
                 value = [a.model_dump() for a in value]
             setattr(meeting, field, value)
         
-        meeting.updated_at = datetime.now(timezone.utc)
+        meeting.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         
         # Update in calendar if external event exists
         if meeting.external_event_id:
             meeting_create = MeetingCreate(
-                title=meeting.title,
-                description=meeting.description,
-                start_time=meeting.start_time,
-                end_time=meeting.end_time,
+                title=meeting.title,  # type: ignore[arg-type]
+                description=meeting.description,  # type: ignore[arg-type]
+                start_time=meeting.start_time,  # type: ignore[arg-type]
+                end_time=meeting.end_time,  # type: ignore[arg-type]
                 attendees=[Attendee(**a) for a in (meeting.attendees or [])],
-                provider=meeting.provider,
-                raw_user_input=meeting.raw_user_input,
+                provider=meeting.provider,  # type: ignore[arg-type]
+                raw_user_input=meeting.raw_user_input,  # type: ignore[arg-type]
             )
             await calendar_provider.update_event(meeting.external_event_id, meeting_create)
         
