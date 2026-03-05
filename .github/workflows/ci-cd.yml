@@ -1,0 +1,91 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  backend-ci:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: scheduler_db
+          POSTGRES_USER: scheduler_user
+          POSTGRES_PASSWORD: scheduler_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U scheduler_user -d scheduler_db"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: test
+      SECRET_KEY: ci-secret-key-please-change
+      ENCRYPTION_KEY: aLXaTjWU596yktNxjxwR-UyyZtj7h1lQa6qOvtAcuZs=
+      FRONTEND_URL: http://localhost:5173
+
+      DATABASE_URL: postgresql+asyncpg://scheduler_user:scheduler_password@localhost:5432/scheduler_db
+      REDIS_URL: redis://localhost:6379/0
+
+      OPENAI_API_KEY: sk-ci-dummy
+      OPENAI_MODEL: gpt-4o
+
+      JWT_SECRET_KEY: ci-jwt-secret
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRE_MINUTES: "60"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint (Ruff)
+        working-directory: backend
+        run: ruff check app tests
+
+      - name: Type check (mypy)
+        working-directory: backend
+        run: mypy app
+
+      - name: Test (pytest + coverage)
+        working-directory: backend
+        run: pytest -q --cov=app --cov-report=term-missing --cov-fail-under=80
+
+  docker-build:
+    needs: backend-ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t meeting-scheduler-backend:ci ./backend
+
+      - name: Build frontend image
+        run: docker build -t meeting-scheduler-frontend:ci ./frontend
+
+      # ECR push + ECS deploy are intentionally left as a template:
+      # - add AWS creds + ECR repo names as GitHub Secrets
+      # - log in to ECR, tag, push
+      # - update ECS task definition and force new deployment
+
