@@ -15,7 +15,8 @@ from app.models.user import User
 def _test_db_url() -> str:
     url = os.getenv("TEST_DATABASE_URL") or os.getenv("DATABASE_URL") or ""
     if not url or "postgresql" not in url:
-        pytest.skip("PostgreSQL DATABASE_URL/TEST_DATABASE_URL required for integration tests")
+        # Use SQLite for testing when PostgreSQL is not available
+        return "sqlite+aiosqlite:///:memory:"
     return url
 
 

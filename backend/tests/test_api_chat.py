@@ -55,7 +55,7 @@ async def test_chat_message_creates_meeting(override_db, seeded_user, user_jwt, 
 
     monkeypatch.setattr(llm_service, "parse_intent", _fake_parse)
 
-    async def _override_calendar_provider(*args, **kwargs):
+    async def _override_calendar_provider():
         return _FakeProvider()
 
     app.dependency_overrides[get_calendar_provider] = _override_calendar_provider
