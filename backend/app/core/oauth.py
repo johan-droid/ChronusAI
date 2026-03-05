@@ -27,6 +27,7 @@ class OAuth2Provider:
             self.client_secret = settings.microsoft_client_secret
             self.redirect_uri = settings.microsoft_redirect_uri
             self.scopes = [
+                "User.Read",
                 "Calendars.ReadWrite",
                 "offline_access"
             ]
