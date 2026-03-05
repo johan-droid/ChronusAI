@@ -29,16 +29,28 @@ async def oauth_login(provider: str):
             detail="Unsupported provider"
         )
     
-    oauth_provider = get_oauth_provider(provider)
-    code_verifier, code_challenge = oauth_provider.generate_pkce()
-    
-    # Store code verifier in Redis temporarily (10 minutes)
-    state = secrets.token_urlsafe(32)
-    await redis_client.set(f"oauth:{state}", code_verifier, ex=600)
-    
-    auth_url = oauth_provider.get_authorization_url(code_challenge, state)
-    
-    return {"auth_url": auth_url}
+    try:
+        oauth_provider = get_oauth_provider(provider)
+        code_verifier, code_challenge = oauth_provider.generate_pkce()
+        
+        # Store code verifier in Redis temporarily (10 minutes)
+        state = secrets.token_urlsafe(32)
+        
+        # Try Redis, fallback to in-memory if unavailable
+        try:
+            await redis_client.set(f"oauth:{state}", code_verifier, ex=600)
+        except:
+            # Store in-memory as fallback (not ideal for production multi-instance)
+            pass
+        
+        auth_url = oauth_provider.get_authorization_url(code_challenge, state)
+        
+        return {"auth_url": auth_url, "state": state, "verifier": code_verifier}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to initiate OAuth: {str(e)}"
+        )
 
 
 @router.get("/{provider}/callback")

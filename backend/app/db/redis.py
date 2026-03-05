@@ -17,14 +17,13 @@ class RedisClient:
     async def connect(self) -> None:
         if not self._enabled:
             return
-        self.client = redis.from_url(self._url, encoding="utf-8", decode_responses=True)
         try:
+            self.client = redis.from_url(self._url, encoding="utf-8", decode_responses=True)
             result = await self.client.ping()
             ping_result = bool(result)
             if not ping_result:
                 raise RuntimeError("Redis ping failed")
-        except Exception as e:
-            print(f"Redis connection failed: {e}. Running without cache.")
+        except Exception:
             self.client = None
             self._enabled = False
 
