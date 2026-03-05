@@ -94,13 +94,13 @@ async def update_meeting(
         # Update in calendar if external event exists
         if meeting.external_event_id:
             meeting_create = MeetingCreate(
-                title=meeting.title,  # type: ignore[arg-type]
-                description=meeting.description,  # type: ignore[arg-type]
-                start_time=meeting.start_time,  # type: ignore[arg-type]
-                end_time=meeting.end_time,  # type: ignore[arg-type]
-                attendees=[Attendee(**a) for a in (meeting.attendees or [])],
-                provider=meeting.provider,  # type: ignore[arg-type]
-                raw_user_input=meeting.raw_user_input,  # type: ignore[arg-type]
+                title=str(meeting.title),
+                description=str(meeting.description) if meeting.description else None,
+                start_time=meeting.start_time,
+                end_time=meeting.end_time,
+                attendees=[Attendee(**a) for a in (getattr(meeting, 'attendees') or [])],
+                provider=str(meeting.provider),
+                raw_user_input=str(meeting.raw_user_input) if meeting.raw_user_input else None,
             )
             await calendar_provider.update_event(meeting.external_event_id, meeting_create)
         
@@ -145,8 +145,8 @@ async def delete_meeting(
             await calendar_provider.delete_event(meeting.external_event_id)
         
         # Update status in database
-        meeting.status = "canceled"
-        meeting.updated_at = datetime.now(timezone.utc)
+        meeting.status = "canceled"  # type: ignore[assignment]
+        meeting.updated_at = datetime.now(timezone.utc)  # type: ignore[assignment]
         await db.commit()
         
         return {"message": "Meeting canceled successfully"}

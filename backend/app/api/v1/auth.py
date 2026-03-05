@@ -126,7 +126,7 @@ async def oauth_callback(
             oauth_cred.access_token = encrypted_access
             oauth_cred.refresh_token = encrypted_refresh
             oauth_cred.expires_at = expires_at
-            oauth_cred.scopes = scopes_list  # type: ignore[assignment]
+            oauth_cred.scopes = scopes_list
         else:
             oauth_cred = OAuthCredential(
                 user_id=user.id,

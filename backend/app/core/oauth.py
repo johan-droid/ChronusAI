@@ -35,12 +35,13 @@ class OAuth2Provider:
     
     def generate_pkce(self) -> tuple[str, str]:
         """Generate PKCE code verifier and challenge."""
-        code_verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).decode('utf-8')
+        code_verifier_bytes = secrets.token_bytes(32)
+        code_verifier = base64.urlsafe_b64encode(code_verifier_bytes).decode('utf-8')
         code_verifier = code_verifier.rstrip('=')
         
         # Create code challenge
-        code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-        code_challenge = base64.urlsafe_b64encode(code_challenge).decode('utf-8')
+        code_challenge_bytes = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+        code_challenge = base64.urlsafe_b64encode(code_challenge_bytes).decode('utf-8')
         code_challenge = code_challenge.replace('=', '')
         
         return code_verifier, code_challenge

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     secret_key: str
     encryption_key: str  # Fernet.generate_key() output (base64 urlsafe)
-    frontend_url: AnyHttpUrl = "http://localhost:5173"
+    frontend_url: AnyHttpUrl = AnyHttpUrl("http://localhost:5173")
 
     # Database / Cache
     database_url: str

@@ -17,8 +17,9 @@ class RedisClient:
         self.client = redis.from_url(self._url, encoding="utf-8", decode_responses=True)
         # Ping to fail fast
         result = await self.client.ping()
-        if isinstance(result, bool):
-            if not result:
+        # Ensure we have a boolean result
+        ping_result = bool(result) if not isinstance(result, bool) else result
+        if not ping_result:
                 raise RuntimeError("Redis ping failed")
 
     async def disconnect(self) -> None:

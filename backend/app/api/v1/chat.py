@@ -49,8 +49,8 @@ async def send_message(
     
     # Parse user intent
     parsed_intent = await llm_service.parse_intent(
-        payload.message,
-        current_user.timezone,
+        str(payload.message),
+        str(current_user.timezone),
         context,
     )
     
@@ -140,7 +140,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
         attendees_emails = list({str(user.email), *[str(a) for a in intent.attendees]})
         
         # Fetch busy slots in the day window (08:00-20:00 local)
-        start_local, end_local = _day_window_local(target_date, user.timezone)
+        start_local, end_local = _day_window_local(str(intent.target_date), str(user.timezone))
         start_utc = start_local.astimezone(timezone.utc)
         end_utc = end_local.astimezone(timezone.utc)
         
@@ -240,7 +240,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
         await db.refresh(meeting)
 
         try:
-            local_start = meeting_create.start_time.astimezone(ZoneInfo(user.timezone))
+            local_start = meeting_create.start_time.astimezone(ZoneInfo(str(user.timezone)))
         except Exception:
             local_start = meeting_create.start_time
         formatted_time = local_start.strftime("%A, %B %d at %I:%M %p")
@@ -306,7 +306,7 @@ async def handle_cancel_meeting(intent, user: User, calendar_provider, db: Async
             await calendar_provider.delete_event(meeting.external_event_id)
         
         # Update database
-        meeting.status = "canceled"
+        meeting.status = "canceled"  # type: ignore[assignment]
         await db.commit()
         
         return ChatResponse(
@@ -351,7 +351,7 @@ async def handle_query_availability(intent, user: User, calendar_provider):
         # Format busy times
         busy_times = []
         for slot in busy_slots:
-            local_start = slot.start.astimezone(user.tzinfo if hasattr(user, 'tzinfo') else datetime.timezone.utc)
+            local_start = slot.start.astimezone(timezone.utc)
             busy_times.append(local_start.strftime("%I:%M %p"))
         
         return ChatResponse(

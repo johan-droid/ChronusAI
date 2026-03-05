@@ -52,18 +52,18 @@ class TokenRefreshMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
             now = datetime.now(timezone.utc)
-            if cred.expires_at <= now + timedelta(minutes=5):  # type: ignore[operator]
+            if cred.expires_at <= now + timedelta(minutes=5):
                 try:
-                    refresh_token = token_encryptor.decrypt(cred.refresh_token)  # type: ignore[arg-type]
+                    refresh_token = token_encryptor.decrypt(cred.refresh_token)
                     if refresh_token:
-                        provider = get_oauth_provider(user.provider)  # type: ignore[arg-type]
+                        provider = get_oauth_provider(user.provider)
                         refreshed = await provider.refresh_access_token(refresh_token)
                         new_access = refreshed.get("access_token")
                         if new_access:
-                            cred.access_token = token_encryptor.encrypt(new_access)  # type: ignore[assignment]
+                            cred.access_token = token_encryptor.encrypt(new_access)
                             if refreshed.get("refresh_token"):
-                                cred.refresh_token = token_encryptor.encrypt(refreshed["refresh_token"])  # type: ignore[assignment]
-                            cred.expires_at = now + timedelta(seconds=int(refreshed.get("expires_in", 3600)))  # type: ignore[assignment]
+                                cred.refresh_token = token_encryptor.encrypt(refreshed["refresh_token"])
+                            cred.expires_at = now + timedelta(seconds=int(refreshed.get("expires_in", 3600)))
                             await db.commit()
                             request.state.oauth_access_token = new_access
                 except Exception:
@@ -76,11 +76,11 @@ class TokenRefreshMiddleware(BaseHTTPMiddleware):
 
             if not hasattr(request.state, "oauth_access_token"):
                 try:
-                    request.state.oauth_access_token = token_encryptor.decrypt(cred.access_token)  # type: ignore[arg-type]
+                    request.state.oauth_access_token = token_encryptor.decrypt(cred.access_token)
                 except Exception:
                     pass
 
-            request.state.provider = user.provider  # type: ignore[assignment]
+            request.state.provider = user.provider
 
         return await call_next(request)
 
