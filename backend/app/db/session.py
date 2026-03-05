@@ -11,7 +11,7 @@ class Base(DeclarativeBase):
 
 
 engine: AsyncEngine = create_async_engine(
-    settings.database_url,
+    settings.database_url.replace('postgresql://', 'postgresql+asyncpg://'),
     echo=settings.app_env == "development",
     pool_pre_ping=True,
 )
