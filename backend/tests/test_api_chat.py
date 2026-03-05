@@ -28,13 +28,15 @@ class _FakeProvider(CalendarProvider):
 async def test_chat_message_creates_meeting(override_db, seeded_user, user_jwt, monkeypatch):
     # Avoid Redis dependency in this test
     import app.api.v1.chat as chat_api
-
+    
+    # Create proper mock functions that match the expected signatures
     async def _no_context(user_id: str):
         return []
-
+    
     async def _no_save(user_id: str, messages: list):
         return None
-
+    
+    # Mock the functions in the module where they're used
     monkeypatch.setattr(chat_api, "get_conversation_context", _no_context)
     monkeypatch.setattr(chat_api, "save_conversation_context", _no_save)
 
