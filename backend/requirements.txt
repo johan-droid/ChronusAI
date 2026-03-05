@@ -6,7 +6,6 @@ asyncpg
 alembic
 psycopg2-binary
 
-redis
 httpx
 
 pydantic

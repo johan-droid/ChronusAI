@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.core.oauth import get_oauth_provider
 from app.core.security import create_access_token, token_encryptor
-from app.db.redis import redis_client
+
 from app.db.session import get_db
 from app.models.oauth_credential import OAuthCredential
 from app.models.user import User
@@ -32,19 +32,10 @@ async def oauth_login(provider: str):
     try:
         oauth_provider = get_oauth_provider(provider)
         code_verifier, code_challenge = oauth_provider.generate_pkce()
-        
-        # Store code verifier in Redis temporarily (10 minutes)
         state = secrets.token_urlsafe(32)
-        
-        # Try Redis, fallback to in-memory if unavailable
-        try:
-            await redis_client.set(f"oauth:{state}", code_verifier, ex=600)
-        except:
-            # Store in-memory as fallback (not ideal for production multi-instance)
-            pass
-        
         auth_url = oauth_provider.get_authorization_url(code_challenge, state)
         
+        # Return verifier to frontend for stateless flow
         return {"auth_url": auth_url, "state": state, "verifier": code_verifier}
     except Exception as e:
         raise HTTPException(
@@ -62,19 +53,10 @@ async def oauth_callback(
 ):
     """Handle OAuth callback from provider."""
     try:
-        # Retrieve code verifier from Redis
-        code_verifier = await redis_client.get(f"oauth:{state}")
-        if not code_verifier:
-            # Fallback: try to proceed without verifier for testing
-            code_verifier = None
-        
-        # Clean up Redis
-        if code_verifier:
-            await redis_client.delete(f"oauth:{state}")
-        
-        # Exchange code for tokens
+        # Exchange code for tokens without PKCE verifier
+        # OAuth providers with client_secret don't require PKCE
         oauth_provider = get_oauth_provider(provider)
-        tokens = await oauth_provider.exchange_code_for_tokens(code, code_verifier)
+        tokens = await oauth_provider.exchange_code_for_tokens(code, None)
 
         access_token = tokens.get("access_token")
         if not access_token:

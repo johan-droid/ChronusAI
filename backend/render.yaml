@@ -28,11 +28,6 @@ services:
         fromDatabase:
           name: chronosai-postgres
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: chronosai-redis
-          property: connectionString
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
@@ -61,8 +56,3 @@ databases:
     plan: free
     region: oregon
     postgresMajorVersion: 15
-
-  - name: chronosai-redis
-    plan: free
-    region: oregon
-    maxmemoryPolicy: allkeys-lru

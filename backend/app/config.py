@@ -19,9 +19,8 @@ class Settings(BaseSettings):
     encryption_key: str  # Fernet.generate_key() output (base64 urlsafe)
     frontend_url: AnyHttpUrl = AnyHttpUrl("http://localhost:5173")
 
-    # Database / Cache
+    # Database
     database_url: str
-    redis_url: Optional[str] = None
 
     # Google Gemini
     gemini_api_key: str
