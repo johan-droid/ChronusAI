@@ -4,6 +4,7 @@ uvicorn[standard]
 sqlalchemy[asyncio]
 asyncpg
 alembic
+psycopg
 psycopg2-binary
 
 httpx
