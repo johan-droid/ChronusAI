@@ -11,6 +11,11 @@ class ApiClient {
     this.client = axios.create({
       baseURL: API_BASE_URL,
       timeout: 30000,
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     });
 
     // Request interceptor to add auth token
@@ -41,8 +46,13 @@ class ApiClient {
 
   // Auth endpoints
   async getAuthUrl(provider: 'google' | 'outlook'): Promise<AuthUrlResponse> {
-    const response = await this.client.get(`/auth/${provider}/login`);
-    return response.data;
+    try {
+      const response = await this.client.get(`/auth/${provider}/login`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Auth URL error:', error);
+      throw error;
+    }
   }
 
   async getCurrentUser(): Promise<User> {

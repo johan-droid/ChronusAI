@@ -69,13 +69,30 @@ app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(TokenRefreshMiddleware)
 
-# CORS middleware
+# CORS middleware - Enhanced for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[str(settings.frontend_url), "http://localhost:5173", *settings.cors_origins],
+    allow_origins=[
+        str(settings.frontend_url),
+        "https://chronus-ai.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        *settings.cors_origins
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "Accept",
+        "Origin",
+        "User-Agent",
+        "DNT",
+        "Cache-Control",
+        "X-Requested-With"
+    ],
+    expose_headers=["Content-Length", "X-Request-ID"],
+    max_age=3600,
 )
 
 
