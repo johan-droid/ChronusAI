@@ -60,6 +60,11 @@ class ApiClient {
     return response.data;
   }
 
+  async checkStatus(): Promise<{ online: boolean; latency: string }> {
+    const response = await this.client.get('/status');
+    return response.data;
+  }
+
   // Chat endpoints
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
     const response = await this.client.post('/chat/message', request);

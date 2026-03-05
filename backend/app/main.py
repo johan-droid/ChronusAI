@@ -12,6 +12,7 @@ from app.api.v1.router import api_router
 from app.db.redis import redis_client
 from app.core.rate_limit import limiter
 from app.core.middleware import TokenRefreshMiddleware
+from app.core.self_ping import SelfPinger
 
 # Configure structured logging
 structlog.configure(
@@ -45,11 +46,22 @@ async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONR
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting up Meeting Scheduler API")
+    logger.info("Starting up ChronosAI API")
     await redis_client.connect()
+    
+    # Start self-ping for Render free tier
+    if settings.app_env == "production":
+        import os
+        render_url = os.getenv("RENDER_EXTERNAL_URL", "https://chronusai.onrender.com")
+        self_pinger = SelfPinger(url=render_url)
+        self_pinger.start()
+    
     yield
+    
     # Shutdown
-    logger.info("Shutting down Meeting Scheduler API")
+    logger.info("Shutting down ChronosAI API")
+    if settings.app_env == "production":
+        self_pinger.stop()
     await redis_client.disconnect()
 
 
@@ -142,7 +154,18 @@ async def health_check():
         "status": "healthy",
         "service": "ChronosAI",
         "version": "1.0.0",
-        "uptime": "operational"
+        "uptime": "operational",
+        "timestamp": time.time()
+    }
+
+
+@app.get("/api/v1/status")
+async def api_status():
+    """API status for frontend health indicator."""
+    return {
+        "online": True,
+        "latency": "low",
+        "timestamp": time.time()
     }
 
 
