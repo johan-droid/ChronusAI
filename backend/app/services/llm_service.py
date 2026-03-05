@@ -14,7 +14,7 @@ class LLMService:
     def __init__(self) -> None:
         self._llm = ChatOpenAI(
             model=settings.openai_model,
-            api_key=settings.openai_api_key.get_secret_value(),
+            api_key=settings.openai_api_key,
             temperature=0,
         ).with_structured_output(ParsedIntent)
 
@@ -45,7 +45,7 @@ class LLMService:
             if role == "assistant":
                 msgs.append(AIMessage(content=content))
             elif role == "user":
-                msgs.append(HumanMessage(content))
+                msgs.append(HumanMessage(content=content))
         return msgs
 
     async def parse_intent(self, message: str, user_timezone: str, context: List[dict[str, Any]]) -> ParsedIntent:

@@ -351,7 +351,7 @@ async def handle_query_availability(intent, user: User, calendar_provider):
         # Format busy times
         busy_times = []
         for slot in busy_slots:
-            local_start = slot.start.astimezone(timezone.utc)
+            local_start = slot.start.astimezone(ZoneInfo(str(user.timezone)))
             busy_times.append(local_start.strftime("%I:%M %p"))
         
         return ChatResponse(

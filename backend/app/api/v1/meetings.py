@@ -96,8 +96,8 @@ async def update_meeting(
             meeting_create = MeetingCreate(
                 title=str(meeting.title),
                 description=str(meeting.description) if meeting.description else None,
-                start_time=meeting.start_time,
-                end_time=meeting.end_time,
+                start_time=getattr(meeting, 'start_time'),
+                end_time=getattr(meeting, 'end_time'),
                 attendees=[Attendee(**a) for a in (getattr(meeting, 'attendees') or [])],
                 provider=str(meeting.provider),
                 raw_user_input=str(meeting.raw_user_input) if meeting.raw_user_input else None,
