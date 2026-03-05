@@ -70,16 +70,19 @@ class OAuth2Provider:
         
         return f"{self.auth_url}?{urlencode(params)}"
     
-    async def exchange_code_for_tokens(self, code: str, code_verifier: str) -> Dict[str, Any]:
+    async def exchange_code_for_tokens(self, code: str, code_verifier: str | None = None) -> Dict[str, Any]:
         """Exchange authorization code for access and refresh tokens."""
         data = {
             "client_id": self.client_id,
             "client_secret": self.client_secret,
             "code": code,
             "redirect_uri": self.redirect_uri,
-            "code_verifier": code_verifier,
             "grant_type": "authorization_code"
         }
+        
+        # Add code_verifier only if provided
+        if code_verifier:
+            data["code_verifier"] = code_verifier
         
         async with httpx.AsyncClient() as client:
             response = await client.post(self.token_url, data=data)
