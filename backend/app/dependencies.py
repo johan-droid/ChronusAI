@@ -60,7 +60,7 @@ async def get_calendar_provider(
     
     access_token = getattr(request.state, "oauth_access_token", None)
     if not access_token:
-        access_token = token_encryptor.decrypt(oauth_credential.access_token)
+        access_token = token_encryptor.decrypt(oauth_credential.access_token)  # type: ignore[arg-type]
     
     if current_user.provider == "google":
         from app.services.google_calendar import GoogleCalendarAdapter

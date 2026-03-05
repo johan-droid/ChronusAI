@@ -103,7 +103,7 @@ async def oauth_callback(
             await db.refresh(user)
         else:
             # Keep provider consistent with latest login
-            user.provider = provider
+            user.provider = provider  # type: ignore[assignment]
             if full_name and not user.full_name:
                 user.full_name = full_name
             await db.commit()
@@ -126,7 +126,7 @@ async def oauth_callback(
             oauth_cred.access_token = encrypted_access
             oauth_cred.refresh_token = encrypted_refresh
             oauth_cred.expires_at = expires_at
-            oauth_cred.scopes = scopes_list
+            oauth_cred.scopes = scopes_list  # type: ignore[assignment]
         else:
             oauth_cred = OAuthCredential(
                 user_id=user.id,

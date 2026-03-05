@@ -1,4 +1,5 @@
 import uuid
+from typing import List, Optional
 
 from sqlalchemy import Column, DateTime, ForeignKey, Text
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
@@ -16,7 +17,7 @@ class OAuthCredential(Base):
     access_token = Column(Text, nullable=False)  # Fernet-encrypted
     refresh_token = Column(Text, nullable=False)  # Fernet-encrypted
     expires_at = Column(DateTime(timezone=True), nullable=False)
-    scopes = Column(ARRAY(Text), nullable=True)
+    scopes: Optional[List[str]] = Column(ARRAY(Text), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationship
