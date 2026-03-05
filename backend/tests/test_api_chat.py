@@ -65,6 +65,8 @@ async def test_chat_message_creates_meeting(override_db, seeded_user, user_jwt, 
             headers={"Authorization": f"Bearer {user_jwt}"},
             json={"message": "Schedule a sync with alex@corp.com on Mar 6 at 3pm"},
         )
+    print(f"Response status: {resp.status_code}")
+    print(f"Response body: {resp.text}")
     assert resp.status_code == 200
     data = resp.json()
     assert data["intent"] == "CREATE_MEETING"
