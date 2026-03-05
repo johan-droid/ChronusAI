@@ -1,6 +1,6 @@
-# 🚀 AI Meeting Scheduler Agent
+# 🚀 ChronosAI - AI Meeting Scheduler
 
-A full-stack, production-ready AI Meeting Scheduler Agent that lets enterprise users schedule, reschedule, and cancel calendar meetings using plain natural language. The system integrates with Google Calendar and Microsoft Outlook via secure OAuth 2.0, uses an LLM (GPT-4o) for intent detection and entity extraction, and resolves scheduling conflicts algorithmically.
+A full-stack, production-ready AI Meeting Scheduler that lets users schedule, reschedule, and cancel calendar meetings using plain natural language. The system integrates with Google Calendar and Microsoft Outlook via secure OAuth 2.0, uses Google Gemini for intent detection and entity extraction, and resolves scheduling conflicts algorithmically.
 
 ## 📋 Features
 
@@ -17,7 +17,7 @@ A full-stack, production-ready AI Meeting Scheduler Agent that lets enterprise u
 ### Backend
 - **Runtime**: Python 3.11+
 - **Framework**: FastAPI (async, with Uvicorn)
-- **AI/NLP**: OpenAI API (GPT-4o) via LangChain
+- **AI/NLP**: Google Gemini 1.5 Pro via LangChain
 - **Auth**: OAuth 2.0 with PKCE, PyJWT
 - **Database**: PostgreSQL 15 with SQLAlchemy
 - **Cache**: Redis 7
@@ -26,7 +26,7 @@ A full-stack, production-ready AI Meeting Scheduler Agent that lets enterprise u
 ### Frontend
 - **Framework**: React 18 + TypeScript
 - **Build Tool**: Vite
-- **Styling**: Tailwind CSS
+- **Styling**: Tailwind CSS (Cosmic Galaxy Theme)
 - **State Management**: Zustand
 - **API Client**: TanStack Query + Axios
 - **UI Components**: Custom components with Lucide icons
@@ -54,7 +54,7 @@ A full-stack, production-ready AI Meeting Scheduler Agent that lets enterprise u
    
    # Edit the files with your actual credentials
    # You'll need:
-   # - OpenAI API key
+   # - Google Gemini API key
    # - Google OAuth credentials (optional)
    # - Microsoft OAuth credentials (optional)
    ```
@@ -133,9 +133,9 @@ FRONTEND_URL=http://localhost:5173
 DATABASE_URL=postgresql://scheduler_user:password@localhost:5432/scheduler_db
 REDIS_URL=redis://localhost:6379/0
 
-# OpenAI
-OPENAI_API_KEY=sk-your-openai-api-key
-OPENAI_MODEL=gpt-4o
+# Google Gemini
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-1.5-pro
 
 # Google OAuth (optional)
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -269,4 +269,4 @@ If you encounter any issues or have questions:
 
 ---
 
-Built with ❤️ using modern web technologies.
+Built with ❤️ by the ChronosAI team using modern web technologies.

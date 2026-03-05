@@ -13,9 +13,8 @@ pydantic
 pydantic-settings
 python-dotenv
 
-openai
 langchain
-langchain-openai
+langchain-google-genai
 
 python-jose[cryptography]
 cryptography

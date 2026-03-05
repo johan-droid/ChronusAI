@@ -30,6 +30,8 @@ class ChatResponse(BaseModel):
     intent: str
     meeting: Optional[dict] = None
     requires_clarification: bool = False
+    suggestions: Optional[List[str]] = None
+    confidence: Optional[float] = None
 
 
 class ConversationMessage(BaseModel):

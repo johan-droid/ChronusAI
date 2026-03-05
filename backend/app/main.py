@@ -54,10 +54,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Meeting Scheduler API",
-    description="AI-powered meeting scheduling agent",
+    title="ChronosAI - Meeting Scheduler API",
+    description="🚀 AI-powered meeting scheduling agent with natural language processing",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json"
 )
 
 # Rate limiting
@@ -99,14 +102,31 @@ app.include_router(api_router)
 
 @app.get("/")
 async def root():
-    """Root endpoint for health check."""
-    return {"message": "Meeting Scheduler API is running"}
+    """Root endpoint with API information."""
+    return {
+        "service": "ChronosAI",
+        "description": "AI-Powered Meeting Scheduler",
+        "version": "1.0.0",
+        "status": "operational",
+        "docs": "/api/docs",
+        "features": [
+            "Natural Language Processing",
+            "Multi-Calendar Integration",
+            "Smart Conflict Resolution",
+            "Real-time Sync"
+        ]
+    }
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "service": "meeting-scheduler-api"}
+    """Health check endpoint with detailed status."""
+    return {
+        "status": "healthy",
+        "service": "ChronosAI",
+        "version": "1.0.0",
+        "uptime": "operational"
+    }
 
 
 # Exception handlers

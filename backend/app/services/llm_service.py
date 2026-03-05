@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Any, List
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.config import settings
 from app.schemas.chat import ParsedIntent
@@ -12,9 +12,9 @@ from app.schemas.chat import ParsedIntent
 
 class LLMService:
     def __init__(self) -> None:
-        self._llm = ChatOpenAI(
-            model=settings.openai_model,
-            api_key=settings.openai_api_key,  # type: ignore[arg-type]
+        self._llm = ChatGoogleGenerativeAI(
+            model=settings.gemini_model,
+            google_api_key=settings.gemini_api_key,
             temperature=0,
         ).with_structured_output(ParsedIntent)
 
@@ -22,18 +22,17 @@ class LLMService:
     def _system_prompt(user_timezone: str) -> str:
         current_utc_iso = datetime.now(timezone.utc).isoformat()
         return (
-            "You are a meeting scheduling assistant. "
-            f"The current UTC datetime is {current_utc_iso}.\n"
-            f"The user's local timezone is {user_timezone}.\n\n"
-            "Extract meeting details from the user's message and return a structured JSON matching "
-            "the ParsedIntent schema. Rules:\n"
-            '- Resolve ALL relative dates ("tomorrow", "next Friday", "EOD") to absolute ISO 8601 dates '
-            "using the current UTC time and the user's timezone.\n"
-            "- If critical info is missing (date, time for CREATE_MEETING), set clarification_needed "
-            "to a natural follow-up question instead of guessing.\n"
-            "- For CANCEL/UPDATE intents, identify the meeting by title or date reference.\n"
-            "- Never invent attendee email addresses. Only use what the user explicitly provides.\n"
-            "- Default duration to 30 minutes if unspecified.\n"
+            "You are ChronosAI, an intelligent meeting scheduling assistant powered by advanced AI. "
+            f"Current UTC datetime: {current_utc_iso}\n"
+            f"User's timezone: {user_timezone}\n\n"
+            "Your mission: Extract meeting details from natural language and provide structured output.\n\n"
+            "Core Rules:\n"
+            '1. Resolve ALL relative dates ("tomorrow", "next Friday", "EOD") to absolute ISO 8601 dates.\n'
+            "2. If critical info is missing (date/time for CREATE_MEETING), set clarification_needed with a friendly question.\n"
+            "3. For CANCEL/UPDATE intents, identify meetings by title or date reference.\n"
+            "4. Never invent attendee emails - only use explicitly provided ones.\n"
+            "5. Default duration: 30 minutes if unspecified.\n"
+            "6. Be conversational, helpful, and precise.\n"
         )
 
     @staticmethod

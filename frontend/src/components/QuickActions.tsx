@@ -1,4 +1,4 @@
-import { Calendar, Clock, Users } from 'lucide-react'
+import { Calendar, Clock, Users, Zap, Sparkles, Star } from 'lucide-react'
 
 interface QuickActionsProps {
   onQuickSchedule: () => void
@@ -14,24 +14,30 @@ export default function QuickActions({
   const quickActions = [
     {
       title: 'Quick Schedule',
-      description: 'Schedule a meeting for tomorrow at 10 AM',
-      icon: <Calendar className="h-5 w-5" />,
+      description: 'Instant meeting creation',
+      icon: <Calendar className="h-6 w-6" />,
       action: onQuickSchedule,
-      color: 'bg-blue-500 hover:bg-blue-600'
+      gradient: 'from-primary via-accent to-primary',
+      hoverGlow: 'hover:shadow-[0_0_40px_rgba(168,85,247,0.4)]',
+      badge: <Zap className="h-4 w-4" />
     },
     {
       title: 'Check Availability',
-      description: 'See when I\'m free this week',
-      icon: <Clock className="h-5 w-5" />,
+      description: 'View your free slots',
+      icon: <Clock className="h-6 w-6" />,
       action: onCheckAvailability,
-      color: 'bg-green-500 hover:bg-green-600'
+      gradient: 'from-secondary via-primary to-secondary',
+      hoverGlow: 'hover:shadow-[0_0_40px_rgba(59,130,246,0.4)]',
+      badge: <Sparkles className="h-4 w-4" />
     },
     {
       title: 'Team Meeting',
-      description: 'Schedule with team members',
-      icon: <Users className="h-5 w-5" />,
+      description: 'Schedule with attendees',
+      icon: <Users className="h-6 w-6" />,
       action: onScheduleWithAttendees,
-      color: 'bg-purple-500 hover:bg-purple-600'
+      gradient: 'from-accent via-secondary to-accent',
+      hoverGlow: 'hover:shadow-[0_0_40px_rgba(236,72,153,0.4)]',
+      badge: <Star className="h-4 w-4" />
     }
   ]
 
@@ -41,14 +47,62 @@ export default function QuickActions({
         <button
           key={index}
           onClick={action.action}
-          className={`p-4 rounded-lg text-white transition-colors ${action.color} flex flex-col items-center text-center space-y-2 hover:shadow-lg`}
+          className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 ${action.hoverGlow} glass border border-primary/20 hover:border-primary/50`}
+          style={{ animationDelay: `${index * 0.1}s` }}
         >
-          <div className="p-2 bg-white/20 rounded-full">
-            {action.icon}
+          {/* Animated gradient background */}
+          <div className={`absolute inset-0 bg-gradient-to-r ${action.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-300`} />
+          
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000">
+            <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12" />
           </div>
-          <div>
-            <h3 className="font-semibold">{action.title}</h3>
-            <p className="text-sm opacity-90">{action.description}</p>
+
+          {/* Floating particles */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-1 h-1 bg-white rounded-full opacity-20 group-hover:opacity-40 transition-opacity"
+                style={{
+                  left: `${20 + i * 15}%`,
+                  top: `${20 + i * 10}%`,
+                  animation: `float ${2 + i}s ease-in-out infinite`,
+                  animationDelay: `${i * 0.2}s`
+                }}
+              />
+            ))}
+          </div>
+          
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center text-center space-y-3">
+            {/* Icon with glow */}
+            <div className="relative">
+              <div className={`absolute inset-0 bg-gradient-to-r ${action.gradient} blur-xl opacity-50 group-hover:opacity-75 transition-opacity rounded-full`} />
+              <div className="relative p-3 rounded-full bg-gradient-to-br from-card/50 to-card backdrop-blur-sm">
+                <div className="text-foreground group-hover:scale-110 transition-transform">
+                  {action.icon}
+                </div>
+              </div>
+              
+              {/* Badge */}
+              <div className="absolute -top-1 -right-1 p-1.5 rounded-full bg-gradient-to-br from-accent to-primary text-white shadow-lg group-hover:scale-110 transition-transform">
+                {action.badge}
+              </div>
+            </div>
+            
+            {/* Text */}
+            <div>
+              <h3 className="font-bold text-foreground font-['Orbitron'] text-lg group-hover:text-primary transition-colors">
+                {action.title}
+              </h3>
+              <p className="text-sm text-muted-foreground group-hover:text-foreground transition-colors font-['Space_Mono'] mt-1">
+                {action.description}
+              </p>
+            </div>
+
+            {/* Action indicator */}
+            <div className={`w-full h-1 bg-gradient-to-r ${action.gradient} rounded-full transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
           </div>
         </button>
       ))}

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { useAuthStore } from './store/authStore';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Availability from './pages/Availability';
@@ -34,7 +35,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="h-screen bg-background">
+          {/* Planets */}
+          <div className="planet planet-1" />
+          <div className="planet planet-2" />
+          <div className="planet planet-3" />
+          
           <Routes>
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route 
               path="/dashboard" 
@@ -60,7 +67,7 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </Router>

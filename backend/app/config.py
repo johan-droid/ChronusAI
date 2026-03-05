@@ -23,9 +23,9 @@ class Settings(BaseSettings):
     database_url: str
     redis_url: str = "redis://localhost:6379/0"
 
-    # OpenAI
-    openai_api_key: str
-    openai_model: str = "gpt-4o"
+    # Google Gemini
+    gemini_api_key: str
+    gemini_model: str = "gemini-1.5-pro"
 
     # Google OAuth
     google_client_id: Optional[str] = None
