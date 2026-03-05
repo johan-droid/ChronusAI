@@ -10,9 +10,11 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import HealthStatus from '../components/HealthStatus';
 import TimeGreeting from '../components/TimeGreeting';
+import CacheCleaner from '../components/CacheCleaner';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
+import { clearAuthCache } from '../lib/cache';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function Dashboard() {
@@ -45,7 +47,7 @@ export default function Dashboard() {
   }, [navigate, logout]);
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
+    clearAuthCache();
     logout();
     navigate('/login');
   };
@@ -110,6 +112,7 @@ export default function Dashboard() {
             
             <div className="flex items-center space-x-3">
               <ThemeToggle />
+              <CacheCleaner />
               <Button variant="outline" size="sm" onClick={() => navigate('/history')}>
                 <History className="h-4 w-4 mr-2" />
                 History

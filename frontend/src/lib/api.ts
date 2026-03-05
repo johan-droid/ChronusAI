@@ -1,6 +1,7 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse } from '../types';
+import { cacheManager, clearAuthCache } from './cache';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -35,8 +36,7 @@ class ApiClient {
       (response: AxiosResponse) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Token expired or invalid, clear it and redirect to login
-          localStorage.removeItem('auth_token');
+          clearAuthCache();
           window.location.href = '/login';
         }
         return Promise.reject(error);
@@ -56,7 +56,11 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<User> {
+    const cached = cacheManager.get('user:current');
+    if (cached) return cached;
+
     const response = await this.client.get('/users/me');
+    cacheManager.set('user:current', response.data, 10 * 60 * 1000);
     return response.data;
   }
 
@@ -73,7 +77,11 @@ class ApiClient {
 
   // Meeting endpoints
   async getMeetings(): Promise<Meeting[]> {
+    const cached = cacheManager.get('meetings:list');
+    if (cached) return cached;
+
     const response = await this.client.get('/meetings');
+    cacheManager.set('meetings:list', response.data, 2 * 60 * 1000);
     return response.data;
   }
 
@@ -89,6 +97,7 @@ class ApiClient {
 
   async deleteMeeting(meetingId: string): Promise<{ message: string }> {
     const response = await this.client.delete(`/meetings/${meetingId}`);
+    cacheManager.invalidatePattern('meetings');
     return response.data;
   }
 }

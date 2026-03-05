@@ -31,12 +31,12 @@ async def oauth_login(provider: str):
     
     try:
         oauth_provider = get_oauth_provider(provider)
-        code_verifier, code_challenge = oauth_provider.generate_pkce()
         state = secrets.token_urlsafe(32)
-        auth_url = oauth_provider.get_authorization_url(code_challenge, state)
         
-        # Return verifier to frontend for stateless flow
-        return {"auth_url": auth_url, "state": state, "verifier": code_verifier}
+        # Use client_secret flow (no PKCE)
+        auth_url = oauth_provider.get_authorization_url(None, state)
+        
+        return {"auth_url": auth_url, "state": state}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -53,10 +53,16 @@ async def oauth_callback(
 ):
     """Handle OAuth callback from provider."""
     try:
-        # Exchange code for tokens without PKCE verifier
-        # OAuth providers with client_secret don't require PKCE
         oauth_provider = get_oauth_provider(provider)
-        tokens = await oauth_provider.exchange_code_for_tokens(code, None)
+        
+        # Exchange code for tokens (no PKCE verifier needed with client_secret)
+        try:
+            tokens = await oauth_provider.exchange_code_for_tokens(code, None)
+        except Exception as token_error:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Token exchange failed: {str(token_error)}"
+            )
 
         access_token = tokens.get("access_token")
         if not access_token:

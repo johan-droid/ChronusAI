@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Mail, Loader2, Shield } from 'lucide-react';
 import { apiClient } from '../lib/api';
+import { clearAllCache } from '../lib/cache';
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
@@ -10,6 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    clearAllCache();
     setTimeout(() => setIsAnimated(true), 100);
     
     const urlParams = new URLSearchParams(window.location.search);

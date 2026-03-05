@@ -51,19 +51,22 @@ class OAuth2Provider:
         """Get OAuth provider instance."""
         return OAuth2Provider(provider)
     
-    def get_authorization_url(self, code_challenge: str, state: str) -> str:
+    def get_authorization_url(self, code_challenge: str | None, state: str) -> str:
         """Get the authorization URL for OAuth flow."""
         params = {
             "client_id": self.client_id,
             "redirect_uri": self.redirect_uri,
             "scope": " ".join(self.scopes),
             "response_type": "code",
-            "code_challenge": code_challenge,
-            "code_challenge_method": "S256",
             "state": state,
             "access_type": "offline" if self.provider == "google" else None,
             "prompt": "consent" if self.provider == "google" else None
         }
+        
+        # Add PKCE only if challenge provided
+        if code_challenge:
+            params["code_challenge"] = code_challenge
+            params["code_challenge_method"] = "S256"
         
         # Remove None values
         params = {k: v for k, v in params.items() if v is not None}
