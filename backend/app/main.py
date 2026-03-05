@@ -35,7 +35,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 
-async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
         status_code=429,
         content={"detail": "Rate limit exceeded"},
