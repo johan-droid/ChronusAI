@@ -49,4 +49,6 @@ export interface ChatResponse {
 
 export interface AuthUrlResponse {
   auth_url: string;
+  state?: string;
+  verifier?: string;
 }

@@ -165,7 +165,11 @@ async def api_status():
     return {
         "online": True,
         "latency": "low",
-        "timestamp": time.time()
+        "timestamp": time.time(),
+        "oauth_configured": {
+            "google": bool(settings.google_client_id and settings.google_client_secret),
+            "microsoft": bool(settings.microsoft_client_id and settings.microsoft_client_secret)
+        }
     }
 
 

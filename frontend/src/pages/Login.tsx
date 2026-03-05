@@ -18,7 +18,10 @@ export default function Login() {
     
     if (token) {
       localStorage.setItem('auth_token', token);
-      navigate('/dashboard');
+      // Clear URL params
+      window.history.replaceState({}, document.title, '/login');
+      // Redirect to dashboard
+      setTimeout(() => navigate('/dashboard'), 100);
     }
   }, [navigate]);
 
@@ -27,17 +30,26 @@ export default function Login() {
       setIsLoading(true);
       setError('');
       
-      const { auth_url } = await apiClient.getAuthUrl(provider);
+      const response = await apiClient.getAuthUrl(provider);
       
-      if (!auth_url) {
-        throw new Error('No auth URL received');
+      if (!response || !response.auth_url) {
+        throw new Error('No auth URL received from server');
+      }
+      
+      // Store state and verifier in sessionStorage for callback
+      if (response.state) {
+        sessionStorage.setItem('oauth_state', response.state);
+      }
+      if (response.verifier) {
+        sessionStorage.setItem('oauth_verifier', response.verifier);
       }
       
       // Redirect to OAuth provider
-      window.location.href = auth_url;
+      window.location.href = response.auth_url;
     } catch (error: any) {
       console.error('OAuth login error:', error);
-      setError(error?.response?.data?.detail || 'Failed to initiate login. Please try again.');
+      const errorMsg = error?.response?.data?.detail || error?.message || 'Failed to initiate login';
+      setError(errorMsg);
       setIsLoading(false);
     }
   };
