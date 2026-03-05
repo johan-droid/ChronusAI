@@ -9,7 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token, token_encryptor
-from app.db.redis import redis_client
 from app.db.session import get_db
 from app.models.oauth_credential import OAuthCredential
 from app.models.user import User
@@ -76,23 +75,10 @@ async def get_calendar_provider(
 
 
 async def get_conversation_context(user_id: str) -> list:
-    """Get conversation context from Redis."""
-    context_key = f"session:{user_id}"
-    context = await redis_client.get_json(context_key)
-    
-    if not context:
-        return []
-    
-    return context.get("messages", [])
+    """Get conversation context (in-memory fallback)."""
+    return []
 
 
 async def save_conversation_context(user_id: str, messages: list):
-    """Save conversation context to Redis."""
-    context_key = f"session:{user_id}"
-    context_data = {
-        "messages": messages[-6:],  # Keep only last 6 messages (3 turns)
-        "last_active_at": datetime.now(timezone.utc).isoformat()
-    }
-    
-    # Set with 24 hour expiry
-    await redis_client.set_json(context_key, context_data, ex=86400)
+    """Save conversation context (no-op without Redis)."""
+    pass
