@@ -123,12 +123,12 @@ async def oauth_callback(
         scopes_list = scopes.split() if isinstance(scopes, str) else None
         
         if oauth_cred:
-            oauth_cred.access_token = encrypted_access
-            oauth_cred.refresh_token = encrypted_refresh
-            oauth_cred.expires_at = expires_at
-            oauth_cred.scopes = scopes_list
+            oauth_cred.access_token = encrypted_access  # type: ignore[attr-defined]
+            oauth_cred.refresh_token = encrypted_refresh  # type: ignore[attr-defined]
+            oauth_cred.expires_at = expires_at  # type: ignore[attr-defined]
+            oauth_cred.scopes = scopes_list  # type: ignore[attr-defined]
         else:
-            oauth_cred = OAuthCredential(
+            oauth_cred = OAuthCredential(  # type: ignore[assignment]
                 user_id=user.id,
                 access_token=encrypted_access,
                 refresh_token=encrypted_refresh,

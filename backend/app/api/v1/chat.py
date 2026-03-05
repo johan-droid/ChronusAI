@@ -152,7 +152,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
 
         requested_slot = None
         if intent.target_time is not None:
-            local_start = _combine_local_datetime(target_date, intent.target_time, user.timezone)
+            local_start = _combine_local_datetime(target_date, intent.target_time, str(user.timezone))
             start = local_start.astimezone(timezone.utc)
             requested_slot = (start, start + timedelta(minutes=duration_minutes))
 
@@ -172,7 +172,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
                 duration_minutes=duration_minutes,
                 target_date=target_date,
                 time_preference=intent.time_preference,
-                user_timezone=user.timezone,
+                user_timezone=str(user.timezone),
             )
 
         if available_slot is None:
@@ -216,7 +216,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
             start_time=available_slot.start,
             end_time=available_slot.end,
             attendees=[Attendee(email=e) for e in attendees_emails],
-            provider=user.provider,
+            provider=str(user.provider),
             raw_user_input=None,
         )
 

@@ -6,7 +6,6 @@ import structlog
 import time
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi import _rate_limit_exceeded_handler
 
 from app.config import settings
 from app.api.v1.router import api_router
@@ -36,6 +35,13 @@ structlog.configure(
 logger = structlog.get_logger()
 
 
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={"detail": "Rate limit exceeded"},
+    )
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -56,7 +62,7 @@ app = FastAPI(
 
 # Rate limiting
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 app.add_middleware(TokenRefreshMiddleware)
 

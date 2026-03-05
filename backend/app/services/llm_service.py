@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any, List
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.config import settings
@@ -14,7 +14,7 @@ class LLMService:
     def __init__(self) -> None:
         self._llm = ChatOpenAI(
             model=settings.openai_model,
-            api_key=settings.openai_api_key,
+            api_key=settings.openai_api_key,  # type: ignore[arg-type]
             temperature=0,
         ).with_structured_output(ParsedIntent)
 
@@ -37,8 +37,8 @@ class LLMService:
         )
 
     @staticmethod
-    def _to_messages(context: List[dict[str, Any]]) -> List[Any]:
-        msgs: List[Any] = []
+    def _to_messages(context: List[dict[str, Any]]) -> List[BaseMessage]:
+        msgs: List[BaseMessage] = []
         for item in context[-6:]:
             role = item.get("role")
             content = item.get("content", "")
@@ -49,7 +49,7 @@ class LLMService:
         return msgs
 
     async def parse_intent(self, message: str, user_timezone: str, context: List[dict[str, Any]]) -> ParsedIntent:
-        chain_messages = [SystemMessage(content=self._system_prompt(user_timezone))]
+        chain_messages: List[BaseMessage] = [SystemMessage(content=self._system_prompt(user_timezone))]
         chain_messages.extend(self._to_messages(context))
         chain_messages.append(HumanMessage(content=message))
         result = await self._llm.ainvoke(chain_messages)
