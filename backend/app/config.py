@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # Database / Cache
     database_url: str
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: Optional[str] = None
 
     # Google Gemini
     gemini_api_key: str
