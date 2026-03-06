@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from cryptography.fernet import Fernet
 from jose import jwt, JWTError

@@ -190,7 +190,7 @@ async def refresh_token(
             "expires_in": settings.jwt_expire_minutes * 60
         }
         
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")
 
 

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta, timezone
-from typing import Optional
+from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 import structlog
-import uuid
 import time as _time
 
 from fastapi import APIRouter, Depends, Request
@@ -26,7 +24,7 @@ from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.meeting import Attendee, MeetingCreate
 from app.services.llm_service import llm_service
-from app.services.scheduler_service import find_available_slot, get_next_business_day
+from app.services.scheduler_service import get_next_business_day
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 logger = structlog.get_logger()

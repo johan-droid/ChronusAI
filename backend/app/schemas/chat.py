@@ -1,6 +1,5 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel
 from typing import Optional, List, Literal
-from datetime import datetime
 
 
 class ParsedIntent(BaseModel):

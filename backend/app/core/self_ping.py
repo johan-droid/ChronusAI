@@ -2,7 +2,6 @@ import asyncio
 import httpx
 import structlog
 from datetime import datetime
-import os
 
 logger = structlog.get_logger()
 

@@ -88,7 +88,7 @@ class LLMService:
                     response="I understand you want to work with your calendar. Could you please be more specific about what you'd like to do?"
                 )
                 
-        except Exception as e:
+        except Exception:
             return ParsedIntent(
                 intent="unknown",
                 response="I'm having trouble processing your request right now. Please try rephrasing your message."
