@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Mail, Loader2, Shield, Sparkles, ArrowRight, CheckCircle, Zap, Users, Clock } from 'lucide-react';
+import { Calendar, Mail, Loader2, Shield, ArrowRight, CheckCircle, Zap, Users, Clock } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';

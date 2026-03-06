@@ -3,17 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   ArrowRight, 
-  Sparkles, 
   Zap, 
   Users, 
   Clock, 
   Shield, 
   CheckCircle,
   Star,
-  MessageSquare,
-  BarChart3,
   Globe,
-  Smartphone,
   Brain
 } from 'lucide-react';
 
@@ -131,7 +127,9 @@ export default function LandingPage() {
           <div className={`text-center space-y-8 transition-all duration-1000 ${isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="space-y-6">
               <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-sm">
-                <Sparkles className="h-4 w-4 text-primary" />
+                <div className="h-4 w-4 text-primary rounded-full bg-primary/20 flex items-center justify-center">
+                  <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
+                </div>
                 <span className="text-foreground">Powered by Advanced AI</span>
               </div>
               
