@@ -104,9 +104,9 @@ async def oauth_callback(
             await db.commit()
             await db.refresh(user)
         else:
-            user.provider = provider
+            setattr(user, 'provider', provider)
             if full_name and not user.full_name:
-                user.full_name = full_name
+                setattr(user, 'full_name', full_name)
             await db.commit()
         
         # Encrypt and store tokens
@@ -119,15 +119,15 @@ async def oauth_callback(
         
         # Store or update OAuth credentials
         result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == user.id))
-        oauth_cred: OAuthCredential | None = result.scalar_one_or_none()
+        oauth_cred = result.scalar_one_or_none()
         scopes = tokens.get("scope", "")
         scopes_list = scopes.split() if isinstance(scopes, str) else None
         
         if oauth_cred:
-            oauth_cred.access_token = encrypted_access
-            oauth_cred.refresh_token = encrypted_refresh
-            oauth_cred.expires_at = expires_at
-            oauth_cred.scopes = scopes_list
+            setattr(oauth_cred, 'access_token', encrypted_access)
+            setattr(oauth_cred, 'refresh_token', encrypted_refresh)
+            setattr(oauth_cred, 'expires_at', expires_at)
+            setattr(oauth_cred, 'scopes', scopes_list)
         else:
             oauth_cred = OAuthCredential(
                 user_id=user.id,
