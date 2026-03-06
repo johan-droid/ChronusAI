@@ -22,6 +22,14 @@ class Settings(BaseSettings):
     # Database
     database_url: str
 
+    @property
+    def async_database_url(self) -> str:
+        """Convert database URL to async driver."""
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
     # DeepSeek AI (OpenAI-compatible)
     openai_api_key: str
     openai_model: str = "deepseek-chat"
