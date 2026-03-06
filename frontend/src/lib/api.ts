@@ -151,6 +151,17 @@ class ApiClient {
     return response.data;
   }
 
+  // Generic methods
+  async get(url: string): Promise<any> {
+    const response = await this.client.get(url);
+    return response;
+  }
+
+  async delete(url: string): Promise<any> {
+    const response = await this.client.delete(url);
+    return response;
+  }
+
   // Availability endpoints
   async getAvailability(date: string, timezone?: string): Promise<{
     date: string;

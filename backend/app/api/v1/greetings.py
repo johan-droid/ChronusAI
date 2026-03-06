@@ -41,7 +41,7 @@ Make it motivational and calendar/productivity focused. Just return the greeting
             "local_time": local_time.strftime("%I:%M %p"),
             "timezone": timezone
         }
-    except Exception as e:
+    except Exception:
         # Fallback greeting
         return {
             "greeting": f"Welcome back, {current_user.full_name}! Ready to conquer your schedule?",

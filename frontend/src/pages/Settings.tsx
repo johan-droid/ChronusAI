@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, AlertTriangle, Loader2, Shield, LogOut } from 'lucide-react';
+import { Trash2, AlertTriangle, Loader2, Shield } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import { clearAuthCache } from '../lib/cache';
@@ -18,7 +18,7 @@ export default function Settings() {
       setDeleteLoading(true);
       setDeleteError('');
       
-      await apiClient.delete('/auth/account');
+      await apiClient.deleteAccount();
       
       clearAuthCache();
       logout();
