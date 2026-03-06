@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, LogOut, Plus, Search, Users, Clock, TrendingUp, History, Sparkles } from 'lucide-react';
+import { Calendar, LogOut, Plus, Search, Users, Clock, TrendingUp, History, Sparkles, Menu, X } from 'lucide-react';
 import ChatWindow from '../components/ChatWindow';
 import MeetingCard from '../components/MeetingCard';
 import QuickActions from '../components/QuickActions';
@@ -24,6 +24,21 @@ export default function Dashboard() {
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setSidebarOpen(false);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -88,42 +103,77 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen bg-background flex relative overflow-hidden">
+      {/* Enhanced Galaxy Background */}
+      <div className="stars" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating orbs */}
+        <div className="absolute w-32 h-32 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-xl animate-float" style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
+        <div className="absolute w-24 h-24 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full blur-xl animate-float" style={{ top: '70%', right: '10%', animationDelay: '3s' }} />
+        <div className="absolute w-20 h-20 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-xl animate-float" style={{ top: '40%', left: '80%', animationDelay: '6s' }} />
+        
+        {/* Shooting stars */}
+        <div className="absolute w-1 h-1 bg-white rounded-full" style={{ top: '20%', left: '10%', animation: 'shooting-star 8s infinite', animationDelay: '2s' }} />
+        <div className="absolute w-1 h-1 bg-blue-300 rounded-full" style={{ top: '60%', left: '70%', animation: 'shooting-star 12s infinite', animationDelay: '5s' }} />
+        
+        {/* Nebula clouds */}
+        <div className="absolute w-96 h-96 bg-gradient-radial from-blue-500/5 via-purple-500/3 to-transparent rounded-full blur-3xl animate-pulse" style={{ top: '-10%', right: '-10%' }} />
+        <div className="absolute w-80 h-80 bg-gradient-radial from-green-500/5 via-blue-500/3 to-transparent rounded-full blur-3xl animate-pulse" style={{ bottom: '-10%', left: '-10%', animationDelay: '4s' }} />
+      </div>
+
       {/* Health Status */}
       <HealthStatus />
 
+      {/* Mobile Overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Main Chat Area */}
-      <div className="flex-[7] flex flex-col relative z-10">
-        {/* Header */}
-        <header className="border-b border-white/5 glass px-6 py-4">
+      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
+        isMobile && sidebarOpen ? 'blur-sm' : ''
+      }`}>
+        {/* Mobile Header */}
+        <header className="border-b border-white/5 glass px-4 py-3 md:px-6 md:py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
+              {isMobile && (
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-2 hover:bg-white/5 rounded-lg transition-colors md:hidden"
+                >
+                  <Menu className="h-5 w-5 text-foreground" />
+                </button>
+              )}
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent blur-xl opacity-50 animate-pulse" />
-                <Calendar className="h-8 w-8 text-primary relative z-10" />
+                <Calendar className="h-6 w-6 md:h-8 md:w-8 text-primary relative z-10" />
               </div>
-              <div>
-                <h1 className="text-xl font-semibold gradient-text flex items-center gap-2">
+              <div className="hidden sm:block">
+                <h1 className="text-lg md:text-xl font-semibold gradient-text flex items-center gap-2">
                   ChronosAI
-                  <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+                  <Sparkles className="h-3 w-3 md:h-4 md:w-4 text-accent animate-pulse" />
                 </h1>
                 <TimeGreeting userName={user?.full_name} />
               </div>
             </div>
             
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 md:space-x-3">
               <ThemeToggle />
-              <CacheCleaner />
-              <Button variant="outline" size="sm" onClick={() => navigate('/history')}>
+              {!isMobile && <CacheCleaner />}
+              <Button variant="outline" size="sm" onClick={() => navigate('/history')} className="hidden sm:flex">
                 <History className="h-4 w-4 mr-2" />
                 History
               </Button>
               <Button variant="outline" size="sm" onClick={() => setShowMeetingForm(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                New
+                <Plus className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">New</span>
               </Button>
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors"
+                className="flex items-center space-x-2 px-2 md:px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 <span className="hidden md:inline">Logout</span>
@@ -132,15 +182,28 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Quick Actions */}
-        <div className="p-4 md:p-6 glass border-b border-white/5">
-          <h2 className="text-sm font-semibold mb-4 text-muted-foreground">Quick Actions</h2>
-          <QuickActions
-            onQuickSchedule={() => setShowMeetingForm(true)}
-            onCheckAvailability={() => console.log('Check availability')}
-            onScheduleWithAttendees={() => setShowMeetingForm(true)}
-          />
-        </div>
+        {/* Mobile Quick Actions */}
+        {isMobile && (
+          <div className="p-4 glass border-b border-white/5">
+            <QuickActions
+              onQuickSchedule={() => setShowMeetingForm(true)}
+              onCheckAvailability={() => console.log('Check availability')}
+              onScheduleWithAttendees={() => setShowMeetingForm(true)}
+            />
+          </div>
+        )}
+
+        {/* Desktop Quick Actions */}
+        {!isMobile && (
+          <div className="p-4 md:p-6 glass border-b border-white/5">
+            <h2 className="text-sm font-semibold mb-4 text-muted-foreground">Quick Actions</h2>
+            <QuickActions
+              onQuickSchedule={() => setShowMeetingForm(true)}
+              onCheckAvailability={() => console.log('Check availability')}
+              onScheduleWithAttendees={() => setShowMeetingForm(true)}
+            />
+          </div>
+        )}
 
         {/* Chat Window */}
         <div className="flex-1 overflow-hidden">
@@ -149,11 +212,30 @@ export default function Dashboard() {
       </div>
 
       {/* Sidebar */}
-      <div className="flex-[3] border-l border-white/5 glass relative z-10">
+      <div className={`${
+        isMobile 
+          ? `fixed top-0 right-0 h-full w-80 transform transition-transform duration-300 z-50 ${
+              sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+            }`
+          : 'flex-[3] border-l border-white/5'
+      } glass relative`}>
         <div className="h-full flex flex-col">
+          {/* Mobile Sidebar Header */}
+          {isMobile && (
+            <div className="flex items-center justify-between p-4 border-b border-white/5">
+              <h2 className="font-semibold text-foreground">Overview</h2>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="p-2 hover:bg-white/5 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5 text-foreground" />
+              </button>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="p-4 border-b border-white/5">
-            <h2 className="font-semibold text-foreground mb-4 text-sm">Overview</h2>
+            {!isMobile && <h2 className="font-semibold text-foreground mb-4 text-sm">Overview</h2>}
             <div className="grid grid-cols-2 gap-3">
               <StatsCard title="Total" value={stats.total} icon={<Calendar className="h-4 w-4" />} />
               <StatsCard title="Today" value={stats.today} icon={<Clock className="h-4 w-4" />} />
@@ -206,6 +288,17 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+
+          {/* Mobile Actions */}
+          {isMobile && (
+            <div className="p-4 border-t border-white/5 space-y-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/history')} className="w-full">
+                <History className="h-4 w-4 mr-2" />
+                History
+              </Button>
+              <CacheCleaner />
+            </div>
+          )}
         </div>
       </div>
 

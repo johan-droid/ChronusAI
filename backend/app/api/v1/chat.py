@@ -33,7 +33,7 @@ logger = structlog.get_logger()
 
 
 @router.post("/message", response_model=ChatResponse)
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def send_message(
     request: Request,
     payload: ChatRequest,
@@ -41,69 +41,81 @@ async def send_message(
     calendar_provider = Depends(get_calendar_provider),
     db: AsyncSession = Depends(get_db),
 ):
-    """Process a chat message and return appropriate response."""
+    """AI-powered chat for meeting scheduling with Gemini."""
     start = _time.perf_counter()
     
-    # Get conversation context
-    context = await get_conversation_context(str(current_user.id))
-    
-    # Parse user intent
-    parsed_intent = await llm_service.parse_intent(
-        str(payload.message),
-        str(current_user.timezone),
-        context,
-    )
-    
-    # Add user message to context
-    context.append({"role": "user", "content": payload.message})
-    
-    # Handle clarification needed
-    if parsed_intent.clarification_needed:
-        context.append({"role": "assistant", "content": parsed_intent.clarification_needed})
-        await save_conversation_context(str(current_user.id), context)
+    try:
+        # Get conversation context
+        context = await get_conversation_context(str(current_user.id))
         
-        return ChatResponse(
-            response=parsed_intent.clarification_needed,
-            intent=parsed_intent.intent,
-            requires_clarification=True
+        # Parse user intent with enhanced AI
+        parsed_intent = await llm_service.parse_intent(
+            str(payload.message),
+            str(current_user.timezone),
+            context,
         )
-    
-    # Process based on intent
-    if parsed_intent.intent == "CREATE_MEETING":
-        response = await handle_create_meeting(
-            parsed_intent, current_user, calendar_provider, db, raw_user_input=payload.message
-        )
-    elif parsed_intent.intent == "CANCEL_MEETING":
-        response = await handle_cancel_meeting(
-            parsed_intent, current_user, calendar_provider, db
-        )
-    elif parsed_intent.intent == "UPDATE_MEETING":
-        response = await handle_update_meeting(
-            parsed_intent, current_user, calendar_provider, db
-        )
-    elif parsed_intent.intent == "QUERY_AVAILABILITY":
-        response = await handle_query_availability(
-            parsed_intent, current_user, calendar_provider
-        )
-    else:
-        response = ChatResponse(
-            response="I'm not sure what you'd like to do. Could you please rephrase your request?",
-            intent="UNKNOWN"
-        )
-    
-    # Add bot response to context
-    context.append({"role": "assistant", "content": response.response})
-    await save_conversation_context(str(current_user.id), context)
+        
+        # Add user message to context
+        context.append({"role": "user", "content": payload.message})
+        
+        # Handle clarification needed
+        if parsed_intent.clarification_needed:
+            context.append({"role": "assistant", "content": parsed_intent.clarification_needed})
+            await save_conversation_context(str(current_user.id), context)
+            
+            return ChatResponse(
+                response=parsed_intent.clarification_needed,
+                intent=parsed_intent.intent,
+                requires_clarification=True
+            )
+        
+        # Process based on intent with automatic scheduling
+        if parsed_intent.intent == "CREATE_MEETING":
+            response = await handle_create_meeting(
+                parsed_intent, current_user, calendar_provider, db, raw_user_input=payload.message
+            )
+        elif parsed_intent.intent == "CANCEL_MEETING":
+            response = await handle_cancel_meeting(
+                parsed_intent, current_user, calendar_provider, db
+            )
+        elif parsed_intent.intent == "UPDATE_MEETING":
+            response = await handle_update_meeting(
+                parsed_intent, current_user, calendar_provider, db
+            )
+        elif parsed_intent.intent == "QUERY_AVAILABILITY":
+            response = await handle_query_availability(
+                parsed_intent, current_user, calendar_provider
+            )
+        else:
+            # Enhanced AI response for unknown intents
+            ai_response = await llm_service.generate_helpful_response(
+                payload.message, current_user.full_name or "there"
+            )
+            response = ChatResponse(
+                response=ai_response,
+                intent="GENERAL_CHAT"
+            )
+        
+        # Add bot response to context
+        context.append({"role": "assistant", "content": response.response})
+        await save_conversation_context(str(current_user.id), context)
 
-    logger.info(
-        "chat_message_processed",
-        user_id_hash=hash_user_id(str(current_user.id)),
-        intent=parsed_intent.intent,
-        outcome="clarification" if response.requires_clarification else "ok",
-        duration_ms=round((_time.perf_counter() - start) * 1000, 2),
-    )
-    
-    return response
+        logger.info(
+            "ai_chat_processed",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            intent=parsed_intent.intent,
+            outcome="clarification" if response.requires_clarification else "completed",
+            duration_ms=round((_time.perf_counter() - start) * 1000, 2),
+        )
+        
+        return response
+        
+    except Exception as e:
+        logger.error("ai_chat_failed", error=str(e), user_id_hash=hash_user_id(str(current_user.id)))
+        return ChatResponse(
+            response="I'm experiencing some technical difficulties. Please try again in a moment.",
+            intent="ERROR"
+        )
 
 
 def _combine_local_datetime(target_date, target_time, user_tz: str) -> datetime:
