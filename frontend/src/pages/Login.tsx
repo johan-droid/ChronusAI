@@ -32,7 +32,10 @@ export default function Login() {
         try {
           const userData = await apiClient.getCurrentUser();
           useAuthStore.getState().setAuth(userData, accessToken, refreshToken);
-          navigate('/dashboard');
+          
+          // Clear history and redirect to prevent back navigation issues
+          window.history.replaceState(null, '', '/dashboard');
+          navigate('/dashboard', { replace: true });
         } catch (error) {
           console.error('Failed to fetch user data:', error);
           setError('Authentication failed. Please try again.');

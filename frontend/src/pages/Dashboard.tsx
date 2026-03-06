@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, LogOut, Plus, Search, Users, Clock, TrendingUp, History, Sparkles, Menu, X } from 'lucide-react';
+import { Calendar, Plus, Search, Users, Clock, TrendingUp, Sparkles, Activity } from 'lucide-react';
 import ChatWindow from '../components/ChatWindow';
 import MeetingCard from '../components/MeetingCard';
 import QuickActions from '../components/QuickActions';
@@ -11,12 +11,12 @@ import Input from '../components/Input';
 import HealthStatus from '../components/HealthStatus';
 import TimeGreeting from '../components/TimeGreeting';
 import CacheCleaner from '../components/CacheCleaner';
-import LogoutMenu from '../components/LogoutMenu';
+import Layout from '../components/Layout';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
+import { useNavigationGuard } from '../hooks/useNavigationGuard';
 import { apiClient } from '../lib/api';
 import { clearAuthCache } from '../lib/cache';
-import ThemeToggle from '../components/ThemeToggle';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -25,22 +25,9 @@ export default function Dashboard() {
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setSidebarOpen(false);
-      }
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  // Use navigation guard to prevent back navigation issues
+  useNavigationGuard();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -110,211 +97,154 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-screen bg-background flex relative overflow-hidden mobile-safe-area">
-      {/* Enhanced Deep Galaxy Background */}
-      <div className="stars" />
-      <div className="space-particles" />
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Enhanced floating orbs with deeper colors */}
-        <div className="absolute w-40 h-40 bg-gradient-to-r from-orange-500/15 to-red-500/10 rounded-full blur-2xl animate-float" style={{ top: '8%', left: '3%', animationDelay: '0s' }} />
-        <div className="absolute w-32 h-32 bg-gradient-to-r from-purple-500/12 to-pink-500/8 rounded-full blur-2xl animate-float" style={{ top: '65%', right: '8%', animationDelay: '4s' }} />
-        <div className="absolute w-28 h-28 bg-gradient-to-r from-pink-500/10 to-orange-500/8 rounded-full blur-2xl animate-float" style={{ top: '35%', left: '75%', animationDelay: '8s' }} />
-        
-        {/* Enhanced shooting stars */}
-        <div className="absolute w-2 h-2 bg-gradient-to-r from-orange-400 to-transparent rounded-full" style={{ top: '15%', left: '5%', animation: 'shooting-star 12s infinite', animationDelay: '2s' }} />
-        <div className="absolute w-2 h-2 bg-gradient-to-r from-purple-400 to-transparent rounded-full" style={{ top: '55%', left: '65%', animation: 'shooting-star 16s infinite', animationDelay: '6s' }} />
-        <div className="absolute w-2 h-2 bg-gradient-to-r from-pink-400 to-transparent rounded-full" style={{ top: '25%', left: '85%', animation: 'shooting-star 14s infinite', animationDelay: '10s' }} />
-      </div>
+    <Layout>
+      <div className="h-screen flex flex-col relative overflow-hidden mobile-safe-area">
+        {/* Enhanced Deep Galaxy Background */}
+        <div className="stars" />
+        <div className="space-particles" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {/* Enhanced floating orbs with deeper colors */}
+          <div className="absolute w-40 h-40 bg-gradient-to-r from-orange-500/15 to-red-500/10 rounded-full blur-2xl animate-float" style={{ top: '8%', left: '3%', animationDelay: '0s' }} />
+          <div className="absolute w-32 h-32 bg-gradient-to-r from-purple-500/12 to-pink-500/8 rounded-full blur-2xl animate-float" style={{ top: '65%', right: '8%', animationDelay: '4s' }} />
+          <div className="absolute w-28 h-28 bg-gradient-to-r from-pink-500/10 to-orange-500/8 rounded-full blur-2xl animate-float" style={{ top: '35%', left: '75%', animationDelay: '8s' }} />
+          
+          {/* Enhanced shooting stars */}
+          <div className="absolute w-2 h-2 bg-gradient-to-r from-orange-400 to-transparent rounded-full" style={{ top: '15%', left: '5%', animation: 'shooting-star 12s infinite', animationDelay: '2s' }} />
+          <div className="absolute w-2 h-2 bg-gradient-to-r from-purple-400 to-transparent rounded-full" style={{ top: '55%', left: '65%', animation: 'shooting-star 16s infinite', animationDelay: '6s' }} />
+          <div className="absolute w-2 h-2 bg-gradient-to-r from-pink-400 to-transparent rounded-full" style={{ top: '25%', left: '85%', animation: 'shooting-star 14s infinite', animationDelay: '10s' }} />
+        </div>
 
-      {/* Health Status */}
-      <HealthStatus />
+        {/* Health Status */}
+        <HealthStatus />
 
-      {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col lg:flex-row relative z-10">
+          {/* Chat Section */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Page Header */}
+            <header className="glass border-b border-white/5 px-4 py-4 sm:px-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent blur-xl opacity-50 animate-pulse" />
+                    <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-primary relative z-10" />
+                  </div>
+                  <div>
+                    <h1 className="text-lg sm:text-xl font-semibold gradient-text flex items-center gap-2">
+                      Dashboard
+                      <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 text-accent animate-pulse" />
+                    </h1>
+                    <TimeGreeting userName={user?.full_name} />
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <Button variant="outline" size="sm" onClick={() => setShowMeetingForm(true)} className="shrink-0">
+                    <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">New Meeting</span>
+                  </Button>
+                  <CacheCleaner />
+                </div>
+              </div>
+            </header>
 
-      {/* Main Chat Area */}
-      <div className={`flex-1 flex flex-col relative z-10 transition-all duration-300 ${
-        isMobile && sidebarOpen ? 'blur-sm' : ''
-      }`}>
-        {/* Mobile Header */}
-        <header className="border-b border-white/5 glass px-4 py-3 md:px-6 md:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {isMobile && (
-                <button
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                  className="p-2 hover:bg-white/5 rounded-lg transition-colors md:hidden"
+            {/* Quick Actions */}
+            <div className="p-4 sm:p-6 glass border-b border-white/5">
+              <h2 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Quick Actions</h2>
+              <QuickActions />
+            </div>
+
+            {/* Chat Window */}
+            <div className="flex-1 min-h-0">
+              <ChatWindow />
+            </div>
+          </div>
+
+          {/* Sidebar - Stats & Meetings */}
+          <div className="w-full lg:w-80 xl:w-96 border-t lg:border-t-0 lg:border-l border-white/5 glass">
+            <div className="h-full flex flex-col">
+              {/* Stats Section */}
+              <div className="p-4 border-b border-white/5">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="font-semibold text-foreground text-sm uppercase tracking-wide flex items-center gap-2">
+                    <Activity className="h-4 w-4" />
+                    Overview
+                  </h2>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <StatsCard title="Total" value={stats.total} icon={<Calendar className="h-4 w-4" />} />
+                  <StatsCard title="Today" value={stats.today} icon={<Clock className="h-4 w-4" />} />
+                  <StatsCard title="Week" value={stats.thisWeek} icon={<TrendingUp className="h-4 w-4" />} />
+                  <StatsCard title="Active" value={stats.scheduled} icon={<Users className="h-4 w-4" />} />
+                </div>
+              </div>
+
+              {/* Search and Filter */}
+              <div className="p-4 border-b border-white/5 space-y-3">
+                <Input
+                  placeholder="Search meetings..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  icon={<Search className="h-4 w-4" />}
+                  className="glass border-white/5 text-sm"
+                />
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="w-full p-2.5 border border-white/5 rounded-lg glass text-sm bg-background/50"
                 >
-                  <Menu className="h-5 w-5 text-foreground" />
-                </button>
-              )}
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent blur-xl opacity-50 animate-pulse" />
-                <Calendar className="h-6 w-6 md:h-8 md:w-8 text-primary relative z-10" />
+                  <option value="all">All Status</option>
+                  <option value="scheduled">Scheduled</option>
+                  <option value="canceled">Canceled</option>
+                  <option value="completed">Completed</option>
+                </select>
               </div>
-              <div className="hidden sm:block">
-                <h1 className="text-lg md:text-xl font-semibold gradient-text flex items-center gap-2">
-                  ChronosAI
-                  <Sparkles className="h-3 w-3 md:h-4 md:w-4 text-accent animate-pulse" />
-                </h1>
-                <TimeGreeting userName={user?.full_name} />
+
+              {/* Meetings List */}
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-foreground text-sm">Upcoming Meetings</h3>
+                  <span className="text-xs text-muted-foreground bg-primary/10 px-2 py-1 rounded-full">
+                    {upcomingMeetings?.length || 0}
+                  </span>
+                </div>
+                
+                {meetingsLoading ? (
+                  <div className="text-center text-muted-foreground py-8">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+                    <p className="text-xs mt-2">Loading meetings...</p>
+                  </div>
+                ) : upcomingMeetings && upcomingMeetings.length > 0 ? (
+                  <div className="space-y-2">
+                    {upcomingMeetings.map((meeting) => (
+                      <MeetingCard key={meeting.id} meeting={meeting} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8 glass-card rounded-lg p-6">
+                    <Calendar className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No upcoming meetings</p>
+                    <p className="text-xs mt-1">Schedule your first meeting to get started</p>
+                  </div>
+                )}
               </div>
             </div>
-            
-            <div className="flex items-center space-x-2 md:space-x-3">
-              <ThemeToggle />
-              {!isMobile && <CacheCleaner />}
-              <Button variant="outline" size="sm" onClick={() => navigate('/history')} className="hidden sm:flex">
-                <History className="h-4 w-4 mr-2" />
-                History
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => setShowMeetingForm(true)}>
-                <Plus className="h-4 w-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">New</span>
-              </Button>
-              <button
-                onClick={() => setShowLogoutMenu(true)}
-                className="flex items-center space-x-2 px-2 md:px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                <span className="hidden md:inline">Logout</span>
-              </button>
-            </div>
           </div>
-        </header>
-
-        {/* Mobile Quick Actions */}
-        {isMobile && (
-          <div className="p-3 glass border-b border-white/5">
-            <QuickActions />
-          </div>
-        )}
-
-        {/* Desktop Quick Actions */}
-        {!isMobile && (
-          <div className="p-4 md:p-6 glass border-b border-white/5">
-            <h2 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Quick Actions</h2>
-            <QuickActions />
-          </div>
-        )}
-
-        {/* Chat Window */}
-        <div className="flex-1 overflow-hidden">
-          <ChatWindow />
         </div>
+
+        {/* Meeting Form Modal */}
+        <MeetingForm
+          isOpen={showMeetingForm}
+          onClose={() => setShowMeetingForm(false)}
+          onSubmit={(data) => {
+            console.log('Meeting:', data);
+            setShowMeetingForm(false);
+          }}
+        />
       </div>
-
-      {/* Sidebar */}
-      <div className={`${
-        isMobile 
-          ? `fixed top-0 right-0 h-full w-72 transform transition-transform duration-300 z-50 ${
-              sidebarOpen ? 'translate-x-0' : 'translate-x-full'
-            }`
-          : 'flex-[3] border-l border-white/5'
-      } glass relative`}>
-        <div className="h-full flex flex-col">
-          {/* Mobile Sidebar Header */}
-          {isMobile && (
-            <div className="flex items-center justify-between p-4 border-b border-white/5">
-              <h2 className="font-semibold text-foreground">Overview</h2>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5 text-foreground" />
-              </button>
-            </div>
-          )}
-
-          {/* Stats */}
-          <div className="p-3 md:p-4 border-b border-white/5">
-            {!isMobile && <h2 className="font-semibold text-foreground mb-3 text-xs uppercase tracking-wide">Overview</h2>}
-            <div className="grid grid-cols-2 gap-2 md:gap-3">
-              <StatsCard title="Total" value={stats.total} icon={<Calendar className="h-3 w-3 md:h-4 md:w-4" />} />
-              <StatsCard title="Today" value={stats.today} icon={<Clock className="h-3 w-3 md:h-4 md:w-4" />} />
-              <StatsCard title="Week" value={stats.thisWeek} icon={<TrendingUp className="h-3 w-3 md:h-4 md:w-4" />} />
-              <StatsCard title="Active" value={stats.scheduled} icon={<Users className="h-3 w-3 md:h-4 md:w-4" />} />
-            </div>
-          </div>
-
-          {/* Search */}
-          <div className="p-3 md:p-4 border-b border-white/5 space-y-2 md:space-y-3">
-            <Input
-              placeholder="Search meetings..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              icon={<Search className="h-3 w-3 md:h-4 md:w-4" />}
-              className="glass border-white/5 text-xs md:text-sm"
-            />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full p-2 border border-white/5 rounded-md glass text-xs md:text-sm"
-            >
-              <option value="all">All Status</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="canceled">Canceled</option>
-            </select>
-          </div>
-
-          {/* Meetings */}
-          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold text-foreground text-xs md:text-sm">Upcoming</h2>
-              <span className="text-xs text-muted-foreground">
-                {meetingsLoading ? 'Loading...' : `${upcomingMeetings?.length || 0}`}
-              </span>
-            </div>
-            
-            {meetingsLoading ? (
-              <div className="text-center text-muted-foreground py-8">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-              </div>
-            ) : upcomingMeetings && upcomingMeetings.length > 0 ? (
-              upcomingMeetings.map((meeting) => (
-                <MeetingCard key={meeting.id} meeting={meeting} />
-              ))
-            ) : (
-              <div className="text-center text-muted-foreground py-8 glass rounded-lg p-6">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <p className="text-sm">No upcoming meetings</p>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Actions */}
-          {isMobile && (
-            <div className="p-3 border-t border-white/5 space-y-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/history')} className="w-full text-xs">
-                <History className="h-3 w-3 mr-2" />
-                History
-              </Button>
-              <CacheCleaner />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Logout Menu */}
-      <LogoutMenu 
-        isOpen={showLogoutMenu} 
-        onClose={() => setShowLogoutMenu(false)} 
-      />
-
-      {/* Meeting Form */}
-      <MeetingForm
-        isOpen={showMeetingForm}
-        onClose={() => setShowMeetingForm(false)}
-        onSubmit={(data) => {
-          console.log('Meeting:', data);
-          setShowMeetingForm(false);
-        }}
-      />
-    </div>
+    </Layout>
   );
 }

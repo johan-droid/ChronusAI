@@ -21,9 +21,10 @@ const queryClient = new QueryClient({
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
-  const token = localStorage.getItem('auth_token');
   
-  if (!isAuthenticated && !token) {
+  if (!isAuthenticated) {
+    // Clear any OAuth remnants and redirect
+    sessionStorage.clear();
     return <Navigate to="/login" replace />;
   }
   
