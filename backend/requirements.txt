@@ -2,10 +2,8 @@ fastapi[all]
 uvicorn[standard]
 
 sqlalchemy[asyncio]
-asyncpg
+aiosqlite
 alembic
-psycopg
-psycopg2-binary
 
 httpx
 
