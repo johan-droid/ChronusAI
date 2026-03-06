@@ -47,6 +47,12 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up ChronosAI API")
     
+    # Create database tables
+    from app.db.session import engine, Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Database tables created")
+    
     # Start self-ping for Render free tier
     if settings.app_env == "production":
         import os
