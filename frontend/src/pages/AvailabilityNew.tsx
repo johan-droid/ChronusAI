@@ -10,7 +10,6 @@ export default function Availability() {
   const { user } = useAuthStore();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -127,7 +126,7 @@ export default function Availability() {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Check Availability</h1>
-          <p className="text-slate-400 text-sm sm:text-base">View your free time slots for {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          <p className="text-slate-400 text-sm sm:text-base">View your free time slots for {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
 
         {loading ? (

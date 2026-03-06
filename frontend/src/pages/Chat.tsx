@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, BarChart3, LogOut, Menu, X, Send, Sparkles } from 'lucide-react';
+import { Calendar, Clock, MessageSquare, BarChart3, LogOut, Menu, X, Sparkles } from 'lucide-react';
 import ChatWindow from '../components/ChatWindow';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
