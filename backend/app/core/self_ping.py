@@ -6,7 +6,7 @@ from datetime import datetime
 logger = structlog.get_logger()
 
 class SelfPinger:
-    def __init__(self, url: str, interval: int = 300):  # 5 minutes - aggressive
+    def __init__(self, url: str, interval: int = 30):  # 30 seconds
         self.url = url
         self.interval = interval
         self.task = None
