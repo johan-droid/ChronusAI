@@ -3,7 +3,6 @@ import { LogOut, Shield, Smartphone } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { useAuthStore } from '../store/authStore';
 import { clearAuthCache } from '../lib/cache';
-import { useNavigate } from 'react-router-dom';
 
 interface LogoutMenuProps {
   isOpen: boolean;
@@ -13,7 +12,6 @@ interface LogoutMenuProps {
 export default function LogoutMenu({ isOpen, onClose }: LogoutMenuProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { logout } = useAuthStore();
-  const navigate = useNavigate();
 
   const handleLogout = async (logoutAll = false) => {
     setIsLoading(true);
