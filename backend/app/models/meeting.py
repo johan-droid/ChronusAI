@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, String, Text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, String, Text, JSON
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -24,7 +24,7 @@ class Meeting(Base):
     description = Column(Text)
     start_time = Column(DateTime(timezone=True), nullable=False)  # Always stored in UTC
     end_time = Column(DateTime(timezone=True), nullable=False)
-    attendees = Column(JSONB, nullable=False, default=list)  # [{email,name,response_status}]
+    attendees = Column(JSONB().with_variant(JSON, "sqlite"), nullable=False, default=list)  # [{email,name,response_status}]
     status = Column(String(20), nullable=False, default="scheduled")  # scheduled, canceled, rescheduled, pending
     provider = Column(String(20), nullable=False)
     raw_user_input = Column(Text)  # The original NL request, for audit trail

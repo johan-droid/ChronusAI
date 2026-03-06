@@ -17,7 +17,7 @@ A full-stack, production-ready AI Meeting Scheduler that lets users schedule, re
 ### Backend
 - **Runtime**: Python 3.11+
 - **Framework**: FastAPI (async, with Uvicorn)
-- **AI/NLP**: Google Gemini 1.5 Pro via LangChain
+- **AI/NLP**: DeepSeek Chat (OpenAI-compatible API)
 - **Auth**: OAuth 2.0 with PKCE, PyJWT
 - **Database**: PostgreSQL 15 with SQLAlchemy
 - **Cache**: Redis 7
@@ -54,7 +54,7 @@ A full-stack, production-ready AI Meeting Scheduler that lets users schedule, re
    
    # Edit the files with your actual credentials
    # You'll need:
-   # - Google Gemini API key
+   # - DeepSeek API key
    # - Google OAuth credentials (optional)
    # - Microsoft OAuth credentials (optional)
    ```
@@ -133,9 +133,10 @@ FRONTEND_URL=http://localhost:5173
 DATABASE_URL=postgresql://scheduler_user:password@localhost:5432/scheduler_db
 REDIS_URL=redis://localhost:6379/0
 
-# Google Gemini
-GEMINI_API_KEY=your-gemini-api-key
-GEMINI_MODEL=gemini-1.5-pro
+# DeepSeek AI
+OPENAI_API_KEY=your-deepseek-api-key
+OPENAI_MODEL=deepseek-chat
+OPENAI_BASE_URL=https://api.deepseek.com
 
 # Google OAuth (optional)
 GOOGLE_CLIENT_ID=your-google-client-id

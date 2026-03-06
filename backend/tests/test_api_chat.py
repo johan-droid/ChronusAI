@@ -1,5 +1,3 @@
-from datetime import date, time
-
 import pytest
 from httpx import ASGITransport, AsyncClient
 
@@ -42,15 +40,12 @@ async def test_chat_message_creates_meeting(override_db, seeded_user, user_jwt, 
 
     async def _fake_parse(message: str, user_timezone: str, context):
         return ParsedIntent(
-            intent="CREATE_MEETING",
+            intent="schedule",
             title="Sync",
+            start_time="2026-03-06T15:00:00+00:00",
+            end_time="2026-03-06T15:30:00+00:00",
             attendees=["alex@corp.com"],
-            target_date=date(2026, 3, 6),
-            target_time=time(15, 0),
-            duration_minutes=30,
-            time_preference=None,
-            meeting_id_to_modify=None,
-            clarification_needed=None,
+            response="Meeting scheduled successfully"
         )
 
     monkeypatch.setattr(llm_service, "parse_intent", _fake_parse)
@@ -71,6 +66,6 @@ async def test_chat_message_creates_meeting(override_db, seeded_user, user_jwt, 
     print(f"Response body: {resp.text}")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["intent"] == "CREATE_MEETING"
+    assert data["intent"] == "schedule"
     assert data["meeting"] is not None
 
