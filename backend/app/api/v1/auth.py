@@ -11,12 +11,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.oauth import get_oauth_provider
-from app.core.security import create_access_token, token_encryptor, create_refresh_token, decode_refresh_token, revoke_session, revoke_all_user_sessions
-
+from app.core.security import create_access_token, token_encryptor, create_refresh_token, decode_refresh_token, revoke_session, revoke_all_user_sessions, hash_user_id, mask_email
+from app.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.oauth_credential import OAuthCredential
 from app.models.user import User
-from app.core.security import hash_user_id, mask_email
 import structlog
 
 logger = structlog.get_logger()
