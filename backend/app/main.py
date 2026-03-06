@@ -53,19 +53,18 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables created")
     
-    # Start self-ping for Render free tier
-    if settings.app_env == "production":
-        import os
-        render_url = os.getenv("RENDER_EXTERNAL_URL", "https://chronusai.onrender.com")
-        self_pinger = SelfPinger(url=render_url)
-        self_pinger.start()
+    # Start aggressive self-ping for Render free tier (always run to prevent sleep)
+    import os
+    render_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("BACKEND_URL") or "https://chronusai.onrender.com"
+    self_pinger = SelfPinger(url=render_url, interval=30)  # Aggressive 30-second pings
+    self_pinger.start()
+    logger.info("Aggressive self-ping service started", url=render_url)
     
     yield
     
     # Shutdown
     logger.info("Shutting down ChronosAI API")
-    if settings.app_env == "production":
-        self_pinger.stop()
+    self_pinger.stop()
 
 
 app = FastAPI(
