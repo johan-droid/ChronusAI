@@ -12,7 +12,7 @@ export default defineConfig({
   },
   build: {
     target: 'es2015',
-    minify: 'terser',
+    minify: 'esbuild',  // Use esbuild instead of terser
     rollupOptions: {
       output: {
         manualChunks: {
