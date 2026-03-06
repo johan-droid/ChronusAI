@@ -24,7 +24,6 @@ from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.meeting import Attendee, MeetingCreate
 from app.services.llm_service import llm_service
-from app.services.scheduler_service import get_next_business_day
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 logger = structlog.get_logger()
