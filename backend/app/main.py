@@ -10,7 +10,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.config import settings
 from app.api.v1.router import api_router
 from app.core.rate_limit import limiter
-from app.core.middleware import TokenRefreshMiddleware
+from app.core.middleware import TokenRefreshMiddleware, SecurityValidationMiddleware
 from app.core.self_ping import SelfPinger
 
 # Configure structured logging
@@ -81,6 +81,7 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(SecurityValidationMiddleware)  # Add security validation first
 app.add_middleware(TokenRefreshMiddleware)
 
 # CORS middleware - Enhanced for production

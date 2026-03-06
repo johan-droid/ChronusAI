@@ -23,6 +23,13 @@ export default function LandingPage() {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
 
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   useEffect(() => {
     setTimeout(() => setIsAnimated(true), 100);
 
@@ -207,9 +214,9 @@ export default function LandingPage() {
             </div>
 
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-muted-foreground">
-              <a href="#features" className="hover:text-primary transition-colors">Features</a>
-              <a href="#workflow" className="hover:text-primary transition-colors">Workflow</a>
-              <a href="#testimonials" className="hover:text-primary transition-colors">Wall of Love</a>
+              <button onClick={() => scrollToSection('features')} className="hover:text-primary transition-colors cursor-pointer">Features</button>
+              <button onClick={() => scrollToSection('workflow')} className="hover:text-primary transition-colors cursor-pointer">Workflow</button>
+              <button onClick={() => scrollToSection('testimonials')} className="hover:text-primary transition-colors cursor-pointer">Wall of Love</button>
             </div>
 
             <button
@@ -272,7 +279,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="relative z-10 py-32">
+      <section id="features" className="relative z-10 py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center space-y-6 mb-20">
             <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-xs font-medium">
@@ -314,7 +321,7 @@ export default function LandingPage() {
       </section>
 
       {/* Integration Store Section */}
-      <section className="relative z-10 py-32 overflow-hidden">
+      <section id="workflow" className="relative z-10 py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="glass-card p-12 rounded-[2.5rem] border-white/5 bg-white/[0.01] flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8">
@@ -374,7 +381,7 @@ export default function LandingPage() {
       </section>
 
       {/* Wall of Love Section */}
-      <section className="relative z-10 py-32">
+      <section id="testimonials" className="relative z-10 py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center space-y-6 mb-20">
             <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-xs font-medium">
