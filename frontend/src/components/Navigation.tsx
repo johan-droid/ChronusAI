@@ -64,7 +64,7 @@ export default function Navigation() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    window.location.href = '/login';
   };
 
   const isActive = (path: string) => location.pathname === path;
