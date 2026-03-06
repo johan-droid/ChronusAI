@@ -13,8 +13,8 @@ from app.schemas.chat import ParsedIntent
 class LLMService:
     def __init__(self) -> None:
         self._client = AsyncOpenAI(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url,
+            api_key=settings.openai_api_key,
+            base_url=settings.openai_base_url,
         )
 
     @staticmethod
@@ -53,7 +53,7 @@ class LLMService:
     async def parse_intent(self, message: str, user_timezone: str, context: List[dict[str, Any]]) -> ParsedIntent:
         """Parse user message into structured meeting intent using DeepSeek AI."""
         try:
-            messages = [
+            messages: list[dict[str, str]] = [
                 {"role": "system", "content": self._system_prompt(user_timezone)},
             ]
             
@@ -67,8 +67,8 @@ class LLMService:
             messages.append({"role": "user", "content": message})
             
             response = await self._client.chat.completions.create(
-                model=settings.deepseek_model,
-                messages=messages,
+                model=settings.openai_model,
+                messages=messages,  # type: ignore[arg-type]
                 temperature=0.1,
                 max_tokens=1000,
             )
@@ -98,7 +98,7 @@ class LLMService:
         """Generate helpful AI response for general queries."""
         try:
             response = await self._client.chat.completions.create(
-                model=settings.deepseek_model,
+                model=settings.openai_model,
                 messages=[
                     {"role": "system", "content": self._chat_system_prompt(user_name)},
                     {"role": "user", "content": message}

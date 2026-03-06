@@ -22,10 +22,10 @@ class Settings(BaseSettings):
     # Database
     database_url: str
 
-    # DeepSeek AI
-    deepseek_api_key: str
-    deepseek_model: str = "deepseek-chat"
-    deepseek_base_url: str = "https://api.deepseek.com"
+    # OpenAI/DeepSeek AI
+    openai_api_key: str
+    openai_model: str = "gpt-4o"
+    openai_base_url: str = "https://api.openai.com/v1"
 
     # Google OAuth
     google_client_id: Optional[str] = None

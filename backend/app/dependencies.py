@@ -68,7 +68,7 @@ async def get_calendar_provider(
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported provider: {current_user.provider}"
+            detail=f"Unsupported provider: {str(current_user.provider)}"  # type: ignore[arg-type]
         )
 
 
