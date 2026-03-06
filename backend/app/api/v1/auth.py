@@ -213,15 +213,18 @@ async def logout(
         logout_url = None
         if oauth_cred and current_user.provider:
             try:
-                oauth_provider = get_oauth_provider(current_user.provider)
+                provider_str = str(current_user.provider)
+                oauth_provider = get_oauth_provider(provider_str)
                 
                 # Revoke tokens if provider supports it
                 if oauth_cred.access_token:
-                    decrypted_token = token_encryptor.decrypt(oauth_cred.access_token)
+                    access_token_str = str(oauth_cred.access_token)
+                    decrypted_token = token_encryptor.decrypt(access_token_str)
                     await oauth_provider.revoke_token(decrypted_token)
                 
                 # Get logout URL for frontend redirect
-                logout_url = oauth_provider.get_logout_url(settings.frontend_url)
+                frontend_url_str = str(settings.frontend_url)
+                logout_url = oauth_provider.get_logout_url(frontend_url_str)
             except Exception as e:
                 logger.warning("oauth_revoke_failed", error=str(e))
         
@@ -258,20 +261,24 @@ async def logout_all(
         logout_url = None
         if oauth_cred and current_user.provider:
             try:
-                oauth_provider = get_oauth_provider(current_user.provider)
+                provider_str = str(current_user.provider)
+                oauth_provider = get_oauth_provider(provider_str)
                 
                 # Revoke all tokens
                 if oauth_cred.access_token:
-                    decrypted_token = token_encryptor.decrypt(oauth_cred.access_token)
+                    access_token_str = str(oauth_cred.access_token)
+                    decrypted_token = token_encryptor.decrypt(access_token_str)
                     await oauth_provider.revoke_token(decrypted_token)
                 
                 if oauth_cred.refresh_token:
-                    decrypted_refresh = token_encryptor.decrypt(oauth_cred.refresh_token)
+                    refresh_token_str = str(oauth_cred.refresh_token)
+                    decrypted_refresh = token_encryptor.decrypt(refresh_token_str)
                     if decrypted_refresh:
                         await oauth_provider.revoke_token(decrypted_refresh)
                 
                 # Get logout URL for frontend redirect
-                logout_url = oauth_provider.get_logout_url(settings.frontend_url)
+                frontend_url_str = str(settings.frontend_url)
+                logout_url = oauth_provider.get_logout_url(frontend_url_str)
             except Exception as e:
                 logger.warning("oauth_revoke_all_failed", error=str(e))
         

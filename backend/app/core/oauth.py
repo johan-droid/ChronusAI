@@ -13,7 +13,7 @@ class OAuth2Provider:
         if provider == "google":
             self.auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
             self.token_url = "https://oauth2.googleapis.com/token"
-            self.revoke_url = "https://oauth2.googleapis.com/revoke"
+            self.revoke_url: str | None = "https://oauth2.googleapis.com/revoke"
             self.logout_url = "https://accounts.google.com/Logout"
             self.client_id = settings.google_client_id
             self.client_secret = settings.google_client_secret
@@ -25,7 +25,7 @@ class OAuth2Provider:
         elif provider == "outlook":
             self.auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
             self.token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-            self.revoke_url = None  # Microsoft doesn't have a revoke endpoint
+            self.revoke_url: str | None = None  # Microsoft doesn't have a revoke endpoint
             self.logout_url = "https://login.microsoftonline.com/common/oauth2/v2.0/logout"
             self.client_id = settings.microsoft_client_id
             self.client_secret = settings.microsoft_client_secret
