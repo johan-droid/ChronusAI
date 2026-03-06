@@ -26,19 +26,16 @@ export default function LogoutMenu({ isOpen, onClose }: LogoutMenuProps) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear all auth data
+      // Complete session cleanup
       clearAuthCache();
       logout();
-      
-      // Clear browser history and redirect
-      window.history.replaceState(null, '', '/login');
-      navigate('/login', { replace: true });
-      
-      // Clear any OAuth session storage
       sessionStorage.clear();
+      localStorage.removeItem('oauth_state');
+      localStorage.removeItem('oauth_verifier');
       
-      setIsLoading(false);
-      onClose();
+      // Clear browser history completely and redirect
+      window.history.replaceState(null, '', '/login');
+      window.location.replace('/login');
     }
   };
 
