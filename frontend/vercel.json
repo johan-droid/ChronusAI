@@ -41,6 +41,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "@chronosai-api-url"
+    "VITE_API_URL": "https://chronusai.onrender.com/api/v1"
   }
 }
