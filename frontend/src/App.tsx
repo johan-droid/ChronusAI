@@ -6,6 +6,7 @@ import { useAuthStore } from './store/authStore';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import StatsOverview from './pages/StatsOverview';
 import Availability from './pages/Availability';
 import MeetingHistory from './pages/MeetingHistory';
 import './index.css';
@@ -64,6 +65,14 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route 
               path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <StatsOverview />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/chat" 
               element={
                 <ProtectedRoute>
                   <Dashboard />

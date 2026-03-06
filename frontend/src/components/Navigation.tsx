@@ -10,7 +10,8 @@ import {
   Menu, 
   X,
   Sparkles,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import Button from './Button';
@@ -30,6 +31,12 @@ const navItems: NavItem[] = [
     label: 'Dashboard',
     icon: Home,
     path: '/dashboard'
+  },
+  {
+    id: 'chat',
+    label: 'Chat',
+    icon: MessageSquare,
+    path: '/chat'
   },
   {
     id: 'availability',
