@@ -104,9 +104,9 @@ async def oauth_callback(
             await db.commit()
             await db.refresh(user)
         else:
-            user.provider = provider  # type: ignore[assignment]
+            user.provider = provider
             if full_name and not user.full_name:
-                user.full_name = full_name  # type: ignore[assignment]
+                user.full_name = full_name
             await db.commit()
         
         # Encrypt and store tokens
@@ -119,15 +119,15 @@ async def oauth_callback(
         
         # Store or update OAuth credentials
         result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == user.id))
-        oauth_cred = result.scalar_one_or_none()
+        oauth_cred: OAuthCredential | None = result.scalar_one_or_none()
         scopes = tokens.get("scope", "")
         scopes_list = scopes.split() if isinstance(scopes, str) else None
         
         if oauth_cred:
-            oauth_cred.access_token = encrypted_access  # type: ignore[assignment]
-            oauth_cred.refresh_token = encrypted_refresh  # type: ignore[assignment]
-            oauth_cred.expires_at = expires_at  # type: ignore[assignment]
-            oauth_cred.scopes = scopes_list  # type: ignore[assignment]
+            oauth_cred.access_token = encrypted_access
+            oauth_cred.refresh_token = encrypted_refresh
+            oauth_cred.expires_at = expires_at
+            oauth_cred.scopes = scopes_list
         else:
             oauth_cred = OAuthCredential(
                 user_id=user.id,
@@ -208,7 +208,7 @@ async def logout(
         logger.info(
             "user_logged_out",
             user_id_hash=hash_user_id(str(current_user.id)),
-            email=mask_email(str(current_user.email))  # type: ignore[arg-type]
+            email=mask_email(str(current_user.email))
         )
         
         return {"message": "Logged out successfully"}
