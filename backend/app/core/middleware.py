@@ -40,8 +40,15 @@ class TokenRefreshMiddleware(BaseHTTPMiddleware):
         if not user_id:
             return await call_next(request)
 
+        # Convert string UUID to UUID object for SQLAlchemy
+        import uuid
+        try:
+            user_uuid = uuid.UUID(user_id)
+        except (ValueError, AttributeError):
+            return await call_next(request)
+
         async with AsyncSessionLocal() as db:
-            user_res = await db.execute(select(User).where(User.id == user_id))
+            user_res = await db.execute(select(User).where(User.id == user_uuid))
             user = user_res.scalar_one_or_none()
             if user is None:
                 return await call_next(request)

@@ -3,6 +3,9 @@ uvicorn[standard]
 
 sqlalchemy[asyncio]
 aiosqlite
+asyncpg
+psycopg
+psycopg2-binary
 alembic
 
 httpx
