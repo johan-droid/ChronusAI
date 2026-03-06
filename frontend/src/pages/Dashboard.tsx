@@ -192,7 +192,7 @@ export default function Dashboard() {
 
         {/* Mobile Quick Actions */}
         {isMobile && (
-          <div className="p-4 glass border-b border-white/5">
+          <div className="p-3 glass border-b border-white/5">
             <QuickActions />
           </div>
         )}
@@ -200,7 +200,7 @@ export default function Dashboard() {
         {/* Desktop Quick Actions */}
         {!isMobile && (
           <div className="p-4 md:p-6 glass border-b border-white/5">
-            <h2 className="text-sm font-semibold mb-4 text-muted-foreground">Quick Actions</h2>
+            <h2 className="text-xs font-semibold mb-3 text-muted-foreground uppercase tracking-wide">Quick Actions</h2>
             <QuickActions />
           </div>
         )}
@@ -214,7 +214,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div className={`${
         isMobile 
-          ? `fixed top-0 right-0 h-full w-80 transform transition-transform duration-300 z-50 ${
+          ? `fixed top-0 right-0 h-full w-72 transform transition-transform duration-300 z-50 ${
               sidebarOpen ? 'translate-x-0' : 'translate-x-full'
             }`
           : 'flex-[3] border-l border-white/5'
@@ -234,29 +234,29 @@ export default function Dashboard() {
           )}
 
           {/* Stats */}
-          <div className="p-4 border-b border-white/5">
-            {!isMobile && <h2 className="font-semibold text-foreground mb-4 text-sm">Overview</h2>}
-            <div className="grid grid-cols-2 gap-3">
-              <StatsCard title="Total" value={stats.total} icon={<Calendar className="h-4 w-4" />} />
-              <StatsCard title="Today" value={stats.today} icon={<Clock className="h-4 w-4" />} />
-              <StatsCard title="Week" value={stats.thisWeek} icon={<TrendingUp className="h-4 w-4" />} />
-              <StatsCard title="Active" value={stats.scheduled} icon={<Users className="h-4 w-4" />} />
+          <div className="p-3 md:p-4 border-b border-white/5">
+            {!isMobile && <h2 className="font-semibold text-foreground mb-3 text-xs uppercase tracking-wide">Overview</h2>}
+            <div className="grid grid-cols-2 gap-2 md:gap-3">
+              <StatsCard title="Total" value={stats.total} icon={<Calendar className="h-3 w-3 md:h-4 md:w-4" />} />
+              <StatsCard title="Today" value={stats.today} icon={<Clock className="h-3 w-3 md:h-4 md:w-4" />} />
+              <StatsCard title="Week" value={stats.thisWeek} icon={<TrendingUp className="h-3 w-3 md:h-4 md:w-4" />} />
+              <StatsCard title="Active" value={stats.scheduled} icon={<Users className="h-3 w-3 md:h-4 md:w-4" />} />
             </div>
           </div>
 
           {/* Search */}
-          <div className="p-4 border-b border-white/5 space-y-3">
+          <div className="p-3 md:p-4 border-b border-white/5 space-y-2 md:space-y-3">
             <Input
               placeholder="Search meetings..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              icon={<Search className="h-4 w-4" />}
-              className="glass border-white/5"
+              icon={<Search className="h-3 w-3 md:h-4 md:w-4" />}
+              className="glass border-white/5 text-xs md:text-sm"
             />
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full p-2 border border-white/5 rounded-md glass text-sm"
+              className="w-full p-2 border border-white/5 rounded-md glass text-xs md:text-sm"
             >
               <option value="all">All Status</option>
               <option value="scheduled">Scheduled</option>
@@ -265,9 +265,9 @@ export default function Dashboard() {
           </div>
 
           {/* Meetings */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+          <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 md:space-y-3">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="font-semibold text-foreground text-sm">Upcoming</h2>
+              <h2 className="font-semibold text-foreground text-xs md:text-sm">Upcoming</h2>
               <span className="text-xs text-muted-foreground">
                 {meetingsLoading ? 'Loading...' : `${upcomingMeetings?.length || 0}`}
               </span>
@@ -291,9 +291,9 @@ export default function Dashboard() {
 
           {/* Mobile Actions */}
           {isMobile && (
-            <div className="p-4 border-t border-white/5 space-y-2">
-              <Button variant="outline" size="sm" onClick={() => navigate('/history')} className="w-full">
-                <History className="h-4 w-4 mr-2" />
+            <div className="p-3 border-t border-white/5 space-y-2">
+              <Button variant="outline" size="sm" onClick={() => navigate('/history')} className="w-full text-xs">
+                <History className="h-3 w-3 mr-2" />
                 History
               </Button>
               <CacheCleaner />

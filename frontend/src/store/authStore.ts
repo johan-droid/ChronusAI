@@ -53,3 +53,13 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+// Listen for logout-all broadcast
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'logout-all' && e.newValue) {
+      useAuthStore.getState().logout();
+      window.location.href = '/login';
+    }
+  });
+}

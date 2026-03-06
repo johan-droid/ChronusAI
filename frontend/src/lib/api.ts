@@ -141,6 +141,8 @@ class ApiClient {
 
   async logoutAll(): Promise<{ message: string }> {
     const response = await this.client.post('/auth/logout-all');
+    // Broadcast logout to all tabs/windows
+    localStorage.setItem('logout-all', Date.now().toString());
     return response.data;
   }
 }
