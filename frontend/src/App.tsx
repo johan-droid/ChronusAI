@@ -35,7 +35,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="h-screen bg-background">
+        <div className="h-screen bg-background relative overflow-hidden">
           {/* Planets */}
           <div className="planet planet-1" />
           <div className="planet planet-2" />

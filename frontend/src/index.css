@@ -419,15 +419,39 @@ input:focus, textarea:focus, select:focus {
   }
 }
 
-/* Enhanced Typography Scale */
-.text-xs { font-size: 10px; line-height: 1.4; }
-.text-sm { font-size: 12px; line-height: 1.5; }
-.text-base { font-size: 13px; line-height: 1.5; }
-.text-lg { font-size: 15px; line-height: 1.6; }
-.text-xl { font-size: 18px; line-height: 1.6; }
-.text-2xl { font-size: 22px; line-height: 1.7; }
-.text-3xl { font-size: 28px; line-height: 1.7; }
-.text-4xl { font-size: 36px; line-height: 1.8; }
+/* Enhanced Responsive Typography Scale */
+.text-xs { 
+  font-size: clamp(8px, 1.5vw, 10px); 
+  line-height: 1.4; 
+}
+.text-sm { 
+  font-size: clamp(10px, 2vw, 12px); 
+  line-height: 1.5; 
+}
+.text-base { 
+  font-size: clamp(12px, 2.2vw, 13px); 
+  line-height: 1.5; 
+}
+.text-lg { 
+  font-size: clamp(14px, 2.5vw, 15px); 
+  line-height: 1.6; 
+}
+.text-xl { 
+  font-size: clamp(16px, 3vw, 18px); 
+  line-height: 1.6; 
+}
+.text-2xl { 
+  font-size: clamp(18px, 3.5vw, 22px); 
+  line-height: 1.7; 
+}
+.text-3xl { 
+  font-size: clamp(22px, 4vw, 28px); 
+  line-height: 1.7; 
+}
+.text-4xl { 
+  font-size: clamp(26px, 5vw, 36px); 
+  line-height: 1.8; 
+}
 
 /* Space Particles Effect */
 .space-particles {

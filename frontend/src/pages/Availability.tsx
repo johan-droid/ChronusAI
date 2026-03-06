@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Calendar, Clock, Users } from 'lucide-react'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import TimeSlotPicker from '../components/TimeSlotPicker'
-import Button from '../components/Button'
+import Layout from '../components/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/Card'
+import Button from '../components/Button'
 import { useAuthStore } from '../store/authStore'
 
 export default function Availability() {
@@ -91,7 +92,7 @@ export default function Availability() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <Layout>
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -217,6 +218,6 @@ export default function Availability() {
           </Card>
         </div>
       </div>
-    </div>
+    </Layout>
   )
 }
