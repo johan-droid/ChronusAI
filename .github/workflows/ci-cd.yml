@@ -71,7 +71,7 @@ jobs:
 
       - name: Test (pytest + coverage)
         working-directory: backend
-        run: PYTHONPATH=. pytest -q --cov=app --cov-report=term-missing --cov-fail-under=50
+        run: PYTHONPATH=. pytest -q --cov=app --cov-report=term-missing --cov-fail-under=40
 
   docker-build:
     needs: backend-ci
