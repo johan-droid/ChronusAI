@@ -119,15 +119,15 @@ async def oauth_callback(
         
         # Store or update OAuth credentials
         result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == user.id))
-        oauth_cred = result.scalar_one_or_none()
+        existing_cred = result.scalar_one_or_none()
         scopes = tokens.get("scope", "")
         scopes_list = scopes.split() if isinstance(scopes, str) else None
         
-        if oauth_cred:
-            setattr(oauth_cred, 'access_token', encrypted_access)
-            setattr(oauth_cred, 'refresh_token', encrypted_refresh)
-            setattr(oauth_cred, 'expires_at', expires_at)
-            setattr(oauth_cred, 'scopes', scopes_list)
+        if existing_cred:
+            setattr(existing_cred, 'access_token', encrypted_access)
+            setattr(existing_cred, 'refresh_token', encrypted_refresh)
+            setattr(existing_cred, 'expires_at', expires_at)
+            setattr(existing_cred, 'scopes', scopes_list)
         else:
             oauth_cred = OAuthCredential(
                 user_id=user.id,
