@@ -33,6 +33,7 @@ class OAuth2Provider:
             self.scopes = [
                 "User.Read",
                 "Calendars.ReadWrite",
+                "Calendars.ReadWrite.Shared",
                 "offline_access"
             ]
         else:

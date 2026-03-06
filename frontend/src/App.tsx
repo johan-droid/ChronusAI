@@ -9,6 +9,7 @@ import StatsOverview from './pages/StatsOverview';
 import Chat from './pages/Chat';
 import Availability from './pages/AvailabilityNew';
 import History from './pages/HistoryNew';
+import Settings from './pages/Settings';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -92,6 +93,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <History />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               } 
             />

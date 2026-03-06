@@ -297,3 +297,64 @@ async def logout_all(
     except Exception as e:
         logger.error("logout_all_failed", error=str(e))
         return {"message": "Logged out from all devices"}
+
+
+@router.delete("/account")
+async def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete user account and all associated data."""
+    try:
+        # Get OAuth credentials to revoke tokens
+        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
+        oauth_cred = result.scalar_one_or_none()
+        
+        # Revoke OAuth tokens before deletion
+        if oauth_cred and current_user.provider:
+            try:
+                provider_str = str(current_user.provider)
+                oauth_provider = get_oauth_provider(provider_str)
+                
+                if oauth_cred.access_token:
+                    access_token_str = str(oauth_cred.access_token)
+                    decrypted_token = token_encryptor.decrypt(access_token_str)
+                    await oauth_provider.revoke_token(decrypted_token)
+                
+                if oauth_cred.refresh_token:
+                    refresh_token_str = str(oauth_cred.refresh_token)
+                    decrypted_refresh = token_encryptor.decrypt(refresh_token_str)
+                    if decrypted_refresh:
+                        await oauth_provider.revoke_token(decrypted_refresh)
+            except Exception as e:
+                logger.warning("oauth_revoke_on_delete_failed", error=str(e))
+        
+        # Revoke all sessions
+        revoke_all_user_sessions(str(current_user.id))
+        
+        # Delete OAuth credentials
+        if oauth_cred:
+            await db.delete(oauth_cred)
+        
+        # Delete user (cascade will delete meetings and other related data)
+        await db.delete(current_user)
+        await db.commit()
+        
+        logger.info(
+            "user_account_deleted",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            email=mask_email(str(current_user.email))
+        )
+        
+        return {
+            "message": "Account deleted successfully",
+            "provider": current_user.provider
+        }
+        
+    except Exception as e:
+        logger.error("account_deletion_failed", error=str(e))
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account"
+        )

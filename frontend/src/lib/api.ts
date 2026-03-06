@@ -146,6 +146,11 @@ class ApiClient {
     return response.data;
   }
 
+  async deleteAccount(): Promise<{ message: string; provider?: string }> {
+    const response = await this.client.delete('/auth/account');
+    return response.data;
+  }
+
   // Availability endpoints
   async getAvailability(date: string, timezone?: string): Promise<{
     date: string;

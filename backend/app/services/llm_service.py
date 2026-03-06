@@ -111,5 +111,18 @@ class LLMService:
         except Exception:
             return "I'm here to help with your calendar and scheduling needs. Try asking me to 'schedule a meeting' or 'check my availability'!"
 
+    async def generate_completion(self, prompt: str) -> str:
+        """Generate simple completion for given prompt."""
+        try:
+            response = await self._client.chat.completions.create(
+                model=settings.openai_model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.8,
+                max_tokens=100,
+            )
+            return response.choices[0].message.content or ""
+        except Exception:
+            return ""
+
 
 llm_service = LLMService()
