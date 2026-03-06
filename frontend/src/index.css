@@ -35,6 +35,19 @@ body {
   background: hsl(var(--background));
   font-family: 'Inter', sans-serif;
   overflow-x: hidden;
+  height: auto;
+  min-height: 100vh;
+}
+
+/* Fix for scrolling issues */
+html, body {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+}
+
+#root {
+  min-height: 100vh;
+  position: relative;
 }
 
 /* Galaxy Background */
@@ -51,6 +64,7 @@ body {
     radial-gradient(ellipse at right, #7c3aed 0%, transparent 50%),
     linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
   z-index: -2;
+  pointer-events: none;
 }
 
 /* Animated Stars */
@@ -61,6 +75,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
+  pointer-events: none;
 }
 
 .star {

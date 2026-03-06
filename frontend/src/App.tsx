@@ -35,11 +35,29 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="h-screen bg-background relative overflow-hidden">
+        <div className="min-h-screen bg-background relative">
+          {/* Galaxy Background */}
+          <div className="galaxy-bg" />
+          
+          {/* Stars */}
+          <div className="stars">
+            <div className="star" />
+            <div className="star" />
+            <div className="star" />
+            <div className="star" />
+            <div className="star" />
+            <div className="star" />
+            <div className="star" />
+            <div className="star" />
+          </div>
+          
+          {/* Shooting Stars */}
+          <div className="shooting-star" />
+          <div className="shooting-star" />
+          
           {/* Planets */}
           <div className="planet planet-1" />
           <div className="planet planet-2" />
-          <div className="planet planet-3" />
           
           <Routes>
             <Route path="/" element={<LandingPage />} />

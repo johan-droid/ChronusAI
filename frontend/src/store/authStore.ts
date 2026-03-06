@@ -16,12 +16,12 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      isLoading: true,
+      isLoading: false, // Changed from true to false
       setAuth: (user, accessToken, refreshToken) => set({ 
         user, 
         accessToken, 
@@ -50,6 +50,12 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated 
       }),
+      onRehydrateStorage: () => (state) => {
+        // Set loading to false after rehydration
+        if (state) {
+          state.isLoading = false;
+        }
+      },
     }
   )
 );
