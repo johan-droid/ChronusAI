@@ -58,42 +58,28 @@ async def send_message(
         # Add user message to context
         context.append({"role": "user", "content": payload.message})
         
-        # Handle clarification needed
-        if parsed_intent.clarification_needed:
-            context.append({"role": "assistant", "content": parsed_intent.clarification_needed})
-            await save_conversation_context(str(current_user.id), context)
-            
-            return ChatResponse(
-                response=parsed_intent.clarification_needed,
-                intent=parsed_intent.intent,
-                requires_clarification=True
-            )
-        
-        # Process based on intent with automatic scheduling
-        if parsed_intent.intent == "CREATE_MEETING":
+        # Handle different intents
+        if parsed_intent.intent == "schedule":
             response = await handle_create_meeting(
                 parsed_intent, current_user, calendar_provider, db, raw_user_input=payload.message
             )
-        elif parsed_intent.intent == "CANCEL_MEETING":
+        elif parsed_intent.intent == "cancel":
             response = await handle_cancel_meeting(
                 parsed_intent, current_user, calendar_provider, db
             )
-        elif parsed_intent.intent == "UPDATE_MEETING":
+        elif parsed_intent.intent == "reschedule":
             response = await handle_update_meeting(
                 parsed_intent, current_user, calendar_provider, db
             )
-        elif parsed_intent.intent == "QUERY_AVAILABILITY":
+        elif parsed_intent.intent == "check_availability":
             response = await handle_query_availability(
                 parsed_intent, current_user, calendar_provider
             )
         else:
-            # Enhanced AI response for unknown intents
-            ai_response = await llm_service.generate_helpful_response(
-                payload.message, current_user.full_name or "there"
-            )
+            # Use the response from the AI directly
             response = ChatResponse(
-                response=ai_response,
-                intent="GENERAL_CHAT"
+                response=parsed_intent.response,
+                intent=parsed_intent.intent
             )
         
         # Add bot response to context
@@ -139,71 +125,54 @@ def _day_window_local(target_date, user_tz: str) -> tuple[datetime, datetime]:
 async def handle_create_meeting(intent, user: User, calendar_provider, db: AsyncSession, raw_user_input: str):
     """Handle meeting creation intent."""
     try:
-        if intent.target_date is None:
+        # Check if we have enough information
+        if not intent.start_time:
             return ChatResponse(
-                response="What date should I schedule this meeting?",
-                intent="CREATE_MEETING",
+                response="I need more details about when to schedule this meeting. Could you specify a date and time?",
+                intent="schedule",
                 requires_clarification=True,
             )
 
-        target_date = intent.target_date
+        # Parse datetime from ISO string
+        try:
+            start_time = datetime.fromisoformat(intent.start_time.replace('Z', '+00:00'))
+            if intent.end_time:
+                end_time = datetime.fromisoformat(intent.end_time.replace('Z', '+00:00'))
+            else:
+                end_time = start_time + timedelta(minutes=30)  # Default 30 minutes
+        except Exception:
+            return ChatResponse(
+                response="I couldn't understand the time format. Please try again with a clearer date and time.",
+                intent="schedule",
+                requires_clarification=True,
+            )
         
-        # Build attendee list (never invent emails)
-        attendees_emails = list({str(user.email), *[str(a) for a in intent.attendees]})
+        # Build attendee list
+        attendees_emails = list({str(user.email), *intent.attendees})
         
-        # Fetch busy slots in the day window (08:00-20:00 local)
-        start_local, end_local = _day_window_local(str(intent.target_date), str(user.timezone))
-        start_utc = start_local.astimezone(timezone.utc)
-        end_utc = end_local.astimezone(timezone.utc)
-        
+        # Check for conflicts
         busy_slots = await calendar_provider.get_free_busy(
-            start_utc, end_utc, attendees_emails
+            start_time, end_time, attendees_emails
         )
 
-        duration_minutes = int(intent.duration_minutes or 30)
-
-        requested_slot = None
-        if intent.target_time is not None:
-            local_start = _combine_local_datetime(target_date, intent.target_time, str(user.timezone))
-            start = local_start.astimezone(timezone.utc)
-            requested_slot = (start, start + timedelta(minutes=duration_minutes))
-
-        available_slot = None
-        if requested_slot is not None:
-            # If requested slot overlaps any busy slot, fallback to search.
-            rs, re = requested_slot
-            conflict = any(not (re <= b.start or rs >= b.end) for b in busy_slots)
-            if not conflict:
-                from app.services.calendar_provider import TimeSlot
-
-                available_slot = TimeSlot(start=rs, end=re)
-
-        if available_slot is None:
-            available_slot = find_available_slot(
-                busy_slots=busy_slots,
-                duration_minutes=duration_minutes,
-                target_date=target_date,
-                time_preference=intent.time_preference,
-                user_timezone=str(user.timezone),
-            )
-
-        if available_slot is None:
-            next_day = get_next_business_day(target_date)
+        # Check if requested slot conflicts
+        conflict = any(not (end_time <= b.start or start_time >= b.end) for b in busy_slots)
+        if conflict:
             return ChatResponse(
-                response=f"No available slots found on {target_date.isoformat()}. Would you like to try {next_day.isoformat()}?",
-                intent="CREATE_MEETING",
+                response="There's a scheduling conflict at that time. Would you like me to suggest an alternative time?",
+                intent="schedule",
                 requires_clarification=True,
             )
 
         title = intent.title or "Meeting"
 
-        # Idempotency (prevent duplicates)
+        # Check for duplicates
         existing = await db.execute(
             select(Meeting).where(
                 and_(
                     Meeting.user_id == user.id,
                     Meeting.title == title,
-                    Meeting.start_time == available_slot.start,
+                    Meeting.start_time == start_time,
                 )
             )
         )
@@ -211,7 +180,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
         if existing_meeting is not None:
             return ChatResponse(
                 response="That meeting already exists. I won't create a duplicate.",
-                intent="CREATE_MEETING",
+                intent="schedule",
                 meeting={
                     "id": str(existing_meeting.id),
                     "title": existing_meeting.title,
@@ -224,12 +193,12 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
 
         meeting_create = MeetingCreate(
             title=title,
-            description="Meeting created via AI scheduler",
-            start_time=available_slot.start,
-            end_time=available_slot.end,
+            description=intent.description or "Meeting created via AI scheduler",
+            start_time=start_time,
+            end_time=end_time,
             attendees=[Attendee(email=e) for e in attendees_emails],
             provider=str(user.provider),
-            raw_user_input=None,
+            raw_user_input=raw_user_input,
         )
 
         external_event_id = await calendar_provider.create_event(meeting_create)
@@ -265,8 +234,8 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
         )
 
         return ChatResponse(
-            response=f"Meeting scheduled: {title} on {formatted_time}.",
-            intent="CREATE_MEETING",
+            response=f"✅ Meeting scheduled: {title} on {formatted_time}",
+            intent="schedule",
             meeting={
                 "id": str(meeting.id),
                 "title": meeting.title,
@@ -280,37 +249,27 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
     except Exception as e:
         logger.error("chat_create_meeting_failed", error=str(e))
         return ChatResponse(
-            response="I couldn't schedule that right now due to a calendar or network error. Please try again.",
-            intent="CREATE_MEETING"
+            response="I couldn't schedule that meeting right now. Please try again or check your calendar connection.",
+            intent="schedule"
         )
 
 
 async def handle_cancel_meeting(intent, user: User, calendar_provider, db: AsyncSession):
     """Handle meeting cancellation intent."""
     try:
-        meeting: Optional[Meeting] = None
-        if intent.meeting_id_to_modify:
-            try:
-                meeting_uuid = uuid.UUID(intent.meeting_id_to_modify)
-                result = await db.execute(
-                    select(Meeting).where(and_(Meeting.id == meeting_uuid, Meeting.user_id == user.id))
-                )
-                meeting = result.scalar_one_or_none()
-            except Exception:
-                meeting = None
-        if meeting is None:
-            result = await db.execute(
-                select(Meeting)
-                .where(and_(Meeting.user_id == user.id, Meeting.status == "scheduled"))
-                .order_by(Meeting.start_time.asc())
-                .limit(1)
-            )
-            meeting = result.scalar_one_or_none()
+        # Find the most recent scheduled meeting
+        result = await db.execute(
+            select(Meeting)
+            .where(and_(Meeting.user_id == user.id, Meeting.status == "scheduled"))
+            .order_by(Meeting.start_time.asc())
+            .limit(1)
+        )
+        meeting = result.scalar_one_or_none()
         
         if not meeting:
             return ChatResponse(
                 response="No scheduled meetings found to cancel.",
-                intent="CANCEL_MEETING"
+                intent="cancel"
             )
         
         # Delete from calendar
@@ -322,31 +281,31 @@ async def handle_cancel_meeting(intent, user: User, calendar_provider, db: Async
         await db.commit()
         
         return ChatResponse(
-            response=f"Meeting '{meeting.title}' has been canceled.",
-            intent="CANCEL_MEETING"
+            response=f"❌ Meeting '{meeting.title}' has been canceled.",
+            intent="cancel"
         )
         
     except Exception as e:
         logger.error("chat_cancel_meeting_failed", error=str(e))
         return ChatResponse(
-            response="I couldn't cancel that meeting right now due to a calendar or network error. Please try again.",
-            intent="CANCEL_MEETING"
+            response="I couldn't cancel that meeting right now. Please try again.",
+            intent="cancel"
         )
 
 
 async def handle_update_meeting(intent, user: User, calendar_provider, db: AsyncSession):
     """Handle meeting update intent."""
-    # Similar to cancel + create
     return ChatResponse(
-        response="Meeting updates are not yet implemented.",
-        intent="UPDATE_MEETING"
+        response="Meeting updates are not yet implemented. You can cancel and reschedule instead.",
+        intent="reschedule"
     )
 
 
 async def handle_query_availability(intent, user: User, calendar_provider):
     """Handle availability query intent."""
     try:
-        target_date = intent.target_date or datetime.now().date()
+        # Default to today if no specific time provided
+        target_date = datetime.now().date()
         start_of_day = datetime.combine(target_date, datetime.min.time())
         end_of_day = start_of_day + timedelta(days=1)
         
@@ -356,23 +315,28 @@ async def handle_query_availability(intent, user: User, calendar_provider):
         
         if not busy_slots:
             return ChatResponse(
-                response=f"You're free all day on {target_date}.",
-                intent="QUERY_AVAILABILITY"
+                response=f"📅 You're completely free today ({target_date})!",
+                intent="check_availability"
             )
         
         # Format busy times
         busy_times = []
         for slot in busy_slots:
-            local_start = slot.start.astimezone(ZoneInfo(str(user.timezone)))
-            busy_times.append(local_start.strftime("%I:%M %p"))
+            try:
+                local_start = slot.start.astimezone(ZoneInfo(str(user.timezone)))
+                local_end = slot.end.astimezone(ZoneInfo(str(user.timezone)))
+                busy_times.append(f"{local_start.strftime('%I:%M %p')} - {local_end.strftime('%I:%M %p')}")
+            except Exception:
+                busy_times.append(f"{slot.start.strftime('%I:%M %p')} - {slot.end.strftime('%I:%M %p')}")
         
         return ChatResponse(
-            response=f"On {target_date}, you're busy at: {', '.join(busy_times)}",
-            intent="QUERY_AVAILABILITY"
+            response=f"📅 On {target_date}, you're busy during: {', '.join(busy_times)}",
+            intent="check_availability"
         )
         
     except Exception as e:
+        logger.error("chat_availability_failed", error=str(e))
         return ChatResponse(
-            response=f"Failed to check availability: {str(e)}",
-            intent="QUERY_AVAILABILITY"
+            response="I couldn't check your availability right now. Please try again.",
+            intent="check_availability"
         )
