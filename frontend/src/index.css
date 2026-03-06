@@ -206,6 +206,33 @@ input:focus, textarea:focus, select:focus {
   animation: float 25s infinite ease-in-out reverse;
 }
 
+.bg-gradient-radial {
+  background: radial-gradient(circle, var(--tw-gradient-stops));
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Touch-friendly mobile styles */
+@media (max-width: 768px) {
+  .touch-action-manipulation {
+    touch-action: manipulation;
+  }
+  
+  button, .glass-card {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  
+  .mobile-safe-area {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
 @keyframes shooting-star {
   0% {
     transform: translateX(0) translateY(0) rotate(45deg);
@@ -216,10 +243,6 @@ input:focus, textarea:focus, select:focus {
     transform: translateX(-500px) translateY(500px) rotate(45deg);
     opacity: 0;
   }
-}
-
-.bg-gradient-radial {
-  background: radial-gradient(circle, var(--tw-gradient-stops));
 }
 
 @keyframes float {

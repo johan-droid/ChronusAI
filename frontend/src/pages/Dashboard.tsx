@@ -102,7 +102,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="h-screen bg-background flex relative overflow-hidden">
+    <div className="h-screen bg-background flex relative overflow-hidden mobile-safe-area">
       {/* Enhanced Galaxy Background */}
       <div className="stars" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -185,11 +185,7 @@ export default function Dashboard() {
         {/* Mobile Quick Actions */}
         {isMobile && (
           <div className="p-4 glass border-b border-white/5">
-            <QuickActions
-              onQuickSchedule={() => setShowMeetingForm(true)}
-              onCheckAvailability={() => console.log('Check availability')}
-              onScheduleWithAttendees={() => setShowMeetingForm(true)}
-            />
+            <QuickActions />
           </div>
         )}
 
@@ -197,11 +193,7 @@ export default function Dashboard() {
         {!isMobile && (
           <div className="p-4 md:p-6 glass border-b border-white/5">
             <h2 className="text-sm font-semibold mb-4 text-muted-foreground">Quick Actions</h2>
-            <QuickActions
-              onQuickSchedule={() => setShowMeetingForm(true)}
-              onCheckAvailability={() => console.log('Check availability')}
-              onScheduleWithAttendees={() => setShowMeetingForm(true)}
-            />
+            <QuickActions />
           </div>
         )}
 

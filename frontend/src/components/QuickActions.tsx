@@ -1,9 +1,10 @@
 import { Calendar, Clock, Users, Zap, Sparkles, Star } from 'lucide-react'
+import { useSendMessage } from '../hooks/useSendMessage'
 
 interface QuickActionsProps {
-  onQuickSchedule: () => void
-  onCheckAvailability: () => void
-  onScheduleWithAttendees: () => void
+  onQuickSchedule?: () => void
+  onCheckAvailability?: () => void
+  onScheduleWithAttendees?: () => void
 }
 
 export default function QuickActions({ 
@@ -11,12 +12,24 @@ export default function QuickActions({
   onCheckAvailability, 
   onScheduleWithAttendees 
 }: QuickActionsProps) {
+  const sendMessage = useSendMessage();
+
+  const handleQuickAction = (message: string, fallback?: () => void) => {
+    if (sendMessage.isPending) return;
+    
+    try {
+      sendMessage.mutate({ message });
+    } catch (error) {
+      fallback?.();
+    }
+  };
+
   const quickActions = [
     {
       title: 'Quick Schedule',
       description: 'Instant meeting creation',
       icon: <Calendar className="h-6 w-6" />,
-      action: onQuickSchedule,
+      action: () => handleQuickAction('Schedule a 30 minute meeting for tomorrow at 2pm', onQuickSchedule),
       gradient: 'from-primary via-accent to-primary',
       hoverGlow: 'hover:shadow-[0_0_40px_rgba(168,85,247,0.4)]',
       badge: <Zap className="h-4 w-4" />
@@ -25,7 +38,7 @@ export default function QuickActions({
       title: 'Check Availability',
       description: 'View your free slots',
       icon: <Clock className="h-6 w-6" />,
-      action: onCheckAvailability,
+      action: () => handleQuickAction('What is my availability for this week?', onCheckAvailability),
       gradient: 'from-secondary via-primary to-secondary',
       hoverGlow: 'hover:shadow-[0_0_40px_rgba(59,130,246,0.4)]',
       badge: <Sparkles className="h-4 w-4" />
@@ -34,7 +47,7 @@ export default function QuickActions({
       title: 'Team Meeting',
       description: 'Schedule with attendees',
       icon: <Users className="h-6 w-6" />,
-      action: onScheduleWithAttendees,
+      action: () => handleQuickAction('Schedule a team meeting for next Monday at 10am for 1 hour', onScheduleWithAttendees),
       gradient: 'from-accent via-secondary to-accent',
       hoverGlow: 'hover:shadow-[0_0_40px_rgba(236,72,153,0.4)]',
       badge: <Star className="h-4 w-4" />
@@ -47,7 +60,8 @@ export default function QuickActions({
         <button
           key={index}
           onClick={action.action}
-          className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 ${action.hoverGlow} glass border border-primary/20 hover:border-primary/50`}
+          disabled={sendMessage.isPending}
+          className={`group relative overflow-hidden rounded-xl p-6 transition-all duration-300 hover:scale-105 ${action.hoverGlow} glass border border-primary/20 hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
           style={{ animationDelay: `${index * 0.1}s` }}
         >
           {/* Animated gradient background */}
