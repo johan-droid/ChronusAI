@@ -25,7 +25,7 @@ class OAuth2Provider:
         elif provider == "outlook":
             self.auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
             self.token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
-            self.revoke_url: str | None = None  # Microsoft doesn't have a revoke endpoint
+            self.revoke_url = None  # Microsoft doesn't have a revoke endpoint
             self.logout_url = "https://login.microsoftonline.com/common/oauth2/v2.0/logout"
             self.client_id = settings.microsoft_client_id
             self.client_secret = settings.microsoft_client_secret
