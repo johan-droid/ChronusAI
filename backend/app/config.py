@@ -22,9 +22,10 @@ class Settings(BaseSettings):
     # Database
     database_url: str
 
-    # Google Gemini
-    gemini_api_key: str
-    gemini_model: str = "gemini-1.5-pro"
+    # DeepSeek AI
+    deepseek_api_key: str
+    deepseek_model: str = "deepseek-chat"
+    deepseek_base_url: str = "https://api.deepseek.com"
 
     # Google OAuth
     google_client_id: Optional[str] = None

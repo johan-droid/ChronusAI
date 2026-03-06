@@ -111,21 +111,19 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen bg-background flex relative overflow-hidden mobile-safe-area">
-      {/* Enhanced Galaxy Background */}
+      {/* Enhanced Deep Galaxy Background */}
       <div className="stars" />
+      <div className="space-particles" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Floating orbs */}
-        <div className="absolute w-32 h-32 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-full blur-xl animate-float" style={{ top: '10%', left: '5%', animationDelay: '0s' }} />
-        <div className="absolute w-24 h-24 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-full blur-xl animate-float" style={{ top: '70%', right: '10%', animationDelay: '3s' }} />
-        <div className="absolute w-20 h-20 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-xl animate-float" style={{ top: '40%', left: '80%', animationDelay: '6s' }} />
+        {/* Enhanced floating orbs with deeper colors */}
+        <div className="absolute w-40 h-40 bg-gradient-to-r from-orange-500/15 to-red-500/10 rounded-full blur-2xl animate-float" style={{ top: '8%', left: '3%', animationDelay: '0s' }} />
+        <div className="absolute w-32 h-32 bg-gradient-to-r from-purple-500/12 to-pink-500/8 rounded-full blur-2xl animate-float" style={{ top: '65%', right: '8%', animationDelay: '4s' }} />
+        <div className="absolute w-28 h-28 bg-gradient-to-r from-pink-500/10 to-orange-500/8 rounded-full blur-2xl animate-float" style={{ top: '35%', left: '75%', animationDelay: '8s' }} />
         
-        {/* Shooting stars */}
-        <div className="absolute w-1 h-1 bg-white rounded-full" style={{ top: '20%', left: '10%', animation: 'shooting-star 8s infinite', animationDelay: '2s' }} />
-        <div className="absolute w-1 h-1 bg-blue-300 rounded-full" style={{ top: '60%', left: '70%', animation: 'shooting-star 12s infinite', animationDelay: '5s' }} />
-        
-        {/* Nebula clouds */}
-        <div className="absolute w-96 h-96 bg-gradient-radial from-blue-500/5 via-purple-500/3 to-transparent rounded-full blur-3xl animate-pulse" style={{ top: '-10%', right: '-10%' }} />
-        <div className="absolute w-80 h-80 bg-gradient-radial from-green-500/5 via-blue-500/3 to-transparent rounded-full blur-3xl animate-pulse" style={{ bottom: '-10%', left: '-10%', animationDelay: '4s' }} />
+        {/* Enhanced shooting stars */}
+        <div className="absolute w-2 h-2 bg-gradient-to-r from-orange-400 to-transparent rounded-full" style={{ top: '15%', left: '5%', animation: 'shooting-star 12s infinite', animationDelay: '2s' }} />
+        <div className="absolute w-2 h-2 bg-gradient-to-r from-purple-400 to-transparent rounded-full" style={{ top: '55%', left: '65%', animation: 'shooting-star 16s infinite', animationDelay: '6s' }} />
+        <div className="absolute w-2 h-2 bg-gradient-to-r from-pink-400 to-transparent rounded-full" style={{ top: '25%', left: '85%', animation: 'shooting-star 14s infinite', animationDelay: '10s' }} />
       </div>
 
       {/* Health Status */}

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any, List
 
-from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from openai import AsyncOpenAI
 
 from app.config import settings
 from app.schemas.chat import ParsedIntent
@@ -12,17 +12,9 @@ from app.schemas.chat import ParsedIntent
 
 class LLMService:
     def __init__(self) -> None:
-        self._llm = ChatGoogleGenerativeAI(
-            model=settings.gemini_model,
-            google_api_key=settings.gemini_api_key,
-            temperature=0.1,
-        ).with_structured_output(ParsedIntent)
-        
-        # General chat LLM for non-scheduling queries
-        self._chat_llm = ChatGoogleGenerativeAI(
-            model=settings.gemini_model,
-            google_api_key=settings.gemini_api_key,
-            temperature=0.7,
+        self._client = AsyncOpenAI(
+            api_key=settings.deepseek_api_key,
+            base_url=settings.deepseek_base_url,
         )
 
     @staticmethod
@@ -44,7 +36,9 @@ class LLMService:
             "• Auto-schedule to Outlook/Google Calendar\n"
             "• Smart conflict resolution\n"
             "• Timezone-aware scheduling\n"
-            "• Meeting type recognition\n"
+            "• Meeting type recognition\n\n"
+            "RESPOND WITH VALID JSON ONLY in this exact format:\n"
+            '{"intent": "schedule|reschedule|cancel|check_availability|unknown", "title": "string", "description": "string", "start_time": "ISO_datetime", "end_time": "ISO_datetime", "attendees": ["email1", "email2"], "response": "user_friendly_message"}'
         )
 
     @staticmethod
@@ -56,37 +50,64 @@ class LLMService:
             "guide them to use specific commands like 'schedule a meeting' or 'check my availability'."
         )
 
-    @staticmethod
-    def _to_messages(context: List[dict[str, Any]]) -> List[BaseMessage]:
-        msgs: List[BaseMessage] = []
-        for item in context[-8:]:
-            role = item.get("role")
-            content = item.get("content", "")
-            if role == "assistant":
-                msgs.append(AIMessage(content=content))
-            elif role == "user":
-                msgs.append(HumanMessage(content=content))
-        return msgs
-
     async def parse_intent(self, message: str, user_timezone: str, context: List[dict[str, Any]]) -> ParsedIntent:
-        """Parse user message into structured meeting intent using Gemini AI."""
-        chain_messages: List[BaseMessage] = [SystemMessage(content=self._system_prompt(user_timezone))]
-        chain_messages.extend(self._to_messages(context))
-        chain_messages.append(HumanMessage(content=message))
-        
-        result = await self._llm.ainvoke(chain_messages)
-        return ParsedIntent(**result) if isinstance(result, dict) else result
+        """Parse user message into structured meeting intent using DeepSeek AI."""
+        try:
+            messages = [
+                {"role": "system", "content": self._system_prompt(user_timezone)},
+            ]
+            
+            # Add context (last 4 messages)
+            for item in context[-4:]:
+                role = item.get("role")
+                content = item.get("content", "")
+                if role in ["user", "assistant"]:
+                    messages.append({"role": role, "content": content})
+            
+            messages.append({"role": "user", "content": message})
+            
+            response = await self._client.chat.completions.create(
+                model=settings.deepseek_model,
+                messages=messages,
+                temperature=0.1,
+                max_tokens=1000,
+            )
+            
+            content = response.choices[0].message.content
+            if not content:
+                raise ValueError("Empty response from DeepSeek")
+            
+            # Parse JSON response
+            try:
+                parsed_data = json.loads(content)
+                return ParsedIntent(**parsed_data)
+            except json.JSONDecodeError:
+                # Fallback if not valid JSON
+                return ParsedIntent(
+                    intent="unknown",
+                    response="I understand you want to work with your calendar. Could you please be more specific about what you'd like to do?"
+                )
+                
+        except Exception as e:
+            return ParsedIntent(
+                intent="unknown",
+                response="I'm having trouble processing your request right now. Please try rephrasing your message."
+            )
     
     async def generate_helpful_response(self, message: str, user_name: str) -> str:
         """Generate helpful AI response for general queries."""
         try:
-            chain_messages = [
-                SystemMessage(content=self._chat_system_prompt(user_name)),
-                HumanMessage(content=message)
-            ]
+            response = await self._client.chat.completions.create(
+                model=settings.deepseek_model,
+                messages=[
+                    {"role": "system", "content": self._chat_system_prompt(user_name)},
+                    {"role": "user", "content": message}
+                ],
+                temperature=0.7,
+                max_tokens=500,
+            )
             
-            result = await self._chat_llm.ainvoke(chain_messages)
-            return result.content if hasattr(result, 'content') else str(result)
+            return response.choices[0].message.content or "I'm here to help with your calendar and scheduling needs!"
         except Exception:
             return "I'm here to help with your calendar and scheduling needs. Try asking me to 'schedule a meeting' or 'check my availability'!"
 
