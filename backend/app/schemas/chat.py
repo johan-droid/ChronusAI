@@ -1,24 +1,22 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Literal
-from datetime import date, time
+from datetime import datetime
 
 
 class ParsedIntent(BaseModel):
     intent: Literal[
-        "CREATE_MEETING", 
-        "UPDATE_MEETING", 
-        "CANCEL_MEETING", 
-        "QUERY_AVAILABILITY", 
-        "UNKNOWN"
+        "schedule", 
+        "reschedule", 
+        "cancel", 
+        "check_availability", 
+        "unknown"
     ]
     title: Optional[str] = None
-    attendees: List[EmailStr] = []
-    target_date: Optional[date] = None
-    target_time: Optional[time] = None
-    time_preference: Optional[Literal["morning", "afternoon", "evening"]] = None
-    duration_minutes: Optional[int] = Field(default=30, ge=15, le=480)
-    meeting_id_to_modify: Optional[str] = None
-    clarification_needed: Optional[str] = None
+    description: Optional[str] = None
+    start_time: Optional[str] = None  # ISO datetime string
+    end_time: Optional[str] = None    # ISO datetime string
+    attendees: List[str] = []         # Email addresses as strings
+    response: str                     # User-friendly response message
 
 
 class ChatRequest(BaseModel):
