@@ -11,11 +11,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.oauth import get_oauth_provider
-from app.core.security import create_access_token, token_encryptor
+from app.core.security import create_access_token, token_encryptor, create_refresh_token, decode_refresh_token, revoke_session, revoke_all_user_sessions
 
 from app.db.session import get_db
 from app.models.oauth_credential import OAuthCredential
 from app.models.user import User
+from app.core.security import hash_user_id, mask_email
+import structlog
+
+logger = structlog.get_logger()
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -137,11 +141,12 @@ async def oauth_callback(
         
         await db.commit()
         
-        # Create JWT token
-        jwt_token = create_access_token(str(user.id))
+        # Create JWT tokens
+        access_token = create_access_token(str(user.id))
+        refresh_token = create_refresh_token(str(user.id))
         
-        # Redirect to frontend with token
-        redirect_url = f"{settings.frontend_url}/login?token={jwt_token}"
+        # Redirect to frontend with tokens
+        redirect_url = f"{settings.frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
         return RedirectResponse(url=redirect_url)
         
     except HTTPException:
@@ -158,5 +163,78 @@ async def refresh_token(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Refresh an expired access token."""
-    return {"message": "Use automatic refresh middleware"}
+    """Refresh access token using refresh token."""
+    try:
+        auth_header = request.headers.get("authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing refresh token")
+        
+        refresh_token = auth_header.split(" ")[1]
+        payload = decode_refresh_token(refresh_token)
+        user_id = payload.get("sub")
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        
+        # Verify user still exists
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
+        
+        # Create new access token
+        new_access_token = create_access_token(str(user.id))
+        
+        return {
+            "access_token": new_access_token,
+            "token_type": "bearer",
+            "expires_in": settings.jwt_expire_minutes * 60
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+
+@router.post("/logout")
+async def logout(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """Logout user and revoke refresh token."""
+    try:
+        auth_header = request.headers.get("x-refresh-token")
+        if auth_header:
+            revoke_session(auth_header)
+        
+        logger.info(
+            "user_logged_out",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            email=mask_email(current_user.email)
+        )
+        
+        return {"message": "Logged out successfully"}
+        
+    except Exception as e:
+        logger.error("logout_failed", error=str(e))
+        return {"message": "Logged out"}
+
+
+@router.post("/logout-all")
+async def logout_all(
+    current_user: User = Depends(get_current_user),
+):
+    """Logout from all devices."""
+    try:
+        revoked_count = revoke_all_user_sessions(str(current_user.id))
+        
+        logger.info(
+            "user_logged_out_all_devices",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            sessions_revoked=revoked_count
+        )
+        
+        return {"message": f"Logged out from {revoked_count} devices"}
+        
+    except Exception as e:
+        logger.error("logout_all_failed", error=str(e))
+        return {"message": "Logged out from all devices"}

@@ -11,6 +11,7 @@ import Input from '../components/Input';
 import HealthStatus from '../components/HealthStatus';
 import TimeGreeting from '../components/TimeGreeting';
 import CacheCleaner from '../components/CacheCleaner';
+import LogoutMenu from '../components/LogoutMenu';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
@@ -26,6 +27,7 @@ export default function Dashboard() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showLogoutMenu, setShowLogoutMenu] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -42,29 +44,35 @@ export default function Dashboard() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
+      const { accessToken, isAuthenticated } = useAuthStore.getState();
+      
+      if (!accessToken || !isAuthenticated) {
         navigate('/login');
         return;
       }
 
       try {
         const userData = await apiClient.getCurrentUser();
-        useAuthStore.getState().setAuth(userData, token);
+        useAuthStore.getState().setAuth(userData, accessToken, useAuthStore.getState().refreshToken || '');
       } catch (error) {
         console.error('Auth check failed:', error);
-        logout();
-        navigate('/login');
+        handleLogout();
       }
     };
 
     checkAuth();
-  }, [navigate, logout]);
+  }, [navigate]);
 
-  const handleLogout = () => {
-    clearAuthCache();
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await apiClient.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      clearAuthCache();
+      logout();
+      navigate('/login');
+    }
   };
 
   const filteredMeetings = meetings?.filter(meeting => {
@@ -172,7 +180,7 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">New</span>
               </Button>
               <button
-                onClick={handleLogout}
+                onClick={() => setShowLogoutMenu(true)}
                 className="flex items-center space-x-2 px-2 md:px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-white/5 rounded-md transition-colors"
               >
                 <LogOut className="h-4 w-4" />
@@ -293,6 +301,12 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Logout Menu */}
+      <LogoutMenu 
+        isOpen={showLogoutMenu} 
+        onClose={() => setShowLogoutMenu(false)} 
+      />
 
       {/* Meeting Form */}
       <MeetingForm

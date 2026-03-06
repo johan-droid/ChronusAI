@@ -15,12 +15,31 @@ export default function Login() {
     setTimeout(() => setIsAnimated(true), 100);
     
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
     
-    if (token) {
-      localStorage.setItem('auth_token', token);
+    if (accessToken && refreshToken) {
+      // Store tokens securely
+      useAuthStore.getState().setAuth(
+        { id: '', email: '', full_name: '', timezone: 'UTC', provider: 'google' } as any,
+        accessToken,
+        refreshToken
+      );
+      
+      // Clean URL
       window.history.replaceState({}, document.title, '/login');
-      setTimeout(() => navigate('/dashboard'), 100);
+      
+      // Fetch user data and redirect
+      setTimeout(async () => {
+        try {
+          const userData = await apiClient.getCurrentUser();
+          useAuthStore.getState().setAuth(userData, accessToken, refreshToken);
+          navigate('/dashboard');
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+          setError('Authentication failed. Please try again.');
+        }
+      }, 100);
     }
   }, [navigate]);
 

@@ -2,6 +2,7 @@ import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse } from '../types';
 import { cacheManager, clearAuthCache } from './cache';
+import { useAuthStore } from '../store/authStore';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
@@ -22,23 +23,51 @@ class ApiClient {
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem('auth_token');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const { accessToken } = useAuthStore.getState();
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
         }
         return config;
       },
       (error) => Promise.reject(error)
     );
 
-    // Response interceptor to handle errors
+    // Response interceptor for token refresh
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
-      (error) => {
+      async (error) => {
+        const originalRequest = error.config;
+        
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          try {
+            const { refreshToken, updateAccessToken } = useAuthStore.getState();
+            if (refreshToken) {
+              const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
+                headers: { Authorization: `Bearer ${refreshToken}` }
+              });
+              
+              const { access_token } = response.data;
+              updateAccessToken(access_token);
+              
+              // Retry original request
+              originalRequest.headers.Authorization = `Bearer ${access_token}`;
+              return this.client(originalRequest);
+            }
+          } catch (refreshError) {
+            // Refresh failed, logout user
+            clearAuthCache();
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          }
+        }
+        
         if (error.response?.status === 401) {
           clearAuthCache();
           window.location.href = '/login';
         }
+        
         return Promise.reject(error);
       }
     );
@@ -98,6 +127,20 @@ class ApiClient {
   async deleteMeeting(meetingId: string): Promise<{ message: string }> {
     const response = await this.client.delete(`/meetings/${meetingId}`);
     cacheManager.invalidatePattern('meetings');
+    return response.data;
+  }
+
+  // Auth methods
+  async logout(): Promise<{ message: string }> {
+    const { refreshToken } = useAuthStore.getState();
+    const response = await this.client.post('/auth/logout', {}, {
+      headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {}
+    });
+    return response.data;
+  }
+
+  async logoutAll(): Promise<{ message: string }> {
+    const response = await this.client.post('/auth/logout-all');
     return response.data;
   }
 }
