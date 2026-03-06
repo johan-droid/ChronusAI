@@ -5,10 +5,10 @@ import { Toaster } from 'sonner';
 import { useAuthStore } from './store/authStore';
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
 import StatsOverview from './pages/StatsOverview';
-import Availability from './pages/Availability';
-import MeetingHistory from './pages/MeetingHistory';
+import Chat from './pages/Chat';
+import Availability from './pages/AvailabilityNew';
+import History from './pages/HistoryNew';
 import './index.css';
 
 const queryClient = new QueryClient({
@@ -75,7 +75,7 @@ function App() {
               path="/chat" 
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Chat />
                 </ProtectedRoute>
               } 
             />
@@ -91,7 +91,7 @@ function App() {
               path="/history" 
               element={
                 <ProtectedRoute>
-                  <MeetingHistory />
+                  <History />
                 </ProtectedRoute>
               } 
             />
