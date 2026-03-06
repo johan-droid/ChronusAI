@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Mail, Loader2, Shield } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
+import { useAuthStore } from '../store/authStore';
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
