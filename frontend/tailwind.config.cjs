@@ -34,8 +34,9 @@ module.exports = {
         ring: "hsl(var(--ring))",
       },
       fontFamily: {
+        heading: ["Cal Sans", "Matter", "Satoshi", "sans-serif"],
+        sans: ["Satoshi", "Matter", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
-        sans: ["Inter", "sans-serif"],
       },
     },
   },
