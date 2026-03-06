@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Sparkles, Zap, Star, ArrowRight, Check, Globe, Shield, Rocket, Users, Clock, TrendingUp } from 'lucide-react';
 import Button from '../components/Button';
+import AnimatedLogo from '../components/AnimatedLogo';
 
 export default function Landing() {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -87,10 +88,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent blur-xl opacity-50 animate-pulse" />
-                <Calendar className="h-8 w-8 text-primary relative z-10" />
-              </div>
+              <AnimatedLogo size={32} autoPlay={true} />
               <span className="text-2xl font-bold gradient-text font-['Orbitron']">ChronosAI</span>
             </div>
             <Button variant="cosmic" size="sm" onClick={() => navigate('/login')}>
@@ -244,7 +242,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Calendar className="h-6 w-6 text-primary" />
+              <AnimatedLogo size={24} autoPlay={true} />
               <span className="text-lg font-bold gradient-text font-['Orbitron']">ChronosAI</span>
             </div>
             <p className="text-sm text-muted-foreground font-['Space_Mono']">

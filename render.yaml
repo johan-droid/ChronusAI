@@ -19,18 +19,18 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: chronosai-db
-          property: connectionString
+        value: sqlite+aiosqlite:///./scheduler.db
       - key: REDIS_URL
         fromService:
           name: chronosai-redis
           type: redis
           property: connectionString
-      - key: GEMINI_API_KEY
+      - key: OPENAI_API_KEY
         sync: false
-      - key: GEMINI_MODEL
-        value: gemini-1.5-pro
+      - key: OPENAI_MODEL
+        value: deepseek-chat
+      - key: OPENAI_BASE_URL
+        value: https://api.deepseek.com
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -45,25 +45,6 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
-
-  # PostgreSQL Database
-  - type: pserv
-    name: chronosai-db
-    env: docker
-    plan: starter
-    image:
-      url: postgres:15-alpine
-    disk:
-      name: chronosai-data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 10
-    envVars:
-      - key: POSTGRES_DB
-        value: scheduler_db
-      - key: POSTGRES_USER
-        value: scheduler_user
-      - key: POSTGRES_PASSWORD
-        generateValue: true
 
   # Redis Cache
   - type: redis

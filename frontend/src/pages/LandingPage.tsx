@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ColorBends from '../components/ColorBends';
+import AnimatedLogo from '../components/AnimatedLogo';
 import {
   ArrowRight,
   Zap,
@@ -201,7 +202,8 @@ export default function LandingPage() {
         <nav className={`max-w-5xl mx-auto transition-all duration-500 rounded-full border border-white/5 shadow-2xl ${isScrolled ? 'bg-black/60 backdrop-blur-xl border-white/10 px-6 py-2' : 'bg-transparent px-2 py-2 border-transparent'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <img src="/logo.png" alt="ChronusAI Logo" className={`transition-all duration-500 ${isScrolled ? 'h-8' : 'h-10'} w-auto`} />
+              <AnimatedLogo size={isScrolled ? 32 : 40} autoPlay={true} />
+              <span className="text-xl font-bold gradient-text">ChronusAI</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-muted-foreground">
@@ -474,7 +476,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
             <div className="col-span-2 space-y-8">
               <div className="flex items-center space-x-3">
-                <img src="/logo.png" alt="ChronusAI Logo" className="h-10 w-auto" />
+                <AnimatedLogo size={40} autoPlay={true} />
+                <span className="text-xl font-bold gradient-text">ChronusAI</span>
               </div>
               <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
                 The next generation of AI-powered scheduling. Plan, sync, and meet without the friction.

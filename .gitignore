@@ -342,6 +342,7 @@ alembic/versions/*.py
 !alembic/versions/
 
 # Local development
+.env
 .env.local
 .env.*.local
 *.local

@@ -735,3 +735,34 @@ body {
     transform: rotate(360deg) translateX(60px) rotate(-360deg);
   }
 }
+
+/* Animated Logo Styles */
+@keyframes traceLine {
+  from {
+    stroke-dashoffset: 400;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.05);
+  }
+}
+
+.logo-trace {
+  animation: traceLine 2s ease-in-out forwards;
+}
+
+.logo-glow {
+  animation: glowPulse 2s ease-in-out infinite;
+}
