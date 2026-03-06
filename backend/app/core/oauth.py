@@ -13,6 +13,8 @@ class OAuth2Provider:
         if provider == "google":
             self.auth_url = "https://accounts.google.com/o/oauth2/v2/auth"
             self.token_url = "https://oauth2.googleapis.com/token"
+            self.revoke_url = "https://oauth2.googleapis.com/revoke"
+            self.logout_url = "https://accounts.google.com/Logout"
             self.client_id = settings.google_client_id
             self.client_secret = settings.google_client_secret
             self.redirect_uri = settings.google_redirect_uri
@@ -23,6 +25,8 @@ class OAuth2Provider:
         elif provider == "outlook":
             self.auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
             self.token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+            self.revoke_url = None  # Microsoft doesn't have a revoke endpoint
+            self.logout_url = "https://login.microsoftonline.com/common/oauth2/v2.0/logout"
             self.client_id = settings.microsoft_client_id
             self.client_secret = settings.microsoft_client_secret
             self.redirect_uri = settings.microsoft_redirect_uri
@@ -74,6 +78,35 @@ class OAuth2Provider:
         
         return f"{self.auth_url}?{urlencode(params)}"
     
+    def get_logout_url(self, post_logout_redirect_uri: str | None = None) -> str:
+        """Get the logout URL for OAuth provider."""
+        if self.provider == "outlook":
+            params = {}
+            if post_logout_redirect_uri:
+                params["post_logout_redirect_uri"] = post_logout_redirect_uri
+            return f"{self.logout_url}?{urlencode(params)}" if params else self.logout_url
+        elif self.provider == "google":
+            return self.logout_url
+        return ""
+    
+    async def revoke_token(self, token: str) -> bool:
+        """Revoke an access or refresh token."""
+        if not self.revoke_url:
+            return False
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                if self.provider == "google":
+                    response = await client.post(
+                        self.revoke_url,
+                        data={"token": token}
+                    )
+                    return response.status_code == 200
+        except Exception:
+            return False
+        
+        return False
+    
     async def exchange_code_for_tokens(self, code: str, code_verifier: str | None = None) -> Dict[str, Any]:
         """Exchange authorization code for access and refresh tokens."""
         data = {
@@ -117,5 +150,3 @@ class OAuth2Provider:
 def get_oauth_provider(provider: str) -> OAuth2Provider:
     """Get OAuth provider instance."""
     return OAuth2Provider(provider)
-
-

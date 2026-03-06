@@ -131,7 +131,7 @@ class ApiClient {
   }
 
   // Auth methods
-  async logout(): Promise<{ message: string }> {
+  async logout(): Promise<{ message: string; logout_url?: string; provider?: string }> {
     const { refreshToken } = useAuthStore.getState();
     const response = await this.client.post('/auth/logout', {}, {
       headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {}
@@ -139,7 +139,7 @@ class ApiClient {
     return response.data;
   }
 
-  async logoutAll(): Promise<{ message: string }> {
+  async logoutAll(): Promise<{ message: string; logout_url?: string; provider?: string }> {
     const response = await this.client.post('/auth/logout-all');
     // Broadcast logout to all tabs/windows
     localStorage.setItem('logout-all', Date.now().toString());

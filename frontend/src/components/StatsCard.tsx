@@ -1,4 +1,3 @@
-import { TrendingUp } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface StatsCardProps {
@@ -12,13 +11,13 @@ interface StatsCardProps {
   }
 }
 
-export default function StatsCard({ title, value, description, icon, trend }: StatsCardProps) {
+export default function StatsCard({ title, value, description, icon }: StatsCardProps) {
   const [displayValue, setDisplayValue] = useState(0)
   const targetValue = typeof value === 'number' ? value : parseInt(value) || 0
 
   useEffect(() => {
     if (typeof value === 'number') {
-      const duration = 1000 // 1 second
+      const duration = 1000
       const steps = 30
       const increment = targetValue / steps
       let current = 0
@@ -38,52 +37,28 @@ export default function StatsCard({ title, value, description, icon, trend }: St
   }, [targetValue])
 
   return (
-    <div className="group relative overflow-hidden rounded-xl glass border border-primary/20 hover:border-primary/50 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_25px_rgba(168,85,247,0.2)]">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+    <div className="group relative overflow-hidden rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-xl p-6 hover:border-blue-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       
-      {/* Glow effect on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/10 blur-xl opacity-0 group-hover:opacity-50 transition-opacity duration-300" />
-
-      <div className="relative z-10 p-4">
-        {/* Header */}
-        <div className="flex items-center justify-between space-y-0 pb-2">
-          <h3 className="text-sm font-medium font-['Orbitron'] text-muted-foreground group-hover:text-foreground transition-colors">
-            {title}
-          </h3>
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 group-hover:from-primary/20 group-hover:to-accent/20 transition-all">
-            <div className="h-4 w-4 text-primary group-hover:scale-110 transition-transform">
+      <div className="relative z-10">
+        <div className="flex items-start justify-between mb-4">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
+            <div className="text-blue-400">
               {icon}
             </div>
           </div>
         </div>
 
-        {/* Value */}
         <div className="space-y-1">
-          <div className="text-3xl font-bold font-['Orbitron'] bg-gradient-to-r from-primary via-accent to-secondary bg-clip-text text-transparent group-hover:scale-105 transition-transform origin-left">
+          <p className="text-sm font-medium text-slate-400">{title}</p>
+          <p className="text-3xl font-bold text-white">
             {typeof value === 'number' ? displayValue : value}
-          </div>
-          
+          </p>
           {description && (
-            <p className="text-xs text-muted-foreground font-['Space_Mono']">
-              {description}
-            </p>
-          )}
-          
-          {trend && (
-            <div className="flex items-center space-x-1 text-xs pt-2">
-              <TrendingUp className={`h-3 w-3 ${trend.isPositive ? 'text-green-400' : 'text-red-400 rotate-180'}`} />
-              <span className={`font-['Space_Mono'] ${trend.isPositive ? 'text-green-400' : 'text-red-400'}`}>
-                {trend.isPositive ? '+' : ''}{trend.value}%
-              </span>
-              <span className="text-muted-foreground">from last week</span>
-            </div>
+            <p className="text-xs text-slate-500">{description}</p>
           )}
         </div>
       </div>
-
-      {/* Bottom indicator bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-secondary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
     </div>
   )
 }

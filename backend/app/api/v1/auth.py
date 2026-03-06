@@ -198,6 +198,7 @@ async def refresh_token(
 async def logout(
     request: Request,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Logout user and revoke refresh token."""
     try:
@@ -205,13 +206,36 @@ async def logout(
         if auth_header:
             revoke_session(auth_header)
         
+        # Get OAuth credentials to revoke tokens
+        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
+        oauth_cred = result.scalar_one_or_none()
+        
+        logout_url = None
+        if oauth_cred and current_user.provider:
+            try:
+                oauth_provider = get_oauth_provider(current_user.provider)
+                
+                # Revoke tokens if provider supports it
+                if oauth_cred.access_token:
+                    decrypted_token = token_encryptor.decrypt(oauth_cred.access_token)
+                    await oauth_provider.revoke_token(decrypted_token)
+                
+                # Get logout URL for frontend redirect
+                logout_url = oauth_provider.get_logout_url(settings.frontend_url)
+            except Exception as e:
+                logger.warning("oauth_revoke_failed", error=str(e))
+        
         logger.info(
             "user_logged_out",
             user_id_hash=hash_user_id(str(current_user.id)),
             email=mask_email(str(current_user.email))
         )
         
-        return {"message": "Logged out successfully"}
+        return {
+            "message": "Logged out successfully",
+            "logout_url": logout_url,
+            "provider": current_user.provider
+        }
         
     except Exception as e:
         logger.error("logout_failed", error=str(e))
@@ -221,10 +245,35 @@ async def logout(
 @router.post("/logout-all")
 async def logout_all(
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """Logout from all devices."""
     try:
         revoked_count = revoke_all_user_sessions(str(current_user.id))
+        
+        # Get OAuth credentials to revoke tokens
+        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
+        oauth_cred = result.scalar_one_or_none()
+        
+        logout_url = None
+        if oauth_cred and current_user.provider:
+            try:
+                oauth_provider = get_oauth_provider(current_user.provider)
+                
+                # Revoke all tokens
+                if oauth_cred.access_token:
+                    decrypted_token = token_encryptor.decrypt(oauth_cred.access_token)
+                    await oauth_provider.revoke_token(decrypted_token)
+                
+                if oauth_cred.refresh_token:
+                    decrypted_refresh = token_encryptor.decrypt(oauth_cred.refresh_token)
+                    if decrypted_refresh:
+                        await oauth_provider.revoke_token(decrypted_refresh)
+                
+                # Get logout URL for frontend redirect
+                logout_url = oauth_provider.get_logout_url(settings.frontend_url)
+            except Exception as e:
+                logger.warning("oauth_revoke_all_failed", error=str(e))
         
         logger.info(
             "user_logged_out_all_devices",
@@ -232,7 +281,11 @@ async def logout_all(
             sessions_revoked=revoked_count
         )
         
-        return {"message": f"Logged out from {revoked_count} devices"}
+        return {
+            "message": f"Logged out from {revoked_count} devices",
+            "logout_url": logout_url,
+            "provider": current_user.provider
+        }
         
     except Exception as e:
         logger.error("logout_all_failed", error=str(e))
