@@ -5,12 +5,24 @@ import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
 
+interface TimeSlot {
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+  timezone: string;
+}
+
 export default function Availability() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [availableCount, setAvailableCount] = useState(0);
+  const [busyCount, setBusyCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -21,7 +33,7 @@ export default function Availability() {
       }
       try {
         await apiClient.getCurrentUser();
-        setLoading(false);
+        await fetchAvailability();
       } catch (error) {
         navigate('/login');
       }
@@ -29,22 +41,31 @@ export default function Availability() {
     checkAuth();
   }, [navigate]);
 
-  const generateTimeSlots = () => {
-    const slots = [];
-    for (let hour = 9; hour < 18; hour++) {
-      slots.push({
-        time: `${hour.toString().padStart(2, '0')}:00`,
-        available: Math.random() > 0.3
-      });
-      slots.push({
-        time: `${hour.toString().padStart(2, '0')}:30`,
-        available: Math.random() > 0.3
-      });
+  const fetchAvailability = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiClient.getAvailability(selectedDate, user?.timezone);
+      setTimeSlots(data.slots);
+      setAvailableCount(data.available_count);
+      setBusyCount(data.busy_count);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to load availability');
+    } finally {
+      setLoading(false);
     }
-    return slots;
   };
 
-  const timeSlots = generateTimeSlots();
+  useEffect(() => {
+    if (user) {
+      fetchAvailability();
+    }
+  }, [selectedDate, user]);
+
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
@@ -126,8 +147,24 @@ export default function Availability() {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8 animate-fade-in">
           <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Check Availability</h1>
-          <p className="text-slate-400 text-sm sm:text-base">View your free time slots for {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          <p className="text-slate-400 text-sm sm:text-base">View your free time slots for {new Date(selectedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+          
+          {/* Date Picker */}
+          <div className="mt-4">
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-4 py-2 bg-slate-800/50 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+            {error}
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center h-64">
@@ -146,15 +183,15 @@ export default function Availability() {
                   <button
                     key={idx}
                     className={`px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      slot.available
+                      slot.is_available
                         ? 'bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20'
                         : 'bg-red-500/10 text-red-400 border border-red-500/30 cursor-not-allowed opacity-50'
                     }`}
-                    disabled={!slot.available}
+                    disabled={!slot.is_available}
                   >
                     <div className="flex items-center justify-center gap-2">
-                      {slot.available ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                      {slot.time}
+                      {slot.is_available ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                      {formatTime(slot.start_time)}
                     </div>
                   </button>
                 ))}
@@ -191,11 +228,11 @@ export default function Availability() {
                 <h2 className="text-lg font-semibold text-white mb-4">Quick Stats</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center p-4 bg-slate-800/30 rounded-xl border border-white/5">
-                    <p className="text-2xl font-bold text-green-400">{timeSlots.filter(s => s.available).length}</p>
+                    <p className="text-2xl font-bold text-green-400">{availableCount}</p>
                     <p className="text-xs text-slate-400 mt-1">Available Slots</p>
                   </div>
                   <div className="text-center p-4 bg-slate-800/30 rounded-xl border border-white/5">
-                    <p className="text-2xl font-bold text-red-400">{timeSlots.filter(s => !s.available).length}</p>
+                    <p className="text-2xl font-bold text-red-400">{busyCount}</p>
                     <p className="text-xs text-slate-400 mt-1">Busy Slots</p>
                   </div>
                 </div>

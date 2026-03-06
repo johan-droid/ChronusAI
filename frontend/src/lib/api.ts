@@ -145,6 +145,25 @@ class ApiClient {
     localStorage.setItem('logout-all', Date.now().toString());
     return response.data;
   }
+
+  // Availability endpoints
+  async getAvailability(date: string, timezone?: string): Promise<{
+    date: string;
+    timezone: string;
+    slots: Array<{
+      start_time: string;
+      end_time: string;
+      is_available: boolean;
+      timezone: string;
+    }>;
+    available_count: number;
+    busy_count: number;
+  }> {
+    const params = new URLSearchParams({ date });
+    if (timezone) params.append('timezone', timezone);
+    const response = await this.client.get(`/availability?${params.toString()}`);
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();

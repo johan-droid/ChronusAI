@@ -338,3 +338,10 @@ alembic/versions/*.py
 .env.local
 .env.*.local
 *.local
+
+# Documentation
+CICD_TYPE_FIXES.md
+INTEGRATION_COMPLETE.md
+DEPLOYMENT_READY.md
+verify-deployment.sh
+verify-deployment.bat
