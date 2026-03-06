@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Loader2, Shield, Sparkles, Zap, Lock, Heart, Star } from 'lucide-react';
+import { Calendar, Loader2, Shield, Sparkles, Zap, Lock } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';
-import ColorBends from '../components/ColorBends';
-import AnimatedLogo from '../components/AnimatedLogo';
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);

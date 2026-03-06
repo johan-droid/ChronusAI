@@ -96,7 +96,7 @@ export const useDebounce = <T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): T => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<number>();
 
   return useCallback(
     (...args: Parameters<T>) => {
@@ -114,8 +114,8 @@ export const useThrottle = <T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): T => {
-  const lastRun = useRef(Date.now());
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const lastRun = useRef<number>(Date.now());
+  const timeoutRef = useRef<number>();
 
   return useCallback(
     (...args: Parameters<T>) => {
