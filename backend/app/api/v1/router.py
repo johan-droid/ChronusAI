@@ -14,7 +14,7 @@ api_router = APIRouter(
     }
 )
 
-api_router.include_router(auth.router)
+api_router.include_router(auth.router, prefix="/auth")
 api_router.include_router(availability.router)
 api_router.include_router(calendar.router)
 api_router.include_router(chat.router)

@@ -20,7 +20,7 @@ import structlog
 
 logger = structlog.get_logger()
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(tags=["authentication"])
 
 
 @router.get("/{provider}/login")
