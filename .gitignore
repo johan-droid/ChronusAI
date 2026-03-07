@@ -301,6 +301,18 @@ test_*.py
 *_test.py
 test_deepseek.py
 
+# Test files and directories
+tests/
+test/
+**/tests/
+**/test/
+
+# Markdown files (keep local only)
+*.md
+!README.md
+!CONTRIBUTING.md
+!LICENSE.md
+
 # Logs
 *.log
 logs/
@@ -346,3 +358,19 @@ alembic/versions/*.py
 .env.local
 .env.*.local
 *.local
+
+# Environment files (keep these secure)
+backend/.env.local
+frontend/.env.local
+**/.env.local
+
+# Setup and test scripts (keep local)
+setup_local_env.py
+quick_start.py
+test_oauth_config.py
+test_calendar_integration.py
+
+# Documentation files (keep local)
+README_LOCAL_DEVELOPMENT.md
+GOOGLE_OAUTH_SETUP.md
+README_GOOGLE_CALENDAR.md
