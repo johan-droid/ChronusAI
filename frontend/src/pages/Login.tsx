@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ColorBends from '../components/ColorBends';
-import { Calendar, Loader2, Shield, Sparkles, Zap, Lock } from 'lucide-react';
+import AnimatedLogo from '../components/AnimatedLogo';
+import { Loader2, Shield, Sparkles, Zap, Lock } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';
@@ -136,16 +137,16 @@ export default function Login() {
         <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-8">
           <div className="w-full max-w-md">
             {/* Logo & Header */}
-            <div className="text-center mb-6 lg:mb-8 animate-fade-in">
-              <div className="flex justify-center mb-4">
+            <div className="text-center mb-4 lg:mb-8 animate-fade-in">
+              <div className="flex justify-center mb-3">
                 <div className="relative">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 blur-2xl opacity-50 animate-pulse" />
-                  <div className="relative w-12 h-12 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl lg:rounded-3xl flex items-center justify-center shadow-2xl">
-                    <Calendar className="h-6 w-6 lg:h-8 lg:w-8 text-white" />
+                  <div className="relative w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-2xl">
+                    <AnimatedLogo className="h-6 w-6 lg:h-8 lg:w-8" />
                   </div>
                 </div>
               </div>
-              <h1 className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">ChronosAI</h1>
+              <h1 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">ChronosAI</h1>
               <p className="text-slate-400 text-xs lg:text-sm">AI-Powered Calendar Scheduling</p>
             </div>
 
@@ -320,67 +321,67 @@ export default function Login() {
       </div>
 
       {/* Mobile Welcome Content - Below Login */}
-      <div className="lg:hidden relative z-10 bg-white/[0.02] backdrop-blur-xl border-t border-white/5 p-6">
+      <div className="lg:hidden relative z-10 bg-white/[0.02] backdrop-blur-xl border-t border-white/5 p-4 pb-8">
         <div className="max-w-xl mx-auto animate-slide-in-up">
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Mobile Heading */}
             <div className="text-center">
-              <h2 className="text-2xl font-bold text-white mb-3 leading-tight">
+              <h2 className="text-xl font-bold text-white mb-2 leading-tight">
                 Schedule Smarter,
                 <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Not Harder
                 </span>
               </h2>
-              <p className="text-sm text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 Transform your calendar management with AI-powered scheduling that understands natural language.
               </p>
             </div>
 
             {/* Mobile Feature Highlights */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex gap-3 items-start">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl flex items-center justify-center border border-blue-500/30">
-                  <Sparkles className="h-5 w-5 text-blue-400" />
+                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center border border-blue-500/30">
+                  <Sparkles className="h-4 w-4 text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-white mb-1">Natural Language Processing</h3>
-                  <p className="text-slate-400 text-sm">Simply type "Schedule a meeting with John tomorrow at 3pm" and let AI handle the rest.</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Natural Language Processing</h3>
+                  <p className="text-slate-400 text-xs">Simply type "Schedule a meeting with John tomorrow at 3pm" and let AI handle the rest.</p>
                 </div>
               </div>
 
               <div className="flex gap-3 items-start">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl flex items-center justify-center border border-purple-500/30">
-                  <Zap className="h-5 w-5 text-purple-400" />
+                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center border border-purple-500/30">
+                  <Zap className="h-4 w-4 text-purple-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-white mb-1">Instant Synchronization</h3>
-                  <p className="text-slate-400 text-sm">Real-time sync with Google Calendar and Microsoft Outlook keeps everyone on the same page.</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Instant Synchronization</h3>
+                  <p className="text-slate-400 text-xs">Real-time sync with Google Calendar and Microsoft Outlook keeps everyone on the same page.</p>
                 </div>
               </div>
 
               <div className="flex gap-3 items-start">
-                <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-xl flex items-center justify-center border border-pink-500/30">
-                  <Shield className="h-5 w-5 text-pink-400" />
+                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-lg flex items-center justify-center border border-pink-500/30">
+                  <Shield className="h-4 w-4 text-pink-400" />
                 </div>
                 <div>
-                  <h3 className="text-base font-semibold text-white mb-1">Enterprise Security</h3>
-                  <p className="text-slate-400 text-sm">Bank-level encryption and OAuth 2.0 authentication protect your sensitive calendar data.</p>
+                  <h3 className="text-sm font-semibold text-white mb-1">Enterprise Security</h3>
+                  <p className="text-slate-400 text-xs">Bank-level encryption and OAuth 2.0 authentication protect your sensitive calendar data.</p>
                 </div>
               </div>
             </div>
 
             {/* Mobile Stats */}
-            <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
+            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/10">
               <div className="text-center">
-                <div className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-1">10K+</div>
-                <div className="text-xs text-slate-400">Active Users</div>
+                <div className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-1">10K+</div>
+                <div className="text-xs text-slate-400">Users</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">50K+</div>
+                <div className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">50K+</div>
                 <div className="text-xs text-slate-400">Meetings</div>
               </div>
               <div className="text-center">
-                <div className="text-xl font-bold bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent mb-1">99.9%</div>
+                <div className="text-lg font-bold bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent mb-1">99.9%</div>
                 <div className="text-xs text-slate-400">Uptime</div>
               </div>
             </div>
@@ -396,7 +397,7 @@ export default function Login() {
               <div className="absolute inset-0 animate-spin">
                 <div className="h-16 w-16 rounded-full border-4 border-blue-500/20 border-t-blue-500" />
               </div>
-              <Calendar className="h-8 w-8 text-blue-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <AnimatedLogo className="h-8 w-8 text-blue-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
             <div>
               <p className="text-white font-medium">Authenticating...</p>
