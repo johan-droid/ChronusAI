@@ -20,7 +20,7 @@ import structlog
 
 logger = structlog.get_logger()
 
-router = APIRouter(tags=["authentication"])
+router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 @router.get("/{provider}/login")
@@ -412,27 +412,3 @@ async def delete_account(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete account"
         )
-
-
-# Temporary redirect for old OAuth callback URL
-@router.get("/google/callback")
-async def legacy_google_callback(
-    request: Request,
-    code: str = None,
-    state: str = None,
-    error: str = None,
-):
-    """Handle legacy Google OAuth callback and redirect to new endpoint."""
-    if error:
-        logger.error("Legacy OAuth callback error", error=error)
-        return RedirectResponse(
-            url=f"/api/v1/auth/google/callback?error={error}",
-            status_code=302
-        )
-    
-    # Redirect to the correct callback endpoint with all parameters
-    query_params = request.query_params
-    redirect_url = f"/api/v1/auth/google/callback?{query_params}"
-    logger.info("Redirecting legacy OAuth callback", redirect_url=redirect_url)
-    
-    return RedirectResponse(url=redirect_url, status_code=302)
