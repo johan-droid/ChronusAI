@@ -3,7 +3,7 @@ Enhanced Google Calendar API Service
 Provides comprehensive integration with Google Calendar API v3
 """
 
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 import httpx
@@ -129,8 +129,6 @@ class GoogleCalendarService:
     
     async def get_calendar_list(self) -> List[CalendarInfo]:
         """Get list of user's calendars"""
-        access_token = await self._get_access_token()
-        
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 f"{self.base_url}/users/me/calendarList",
@@ -160,27 +158,24 @@ class GoogleCalendarService:
         self,
         calendar_id: str = "primary",
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        max_results: int = 250
+        end_time: Optional[datetime] = None
     ) -> List[CalendarEvent]:
         """Get events from calendar"""
-        access_token = await self._get_access_token()
-        
-        # Default to last 30 days and next 30 days if not specified
-        if not start_time:
-            start_time = datetime.now(timezone.utc) - timedelta(days=30)
-        if not end_time:
-            end_time = datetime.now(timezone.utc) + timedelta(days=30)
-        
-        params = {
-            "timeMin": start_time.isoformat(),
-            "timeMax": end_time.isoformat(),
-            "maxResults": max_results,
-            "singleEvents": "true",
-            "orderBy": "startTime"
-        }
-        
         async with httpx.AsyncClient() as client:
+            # Default to last 30 days and next 30 days if not specified
+            if not start_time:
+                start_time = datetime.now(timezone.utc) - timedelta(days=30)
+            if not end_time:
+                end_time = datetime.now(timezone.utc) + timedelta(days=30)
+            
+            params = {
+                "timeMin": start_time.isoformat(),
+                "timeMax": end_time.isoformat(),
+                "maxResults": 100,
+                "singleEvents": "true",
+                "orderBy": "startTime"
+            }
+            
             response = await client.get(
                 f"{self.base_url}/calendars/{calendar_id}/events",
                 headers=self._headers,
@@ -237,8 +232,6 @@ class GoogleCalendarService:
         end_time: datetime
     ) -> Dict[str, List[TimeSlot]]:
         """Get free/busy information for multiple calendars"""
-        access_token = await self._get_access_token()
-        
         body = {
             "timeMin": start_time.isoformat(),
             "timeMax": end_time.isoformat(),
@@ -272,8 +265,6 @@ class GoogleCalendarService:
     
     async def create_event(self, meeting: MeetingCreate, calendar_id: str = "primary") -> CalendarEvent:
         """Create a new event"""
-        access_token = await self._get_access_token()
-        
         event_body = {
             "summary": meeting.title,
             "description": meeting.description or "",
@@ -325,8 +316,6 @@ class GoogleCalendarService:
     
     async def update_event(self, event_id: str, meeting: MeetingCreate, calendar_id: str = "primary") -> CalendarEvent:
         """Update an existing event"""
-        access_token = await self._get_access_token()
-        
         event_body = {
             "summary": meeting.title,
             "description": meeting.description or "",
@@ -370,8 +359,6 @@ class GoogleCalendarService:
     
     async def delete_event(self, event_id: str, calendar_id: str = "primary") -> bool:
         """Delete an event"""
-        access_token = await self._get_access_token()
-        
         async with httpx.AsyncClient() as client:
             response = await client.delete(
                 f"{self.base_url}/calendars/{calendar_id}/events/{event_id}",
@@ -444,8 +431,6 @@ class GoogleCalendarService:
     async def test_connection(self) -> Dict[str, Any]:
         """Test connection to Google Calendar API"""
         try:
-            access_token = await self._get_access_token()
-            
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     f"{self.base_url}/users/me/calendarList",

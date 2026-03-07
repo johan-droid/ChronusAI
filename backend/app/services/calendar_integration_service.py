@@ -7,7 +7,7 @@ from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 import structlog
-from app.services.google_calendar_service import GoogleCalendarService, TimeSlot, CalendarEvent, CalendarInfo
+from app.services.google_calendar_service import GoogleCalendarService, TimeSlot
 from app.services.outlook_calendar import OutlookCalendarService
 
 logger = structlog.get_logger()
