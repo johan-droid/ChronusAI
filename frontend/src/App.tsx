@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { lazy, Suspense, memo } from 'react';
 import { useAuthStore } from './store/authStore';
 import LoadingSpinner from './components/LoadingSpinner';
+import Footer from './components/Footer';
 import './index.css';
 
 // Lazy load components for better performance
@@ -15,6 +16,8 @@ const Chat = lazy(() => import('./pages/Chat'));
 const Availability = lazy(() => import('./pages/AvailabilityNew'));
 const History = lazy(() => import('./pages/HistoryNew'));
 const Settings = lazy(() => import('./pages/Settings'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -126,10 +129,13 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/terms-of-service" element={<TermsOfService />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
         </div>
+        <Footer />
       </Router>
       <Toaster 
         position="top-right" 
