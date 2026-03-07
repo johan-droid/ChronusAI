@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "chronosai",
+  "name": "chronus-ai",
   "framework": "vite",
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
@@ -42,6 +42,6 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://chronosai-backend.onrender.com"
+    "VITE_API_URL": "https://chronusai.onrender.com"
   }
 }
