@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
-      isLoading: false, // Changed from true to false
+      isLoading: true, // Start with true to check initial auth state
       setAuth: (user, accessToken, refreshToken) => set({ 
         user, 
         accessToken, 

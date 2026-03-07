@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
+import AuthDebug from '../components/AuthDebug';
 import { Loader2, Shield, Sparkles, Zap, Lock } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
@@ -47,8 +48,10 @@ export default function Login() {
           // Set authenticated state with real user data
           useAuthStore.getState().setAuth(userData, accessToken, refreshToken);
 
+          // Small delay to ensure auth state is properly set
+          await new Promise(resolve => setTimeout(resolve, 100));
+
           // Navigate to dashboard
-          window.history.replaceState(null, '', '/dashboard');
           navigate('/dashboard', { replace: true });
         } catch (error) {
           console.error('Authentication failed:', error);
@@ -59,6 +62,12 @@ export default function Login() {
           setIsLoading(false);
         }
       })();
+    } else {
+      // Check if user is already authenticated
+      const { isAuthenticated } = useAuthStore.getState();
+      if (isAuthenticated) {
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [navigate]);
 
@@ -406,6 +415,9 @@ export default function Login() {
           </div>
         </div>
       )}
+      
+      {/* Debug Component */}
+      <AuthDebug />
     </div>
   );
 }

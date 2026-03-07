@@ -67,7 +67,12 @@ const PageLoader = () => (
 );
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading } = useAuthStore();
+  
+  // Show loading indicator while checking authentication
+  if (isLoading) {
+    return <PageLoader />;
+  }
   
   if (!isAuthenticated) {
     // Clear any OAuth remnants and redirect
