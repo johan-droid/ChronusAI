@@ -56,6 +56,9 @@ async def oauth_callback(
 ):
     """Handle OAuth callback from provider with enhanced security."""
     try:
+        # Debug logging
+        logger.info("OAuth callback received", provider=provider, state=state[:10] + "...", code_length=len(code))
+        
         # Validate provider
         if provider not in ["google", "outlook"]:
             raise HTTPException(
@@ -65,6 +68,7 @@ async def oauth_callback(
         
         # Validate state parameter (CSRF protection)
         if not state or len(state) < 32:
+            logger.error("State validation failed", state=state, length=len(state) if state else 0)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or missing state parameter"
@@ -72,6 +76,7 @@ async def oauth_callback(
         
         # Validate code parameter
         if not code or len(code) < 10:
+            logger.error("Code validation failed", code=code[:10] + "...", length=len(code) if code else 0)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid authorization code"
