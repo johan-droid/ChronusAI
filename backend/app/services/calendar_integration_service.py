@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 import structlog
 from app.services.google_calendar_service import GoogleCalendarService, TimeSlot
-from app.services.outlook_calendar import OutlookCalendarService
+from app.services.outlook_calendar import OutlookCalendarAdapter
 
 logger = structlog.get_logger()
 
@@ -20,20 +20,21 @@ class CalendarProvider(Enum):
 class CalendarIntegrationService:
     """Unified calendar integration service"""
     
-    def __init__(self, user_id: str, provider: str, db_session):
+    def __init__(self, user_id: str, provider: str, db_session, access_token: str = None):
         self.user_id = user_id
         self.provider = CalendarProvider(provider.lower())
         self.db = db_session
+        self.access_token = access_token
         self._service = None
     
     @property
-    def service(self) -> Union[GoogleCalendarService, OutlookCalendarService]:
+    def service(self) -> Union[GoogleCalendarService, OutlookCalendarAdapter]:
         """Get the appropriate calendar service"""
         if self._service is None:
             if self.provider == CalendarProvider.GOOGLE:
                 self._service = GoogleCalendarService(self.user_id, self.db)
             elif self.provider == CalendarProvider.OUTLOOK:
-                self._service = OutlookCalendarService(self.user_id, self.db)
+                self._service = OutlookCalendarAdapter(self.access_token)
             else:
                 raise ValueError(f"Unsupported calendar provider: {self.provider}")
         return self._service
