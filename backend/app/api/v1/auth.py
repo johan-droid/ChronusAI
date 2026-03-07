@@ -20,7 +20,42 @@ import structlog
 
 logger = structlog.get_logger()
 
-router = APIRouter(prefix="/auth", tags=["authentication"])
+router = APIRouter(tags=["authentication"])
+
+# Separate route for Microsoft OAuth with /api/v1 prefix
+microsoft_router = APIRouter(tags=["authentication"])
+
+
+@router.get("/google/login")
+async def google_login():
+    """Initiate Google OAuth flow."""
+    return await oauth_login("google")
+
+
+@router.get("/google/callback")
+async def google_callback(
+    code: str,
+    state: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Handle Google OAuth callback."""
+    return await oauth_callback("google", code, state, db)
+
+
+@microsoft_router.get("/outlook/login")
+async def outlook_login():
+    """Initiate Microsoft OAuth flow."""
+    return await oauth_login("outlook")
+
+
+@microsoft_router.get("/outlook/callback")
+async def outlook_callback(
+    code: str,
+    state: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Handle Microsoft OAuth callback."""
+    return await oauth_callback("outlook", code, state, db)
 
 
 @router.get("/{provider}/login")

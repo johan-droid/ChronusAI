@@ -43,7 +43,7 @@ services:
       - key: MICROSOFT_CLIENT_SECRET
         sync: false
       - key: MICROSOFT_REDIRECT_URI
-        value: https://chronusai.onrender.com/auth/outlook/callback
+        value: https://chronusai.onrender.com/api/v1/auth/outlook/callback
       - key: MICROSOFT_TENANT_ID
         value: common
       - key: FRONTEND_URL

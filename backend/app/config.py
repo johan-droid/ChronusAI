@@ -63,7 +63,7 @@ class Settings(BaseSettings):
             if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
                 self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/auth/google/callback")
             if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
-                self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/auth/outlook/callback")
+                self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
             if "localhost" in str(self.frontend_url):
                 self.frontend_url = AnyHttpUrl("https://chronus-ai.vercel.app")
 
