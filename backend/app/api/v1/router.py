@@ -14,8 +14,8 @@ api_router = APIRouter(
     }
 )
 
-api_router.include_router(auth.router, prefix="/auth")
-api_router.include_router(auth.microsoft_router)
+# Microsoft OAuth - keep /api/v1 prefix
+api_router.include_router(auth.microsoft_router, tags=["authentication"])
 api_router.include_router(availability.router)
 api_router.include_router(calendar.router)
 api_router.include_router(chat.router)

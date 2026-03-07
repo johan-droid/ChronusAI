@@ -131,6 +131,10 @@ async def log_requests(request: Request, call_next):
 # Include API routes
 app.include_router(api_router)
 
+# Include Google OAuth routes at root level (no /api/v1 prefix)
+from app.api.v1 import auth
+app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+
 
 @app.get("/")
 async def root():
