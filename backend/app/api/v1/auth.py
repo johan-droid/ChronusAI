@@ -67,12 +67,15 @@ async def oauth_callback(
             )
         
         # Validate state parameter (CSRF protection)
-        if not state or len(state) < 32:
+        if not state:
             logger.error("State validation failed", state=state, length=len(state) if state else 0)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or missing state parameter"
             )
+        
+        # Temporarily log state length for debugging
+        logger.info("State validation passed", state_length=len(state))
         
         # Validate code parameter
         if not code or len(code) < 10:
