@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, BarChart3, LogOut, Menu, X, Sparkles } from 'lucide-react';
+import { Clock, MessageSquare, BarChart3, LogOut, Menu, X, Sparkles } from 'lucide-react';
 import ChatWindow from '../components/ChatWindow';
+import AnimatedLogo from '../components/AnimatedLogo';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
@@ -38,9 +39,7 @@ export default function Chat() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Calendar className="h-5 w-5 text-white" />
-              </div>
+              <AnimatedLogo className="h-10 w-10" />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">ChronosAI</span>
             </div>
 
@@ -58,7 +57,7 @@ export default function Chat() {
                 Availability
               </button>
               <button onClick={() => navigate('/history')} className="px-5 py-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/50 text-sm font-medium transition-all">
-                <Calendar className="h-4 w-4 inline mr-2" />
+                <Clock className="h-4 w-4 inline mr-2" />
                 History
               </button>
             </div>
@@ -92,7 +91,7 @@ export default function Chat() {
                 Availability
               </button>
               <button onClick={() => { navigate('/history'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-slate-800/50 text-slate-300 text-sm font-medium flex items-center gap-3 hover:bg-slate-700/50">
-                <Calendar className="h-4 w-4" />
+                <Clock className="h-4 w-4" />
                 History
               </button>
               <button onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-red-500/10 text-red-400 text-sm font-medium flex items-center gap-3 hover:bg-red-500/20 border border-red-500/20">
