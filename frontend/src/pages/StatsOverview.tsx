@@ -1,22 +1,21 @@
-import { useEffect, memo, useCallback, useMemo } from 'react';
+import { useEffect, useState, memo, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, TrendingUp, Users, CheckCircle, XCircle, MessageSquare, BarChart3, LogOut, Menu, X } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-import { useState } from 'react';
 import LogoutMenu from '../components/LogoutMenu';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AnimatedLogo from '../components/AnimatedLogo';
 
 // Memoized Navigation Component
-const NavigationBar = memo(({ 
-  user, 
-  navigate, 
-  mobileMenuOpen, 
-  setMobileMenuOpen, 
-  setShowLogout 
+const NavigationBar = memo(({
+  user,
+  navigate,
+  mobileMenuOpen,
+  setMobileMenuOpen,
+  setShowLogout
 }: {
   user: any;
   navigate: any;
@@ -227,8 +226,8 @@ export default function StatsOverview() {
         <div className="star" />
         <div className="star" />
       </div>
-      
-      <NavigationBar 
+
+      <NavigationBar
         user={user}
         navigate={navigate}
         mobileMenuOpen={mobileMenuOpen}
@@ -237,7 +236,7 @@ export default function StatsOverview() {
       />
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="saas-main">
         {/* Welcome Header */}
         <div className="mb-8 animate-fade-in">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
