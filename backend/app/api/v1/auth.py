@@ -54,46 +54,83 @@ async def oauth_callback(
     state: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Handle OAuth callback from provider."""
+    """Handle OAuth callback from provider with enhanced security."""
     try:
+        # Validate provider
+        if provider not in ["google", "outlook"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid provider"
+            )
+        
+        # Validate state parameter (CSRF protection)
+        if not state or len(state) < 32:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or missing state parameter"
+            )
+        
+        # Validate code parameter
+        if not code or len(code) < 10:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid authorization code"
+            )
+        
         oauth_provider = get_oauth_provider(provider)
         
         # Exchange code for tokens (no PKCE verifier needed with client_secret)
         try:
             tokens = await oauth_provider.exchange_code_for_tokens(code, None)
         except Exception as token_error:
+            logger.error("token_exchange_failed", error=str(token_error), provider=provider)
             raise HTTPException(
                 status_code=400, 
-                detail=f"Token exchange failed: {str(token_error)}"
+                detail="Token exchange failed. Please try again."
             )
 
         access_token = tokens.get("access_token")
-        if not access_token:
-            raise HTTPException(status_code=400, detail="OAuth token exchange failed")
+        if not access_token or len(access_token) < 20:
+            raise HTTPException(status_code=400, detail="Invalid access token received")
 
-        # Fetch user profile
+        # Fetch user profile with timeout
         async with httpx.AsyncClient(timeout=30) as client:
-            if provider == "google":
-                profile_resp = await client.get(
-                    "https://www.googleapis.com/oauth2/v2/userinfo",
-                    headers={"Authorization": f"Bearer {access_token}"},
+            try:
+                if provider == "google":
+                    profile_resp = await client.get(
+                        "https://www.googleapis.com/oauth2/v2/userinfo",
+                        headers={"Authorization": f"Bearer {access_token}"},
+                    )
+                    profile_resp.raise_for_status()
+                    profile = profile_resp.json()
+                    user_email = profile.get("email")
+                    full_name = profile.get("name")
+                    email_verified = profile.get("verified_email", False)
+                    
+                    # Require verified email for Google
+                    if not email_verified:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Email not verified. Please verify your email with Google."
+                        )
+                else:
+                    profile_resp = await client.get(
+                        "https://graph.microsoft.com/v1.0/me",
+                        headers={"Authorization": f"Bearer {access_token}"},
+                    )
+                    profile_resp.raise_for_status()
+                    profile = profile_resp.json()
+                    user_email = profile.get("mail") or profile.get("userPrincipalName")
+                    full_name = profile.get("displayName")
+            except httpx.HTTPError as http_err:
+                logger.error("profile_fetch_failed", error=str(http_err), provider=provider)
+                raise HTTPException(
+                    status_code=400,
+                    detail="Failed to fetch user profile. Please try again."
                 )
-                profile_resp.raise_for_status()
-                profile = profile_resp.json()
-                user_email = profile.get("email")
-                full_name = profile.get("name")
-            else:
-                profile_resp = await client.get(
-                    "https://graph.microsoft.com/v1.0/me",
-                    headers={"Authorization": f"Bearer {access_token}"},
-                )
-                profile_resp.raise_for_status()
-                profile = profile_resp.json()
-                user_email = profile.get("mail") or profile.get("userPrincipalName")
-                full_name = profile.get("displayName")
 
-        if not user_email:
-            raise HTTPException(status_code=400, detail="Could not read user email")
+        if not user_email or "@" not in user_email:
+            raise HTTPException(status_code=400, detail="Invalid email address received")
 
         # Find or create user
         result = await db.execute(select(User).where(User.email == user_email))
@@ -103,6 +140,7 @@ async def oauth_callback(
             db.add(user)
             await db.commit()
             await db.refresh(user)
+            logger.info("new_user_created", email=mask_email(user_email), provider=provider)
         else:
             setattr(user, 'provider', provider)
             if full_name and not user.full_name:
@@ -140,20 +178,28 @@ async def oauth_callback(
         
         await db.commit()
         
-        # Create JWT tokens
-        access_token = create_access_token(str(user.id))
-        refresh_token = create_refresh_token(str(user.id))
+        # Create JWT tokens with enhanced security
+        jwt_access_token = create_access_token(str(user.id))
+        jwt_refresh_token = create_refresh_token(str(user.id))
+        
+        logger.info(
+            "user_authenticated",
+            user_id_hash=hash_user_id(str(user.id)),
+            email=mask_email(user_email),
+            provider=provider
+        )
         
         # Redirect to frontend with tokens
-        redirect_url = f"{settings.frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
+        redirect_url = f"{settings.frontend_url}/login?access_token={jwt_access_token}&refresh_token={jwt_refresh_token}"
         return RedirectResponse(url=redirect_url)
         
     except HTTPException:
         raise
     except Exception as e:
+        logger.error("oauth_callback_failed", error=str(e), provider=provider)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"OAuth callback failed: {str(e)}"
+            detail="Authentication failed. Please try again."
         )
 
 
@@ -297,3 +343,64 @@ async def logout_all(
     except Exception as e:
         logger.error("logout_all_failed", error=str(e))
         return {"message": "Logged out from all devices"}
+
+
+@router.delete("/account")
+async def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete user account and all associated data."""
+    try:
+        # Get OAuth credentials to revoke tokens
+        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
+        oauth_cred = result.scalar_one_or_none()
+        
+        # Revoke OAuth tokens before deletion
+        if oauth_cred and current_user.provider:
+            try:
+                provider_str = str(current_user.provider)
+                oauth_provider = get_oauth_provider(provider_str)
+                
+                if oauth_cred.access_token:
+                    access_token_str = str(oauth_cred.access_token)
+                    decrypted_token = token_encryptor.decrypt(access_token_str)
+                    await oauth_provider.revoke_token(decrypted_token)
+                
+                if oauth_cred.refresh_token:
+                    refresh_token_str = str(oauth_cred.refresh_token)
+                    decrypted_refresh = token_encryptor.decrypt(refresh_token_str)
+                    if decrypted_refresh:
+                        await oauth_provider.revoke_token(decrypted_refresh)
+            except Exception as e:
+                logger.warning("oauth_revoke_on_delete_failed", error=str(e))
+        
+        # Revoke all sessions
+        revoke_all_user_sessions(str(current_user.id))
+        
+        # Delete OAuth credentials
+        if oauth_cred:
+            await db.delete(oauth_cred)
+        
+        # Delete user (cascade will delete meetings and other related data)
+        await db.delete(current_user)
+        await db.commit()
+        
+        logger.info(
+            "user_account_deleted",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            email=mask_email(str(current_user.email))
+        )
+        
+        return {
+            "message": "Account deleted successfully",
+            "provider": current_user.provider
+        }
+        
+    except Exception as e:
+        logger.error("account_deletion_failed", error=str(e))
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete account"
+        )

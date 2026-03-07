@@ -22,8 +22,11 @@ cryptography
 structlog
 slowapi
 
+pytz
+
 pytest
 pytest-asyncio
 pytest-cov
 mypy
+types-pytz
 ruff

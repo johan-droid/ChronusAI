@@ -1,0 +1,183 @@
+OAUTH CONFIGURATION GUIDE
+
+======================
+GOOGLE OAUTH SETUP
+======================
+
+1. Go to Google Cloud Console: https://console.cloud.google.com/
+
+2. Create a new project or select existing project
+
+3. Enable APIs:
+   - Go to "APIs & Services" > "Library"
+   - Enable "Google Calendar API"
+   - Enable "Google+ API" (for user profile)
+
+4. Create OAuth 2.0 Credentials:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "OAuth client ID"
+   - Application type: "Web application"
+   - Name: "ChronosAI"
+   
+5. Configure OAuth consent screen:
+   - User Type: External (for testing) or Internal (for organization)
+   - App name: ChronosAI
+   - User support email: your-email@example.com
+   - Developer contact: your-email@example.com
+   - Scopes: Add the following scopes:
+     * .../auth/calendar.events
+     * .../auth/calendar.readonly
+     * .../auth/userinfo.email
+     * .../auth/userinfo.profile
+
+6. Add Authorized redirect URIs:
+   - Development: http://localhost:8000/api/v1/auth/google/callback
+   - Production: https://your-domain.com/api/v1/auth/google/callback
+
+7. Add Authorized JavaScript origins:
+   - Development: http://localhost:5173
+   - Production: https://your-domain.com
+
+8. Copy credentials to .env file:
+   GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+   GOOGLE_CLIENT_SECRET=your-client-secret
+   GOOGLE_REDIRECT_URI=http://localhost:8000/api/v1/auth/google/callback
+
+
+======================
+MICROSOFT OAUTH SETUP
+======================
+
+1. Go to Azure Portal: https://portal.azure.com/
+
+2. Navigate to "Azure Active Directory" > "App registrations"
+
+3. Click "New registration":
+   - Name: ChronosAI
+   - Supported account types: "Accounts in any organizational directory and personal Microsoft accounts"
+   - Redirect URI: 
+     * Platform: Web
+     * URI: http://localhost:8000/api/v1/auth/outlook/callback
+
+4. After registration, note down:
+   - Application (client) ID
+   - Directory (tenant) ID
+
+5. Create Client Secret:
+   - Go to "Certificates & secrets"
+   - Click "New client secret"
+   - Description: "ChronosAI Secret"
+   - Expires: Choose duration (recommended: 24 months)
+   - Copy the VALUE immediately (it won't be shown again)
+
+6. Configure API Permissions:
+   - Go to "API permissions"
+   - Click "Add a permission"
+   - Select "Microsoft Graph"
+   - Select "Delegated permissions"
+   - Add these permissions:
+     * User.Read
+     * Calendars.ReadWrite
+     * Calendars.ReadWrite.Shared
+     * offline_access
+   - Click "Grant admin consent" (if you're admin)
+
+7. Configure Authentication:
+   - Go to "Authentication"
+   - Under "Platform configurations" > "Web"
+   - Add redirect URIs:
+     * Development: http://localhost:8000/api/v1/auth/outlook/callback
+     * Production: https://your-domain.com/api/v1/auth/outlook/callback
+   
+   - Under "Implicit grant and hybrid flows":
+     * Check "ID tokens"
+   
+   - Under "Advanced settings":
+     * Allow public client flows: No
+     * Enable the following mobile and desktop flows: No
+
+8. Configure Logout URL (for account deletion):
+   - Go to "Authentication"
+   - Under "Front-channel logout URL":
+     * Development: http://localhost:5173/login
+     * Production: https://your-domain.com/login
+   
+   - Under "Redirect URIs" add logout redirect:
+     * http://localhost:5173/login
+     * https://your-domain.com/login
+
+9. Copy credentials to .env file:
+   MICROSOFT_CLIENT_ID=your-application-id
+   MICROSOFT_CLIENT_SECRET=your-client-secret-value
+   MICROSOFT_REDIRECT_URI=http://localhost:8000/api/v1/auth/outlook/callback
+   MICROSOFT_TENANT_ID=common
+
+
+======================
+IMPORTANT NOTES
+======================
+
+1. Token Revocation:
+   - Google: Supports token revocation via https://oauth2.googleapis.com/revoke
+   - Microsoft: Does not support direct token revocation, but tokens expire automatically
+
+2. Account Deletion:
+   - When user deletes account, the app will:
+     * Revoke all OAuth tokens (Google only)
+     * Delete all user data from database
+     * Log out from all devices
+     * Redirect to provider logout URL
+
+3. Security Best Practices:
+   - Never commit .env file to version control
+   - Use different credentials for development and production
+   - Rotate client secrets regularly
+   - Monitor OAuth consent screen for suspicious activity
+   - Enable 2FA for admin accounts
+
+4. Testing:
+   - Test login flow with both Google and Microsoft accounts
+   - Test account deletion with both providers
+   - Verify tokens are revoked after logout
+   - Check that user data is completely removed
+
+5. Production Checklist:
+   - Update redirect URIs to production URLs
+   - Update frontend URL in .env
+   - Enable HTTPS for all endpoints
+   - Set up proper CORS origins
+   - Configure rate limiting
+   - Set up monitoring and logging
+   - Test account deletion flow thoroughly
+
+
+======================
+TROUBLESHOOTING
+======================
+
+Common Issues:
+
+1. "redirect_uri_mismatch" error:
+   - Ensure redirect URI in code matches exactly with configured URI
+   - Check for trailing slashes
+   - Verify protocol (http vs https)
+
+2. "invalid_client" error:
+   - Verify client ID and secret are correct
+   - Check if client secret has expired (Microsoft)
+   - Ensure credentials are properly set in .env
+
+3. "insufficient_permissions" error:
+   - Verify all required scopes are added
+   - Grant admin consent for Microsoft (if required)
+   - Check if user has necessary permissions
+
+4. Account deletion not working:
+   - Verify token revocation endpoint is accessible
+   - Check if OAuth credentials exist in database
+   - Ensure cascade delete is configured for user model
+
+5. Logout not redirecting properly:
+   - Verify logout URLs are configured in OAuth settings
+   - Check frontend URL in .env
+   - Ensure CORS is properly configured

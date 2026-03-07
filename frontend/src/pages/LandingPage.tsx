@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ColorBends from '../components/ColorBends';
+import AnimatedLogo from '../components/AnimatedLogo';
 import {
   ArrowRight,
   Zap,
@@ -21,6 +22,13 @@ export default function LandingPage() {
   const [isAnimated, setIsAnimated] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   useEffect(() => {
     setTimeout(() => setIsAnimated(true), 100);
@@ -201,13 +209,14 @@ export default function LandingPage() {
         <nav className={`max-w-5xl mx-auto transition-all duration-500 rounded-full border border-white/5 shadow-2xl ${isScrolled ? 'bg-black/60 backdrop-blur-xl border-white/10 px-6 py-2' : 'bg-transparent px-2 py-2 border-transparent'}`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <img src="/logo.png" alt="ChronusAI Logo" className={`transition-all duration-500 ${isScrolled ? 'h-8' : 'h-10'} w-auto`} />
+              <AnimatedLogo className={isScrolled ? "h-8 w-8" : "h-10 w-10"} />
+              <span className="text-xl font-bold gradient-text">ChronusAI</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-muted-foreground">
-              <a href="#features" className="hover:text-primary transition-colors">Features</a>
-              <a href="#workflow" className="hover:text-primary transition-colors">Workflow</a>
-              <a href="#testimonials" className="hover:text-primary transition-colors">Wall of Love</a>
+              <button onClick={() => scrollToSection('features')} className="hover:text-primary transition-colors cursor-pointer">Features</button>
+              <button onClick={() => scrollToSection('workflow')} className="hover:text-primary transition-colors cursor-pointer">Workflow</button>
+              <button onClick={() => scrollToSection('testimonials')} className="hover:text-primary transition-colors cursor-pointer">Wall of Love</button>
             </div>
 
             <button
@@ -270,7 +279,7 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section className="relative z-10 py-32">
+      <section id="features" className="relative z-10 py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center space-y-6 mb-20">
             <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-xs font-medium">
@@ -312,7 +321,7 @@ export default function LandingPage() {
       </section>
 
       {/* Integration Store Section */}
-      <section className="relative z-10 py-32 overflow-hidden">
+      <section id="workflow" className="relative z-10 py-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="glass-card p-12 rounded-[2.5rem] border-white/5 bg-white/[0.01] flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 space-y-8">
@@ -372,7 +381,7 @@ export default function LandingPage() {
       </section>
 
       {/* Wall of Love Section */}
-      <section className="relative z-10 py-32">
+      <section id="testimonials" className="relative z-10 py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="text-center space-y-6 mb-20">
             <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-xs font-medium">
@@ -474,7 +483,8 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
             <div className="col-span-2 space-y-8">
               <div className="flex items-center space-x-3">
-                <img src="/logo.png" alt="ChronusAI Logo" className="h-10 w-auto" />
+                <AnimatedLogo className="h-10 w-10" />
+                <span className="text-xl font-bold gradient-text">ChronusAI</span>
               </div>
               <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
                 The next generation of AI-powered scheduling. Plan, sync, and meet without the friction.

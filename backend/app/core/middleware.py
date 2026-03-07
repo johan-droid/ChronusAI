@@ -6,7 +6,7 @@ import structlog
 from jose import JWTError
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import Response, JSONResponse
 
 from app.core.oauth import get_oauth_provider
 from app.core.security import decode_access_token, hash_user_id, token_encryptor
@@ -17,6 +17,55 @@ from sqlalchemy import select
 
 
 logger = structlog.get_logger()
+
+
+class SecurityValidationMiddleware(BaseHTTPMiddleware):
+    """Validate all requests for security threats."""
+    
+    PROTECTED_PATHS = ["/api/v1/users", "/api/v1/meetings", "/api/v1/chat", "/api/v1/availability"]
+    
+    async def dispatch(self, request: Request, call_next) -> Response:
+        # Check if path requires authentication
+        path = request.url.path
+        requires_auth = any(path.startswith(protected) for protected in self.PROTECTED_PATHS)
+        
+        if requires_auth:
+            auth = request.headers.get("authorization") or ""
+            
+            # Require Bearer token for protected routes
+            if not auth.lower().startswith("bearer "):
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Authentication required"}
+                )
+            
+            token = auth.split(" ", 1)[1].strip()
+            
+            # Validate token format
+            if len(token) < 20:
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Invalid token format"}
+                )
+            
+            # Verify token is valid JWT
+            try:
+                payload = decode_access_token(token)
+                user_id = payload.get("sub")
+                token_type = payload.get("type")
+                
+                if not user_id or token_type != "access":
+                    return JSONResponse(
+                        status_code=401,
+                        content={"detail": "Invalid token"}
+                    )
+            except JWTError:
+                return JSONResponse(
+                    status_code=401,
+                    content={"detail": "Invalid or expired token"}
+                )
+        
+        return await call_next(request)
 
 
 class TokenRefreshMiddleware(BaseHTTPMiddleware):
