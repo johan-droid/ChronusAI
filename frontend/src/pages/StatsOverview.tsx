@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, TrendingUp, Users, CheckCircle, XCircle, MessageSquare, BarChart3, LogOut, Menu, X } from 'lucide-react';
+import { Calendar, Clock, TrendingUp, Users, CheckCircle, XCircle, MessageSquare, BarChart3, LogOut, Menu, X, Sparkles, ArrowUpRight, Activity, Zap } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-import { useState } from 'react';
 import LogoutMenu from '../components/LogoutMenu';
 
 export default function StatsOverview() {
@@ -56,81 +55,86 @@ export default function StatsOverview() {
     totalAttendees: meetings?.reduce((sum, m) => sum + m.attendees.length, 0) || 0,
   };
 
+  const upcomingMeetings = meetings?.filter(m =>
+    m.status === 'scheduled' && new Date(m.start_time) > new Date()
+  ).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).slice(0, 5);
+
+  const quickActions = [
+    { icon: <MessageSquare className="h-5 w-5" />, label: 'Chat with AI', desc: 'Schedule via chat', path: '/chat', color: 'from-blue-500 to-cyan-500' },
+    { icon: <Clock className="h-5 w-5" />, label: 'Availability', desc: 'View free slots', path: '/availability', color: 'from-emerald-500 to-teal-500' },
+    { icon: <Calendar className="h-5 w-5" />, label: 'History', desc: 'Past meetings', path: '/history', color: 'from-violet-500 to-purple-500' },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden">
-      {/* Subtle background effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-grid-white/[0.02]" />
-      
+    <div className="page-shell">
+      {/* Background effects */}
+      <div className="page-bg" />
+      <div className="page-grid-overlay" />
+
       {/* Top Navigation Bar */}
-      <nav className="relative z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between">
+      <nav className="saas-nav">
+        <div className="saas-nav-inner">
+          <div className="saas-nav-content">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+            <div className="saas-nav-logo" onClick={() => navigate('/dashboard')}>
+              <div className="saas-nav-logo-icon">
                 <Calendar className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">ChronosAI</span>
+              <span className="saas-nav-logo-text">ChronosAI</span>
             </div>
 
             {/* Desktop Navigation Pills */}
-            <div className="hidden md:flex items-center gap-2 bg-slate-900/50 rounded-full p-1.5 border border-white/5">
-              <button onClick={() => navigate('/dashboard')} className="px-5 py-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium shadow-lg shadow-blue-500/20 transition-all">
-                <BarChart3 className="h-4 w-4 inline mr-2" />
-                Dashboard
+            <div className="saas-nav-pills">
+              <button onClick={() => navigate('/dashboard')} className="saas-nav-pill saas-nav-pill--active">
+                <BarChart3 className="h-4 w-4" />
+                <span>Dashboard</span>
               </button>
-              <button onClick={() => navigate('/chat')} className="px-5 py-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/50 text-sm font-medium transition-all">
-                <MessageSquare className="h-4 w-4 inline mr-2" />
-                Chat
+              <button onClick={() => navigate('/chat')} className="saas-nav-pill">
+                <MessageSquare className="h-4 w-4" />
+                <span>Chat</span>
               </button>
-              <button onClick={() => navigate('/availability')} className="px-5 py-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/50 text-sm font-medium transition-all">
-                <Clock className="h-4 w-4 inline mr-2" />
-                Availability
+              <button onClick={() => navigate('/availability')} className="saas-nav-pill">
+                <Clock className="h-4 w-4" />
+                <span>Availability</span>
               </button>
-              <button onClick={() => navigate('/history')} className="px-5 py-2 rounded-full text-slate-400 hover:text-white hover:bg-slate-800/50 text-sm font-medium transition-all">
-                <Calendar className="h-4 w-4 inline mr-2" />
-                History
+              <button onClick={() => navigate('/history')} className="saas-nav-pill">
+                <Calendar className="h-4 w-4" />
+                <span>History</span>
               </button>
             </div>
 
-            {/* User Menu & Mobile Toggle */}
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-white">{user?.full_name || 'User'}</p>
-                <p className="text-xs text-slate-400">{user?.email}</p>
+            {/* User Menu */}
+            <div className="saas-nav-user">
+              <div className="saas-nav-user-info">
+                <p className="saas-nav-user-name">{user?.full_name || 'User'}</p>
+                <p className="saas-nav-user-email">{user?.email}</p>
               </div>
-              <button onClick={() => setShowLogout(true)} className="hidden sm:flex w-10 h-10 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700/50 transition-all">
-                <LogOut className="h-4 w-4 text-slate-400" />
+              <button onClick={() => setShowLogout(true)} className="saas-nav-logout-btn" title="Sign out">
+                <LogOut className="h-4 w-4" />
               </button>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden w-10 h-10 rounded-full bg-slate-800/50 border border-white/5 flex items-center justify-center hover:bg-slate-700/50 transition-all">
-                {mobileMenuOpen ? <X className="h-5 w-5 text-slate-400" /> : <Menu className="h-5 w-5 text-slate-400" />}
+              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="saas-nav-mobile-toggle">
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
 
           {/* Mobile Menu */}
           {mobileMenuOpen && (
-            <div className="md:hidden mt-4 pb-4 space-y-2 animate-fade-in">
-              <button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium flex items-center gap-3">
-                <BarChart3 className="h-4 w-4" />
-                Dashboard
+            <div className="saas-mobile-menu">
+              <button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }} className="saas-mobile-item saas-mobile-item--active">
+                <BarChart3 className="h-4 w-4" /> Dashboard
               </button>
-              <button onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-slate-800/50 text-slate-300 text-sm font-medium flex items-center gap-3 hover:bg-slate-700/50">
-                <MessageSquare className="h-4 w-4" />
-                Chat
+              <button onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} className="saas-mobile-item">
+                <MessageSquare className="h-4 w-4" /> Chat
               </button>
-              <button onClick={() => { navigate('/availability'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-slate-800/50 text-slate-300 text-sm font-medium flex items-center gap-3 hover:bg-slate-700/50">
-                <Clock className="h-4 w-4" />
-                Availability
+              <button onClick={() => { navigate('/availability'); setMobileMenuOpen(false); }} className="saas-mobile-item">
+                <Clock className="h-4 w-4" /> Availability
               </button>
-              <button onClick={() => { navigate('/history'); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-slate-800/50 text-slate-300 text-sm font-medium flex items-center gap-3 hover:bg-slate-700/50">
-                <Calendar className="h-4 w-4" />
-                History
+              <button onClick={() => { navigate('/history'); setMobileMenuOpen(false); }} className="saas-mobile-item">
+                <Calendar className="h-4 w-4" /> History
               </button>
-              <button onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }} className="w-full px-4 py-3 rounded-xl bg-red-500/10 text-red-400 text-sm font-medium flex items-center gap-3 hover:bg-red-500/20 border border-red-500/20">
-                <LogOut className="h-4 w-4" />
-                Logout
+              <button onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }} className="saas-mobile-item saas-mobile-item--danger">
+                <LogOut className="h-4 w-4" /> Logout
               </button>
             </div>
           )}
@@ -138,40 +142,194 @@ export default function StatsOverview() {
       </nav>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main className="saas-main">
         {/* Welcome Header */}
-        <div className="mb-8 animate-fade-in">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-2">
-            Welcome back, <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">{user?.full_name?.split(' ')[0] || 'User'}</span>
-          </h1>
-          <p className="text-slate-400 text-sm sm:text-base">Here's your meeting overview</p>
+        <div className="dashboard-welcome fade-in-up">
+          <div className="dashboard-welcome-left">
+            <div className="dashboard-welcome-badge">
+              <Activity className="h-3.5 w-3.5" />
+              <span>Live Overview</span>
+            </div>
+            <h1 className="dashboard-welcome-title">
+              Welcome back, <span className="gradient-text-blue">{user?.full_name?.split(' ')[0] || 'User'}</span>
+            </h1>
+            <p className="dashboard-welcome-sub">Here's an overview of your meeting activity and upcoming schedule.</p>
+          </div>
+          <div className="dashboard-welcome-right">
+            <p className="dashboard-welcome-date">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+          <div className="saas-loader">
+            <div className="saas-loader-spinner" />
+            <p>Loading your dashboard...</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Overview Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-slide-in-left" style={{ animationDelay: '0.1s' }}>
+          <div className="dashboard-grid">
+            {/* Primary Stats Row */}
+            <div className="dashboard-stats-row fade-in-up" style={{ animationDelay: '0.1s' }}>
               <StatsCard title="Total Meetings" value={stats.total} icon={<Calendar className="h-4 w-4" />} />
               <StatsCard title="Scheduled" value={stats.scheduled} icon={<CheckCircle className="h-4 w-4" />} />
               <StatsCard title="Upcoming" value={stats.upcoming} icon={<Clock className="h-4 w-4" />} />
               <StatsCard title="Canceled" value={stats.canceled} icon={<XCircle className="h-4 w-4" />} />
             </div>
 
-            {/* Time-based Analytics */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 animate-slide-in-left" style={{ animationDelay: '0.2s' }}>
-              <StatsCard title="Today" value={stats.today} icon={<Clock className="h-4 w-4" />} description="Meetings scheduled for today" />
-              <StatsCard title="This Week" value={stats.thisWeek} icon={<Calendar className="h-4 w-4" />} description="Meetings this week" />
-              <StatsCard title="This Month" value={stats.thisMonth} icon={<TrendingUp className="h-4 w-4" />} description="Meetings this month" />
-            </div>
+            {/* Content Grid */}
+            <div className="dashboard-content-grid">
+              {/* Left Column - Timeline & Analytics */}
+              <div className="dashboard-content-left">
+                {/* Time Analytics */}
+                <div className="saas-card fade-in-up" style={{ animationDelay: '0.2s' }}>
+                  <div className="saas-card-header">
+                    <div className="saas-card-header-left">
+                      <TrendingUp className="h-4 w-4 text-blue-400" />
+                      <h3>Time Analytics</h3>
+                    </div>
+                  </div>
+                  <div className="dashboard-analytics-grid">
+                    <div className="dashboard-analytics-item">
+                      <div className="dashboard-analytics-icon dashboard-analytics-icon--blue">
+                        <Clock className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="dashboard-analytics-value">{stats.today}</p>
+                        <p className="dashboard-analytics-label">Today</p>
+                      </div>
+                    </div>
+                    <div className="dashboard-analytics-item">
+                      <div className="dashboard-analytics-icon dashboard-analytics-icon--purple">
+                        <Calendar className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="dashboard-analytics-value">{stats.thisWeek}</p>
+                        <p className="dashboard-analytics-label">This Week</p>
+                      </div>
+                    </div>
+                    <div className="dashboard-analytics-item">
+                      <div className="dashboard-analytics-icon dashboard-analytics-icon--emerald">
+                        <TrendingUp className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="dashboard-analytics-value">{stats.thisMonth}</p>
+                        <p className="dashboard-analytics-label">This Month</p>
+                      </div>
+                    </div>
+                    <div className="dashboard-analytics-item">
+                      <div className="dashboard-analytics-icon dashboard-analytics-icon--amber">
+                        <Users className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <p className="dashboard-analytics-value">{stats.totalAttendees}</p>
+                        <p className="dashboard-analytics-label">Total Attendees</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Engagement Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 animate-slide-in-left" style={{ animationDelay: '0.3s' }}>
-              <StatsCard title="Total Attendees" value={stats.totalAttendees} icon={<Users className="h-4 w-4" />} description="Across all meetings" />
-              <StatsCard title="Avg. Attendees" value={stats.total > 0 ? (stats.totalAttendees / stats.total).toFixed(1) : 0} icon={<Users className="h-4 w-4" />} description="Per meeting" />
+                {/* Upcoming Meetings */}
+                <div className="saas-card fade-in-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="saas-card-header">
+                    <div className="saas-card-header-left">
+                      <Sparkles className="h-4 w-4 text-purple-400" />
+                      <h3>Upcoming Meetings</h3>
+                    </div>
+                    <span className="saas-badge">{upcomingMeetings?.length || 0}</span>
+                  </div>
+                  <div className="dashboard-meetings-list">
+                    {upcomingMeetings && upcomingMeetings.length > 0 ? (
+                      upcomingMeetings.map((meeting) => (
+                        <div key={meeting.id} className="dashboard-meeting-item">
+                          <div className="dashboard-meeting-time">
+                            <span className="dashboard-meeting-hour">
+                              {new Date(meeting.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                            </span>
+                            <span className="dashboard-meeting-date">
+                              {new Date(meeting.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
+                          <div className="dashboard-meeting-divider" />
+                          <div className="dashboard-meeting-details">
+                            <p className="dashboard-meeting-title">{meeting.title}</p>
+                            <p className="dashboard-meeting-attendees">
+                              <Users className="h-3 w-3" />
+                              {meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <div className="dashboard-meeting-status dashboard-meeting-status--scheduled">
+                            Scheduled
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="dashboard-empty">
+                        <Calendar className="h-10 w-10" />
+                        <p>No upcoming meetings</p>
+                        <span>Use AI Chat to schedule your first meeting</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column - Quick Actions & Engagement */}
+              <div className="dashboard-content-right">
+                {/* Quick Actions */}
+                <div className="saas-card fade-in-up" style={{ animationDelay: '0.25s' }}>
+                  <div className="saas-card-header">
+                    <div className="saas-card-header-left">
+                      <Zap className="h-4 w-4 text-amber-400" />
+                      <h3>Quick Actions</h3>
+                    </div>
+                  </div>
+                  <div className="dashboard-actions">
+                    {quickActions.map((action, i) => (
+                      <button key={i} onClick={() => navigate(action.path)} className="dashboard-action-btn">
+                        <div className={`dashboard-action-icon bg-gradient-to-br ${action.color}`}>
+                          {action.icon}
+                        </div>
+                        <div className="dashboard-action-text">
+                          <p className="dashboard-action-label">{action.label}</p>
+                          <p className="dashboard-action-desc">{action.desc}</p>
+                        </div>
+                        <ArrowUpRight className="dashboard-action-arrow" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Engagement */}
+                <div className="saas-card fade-in-up" style={{ animationDelay: '0.35s' }}>
+                  <div className="saas-card-header">
+                    <div className="saas-card-header-left">
+                      <Users className="h-4 w-4 text-emerald-400" />
+                      <h3>Engagement</h3>
+                    </div>
+                  </div>
+                  <div className="dashboard-engagement">
+                    <div className="dashboard-engagement-item">
+                      <div className="dashboard-engagement-bar">
+                        <div className="dashboard-engagement-fill" style={{ width: `${Math.min((stats.totalAttendees / Math.max(stats.total, 1)) * 20, 100)}%` }} />
+                      </div>
+                      <div className="dashboard-engagement-info">
+                        <span className="dashboard-engagement-value">{stats.total > 0 ? (stats.totalAttendees / stats.total).toFixed(1) : 0}</span>
+                        <span className="dashboard-engagement-label">Avg. Attendees / Meeting</span>
+                      </div>
+                    </div>
+                    <div className="dashboard-engagement-item">
+                      <div className="dashboard-engagement-bar">
+                        <div className="dashboard-engagement-fill dashboard-engagement-fill--purple" style={{ width: `${Math.min((stats.scheduled / Math.max(stats.total, 1)) * 100, 100)}%` }} />
+                      </div>
+                      <div className="dashboard-engagement-info">
+                        <span className="dashboard-engagement-value">{stats.total > 0 ? Math.round((stats.scheduled / stats.total) * 100) : 0}%</span>
+                        <span className="dashboard-engagement-label">Active Rate</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
