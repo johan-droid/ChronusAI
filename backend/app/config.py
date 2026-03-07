@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 from typing import List, Optional
 
@@ -7,7 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[".env", ".env.local"],
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -53,6 +54,18 @@ class Settings(BaseSettings):
 
     # CORS
     cors_origins: List[str] = []
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Override redirect URIs in production environment
+        is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
+        if is_production:
+            if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
+                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
+            if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
+                self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
+            if "localhost" in str(self.frontend_url):
+                self.frontend_url = AnyHttpUrl("https://chronus-ai.vercel.app")
 
 
 @lru_cache
