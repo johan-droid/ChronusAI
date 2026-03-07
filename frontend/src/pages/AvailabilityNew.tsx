@@ -130,9 +130,7 @@ export default function Availability() {
         <div className="saas-nav-inner">
           <div className="saas-nav-content">
             <div className="saas-nav-logo" onClick={() => navigate('/dashboard')}>
-              <div className="saas-nav-logo-icon">
-                <Calendar className="h-5 w-5 text-white" />
-              </div>
+              <img src="/logo.png" alt="ChronosAI" className="saas-nav-logo-img" />
               <span className="saas-nav-logo-text">ChronosAI</span>
             </div>
 

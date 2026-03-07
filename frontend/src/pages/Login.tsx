@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Loader2, Shield, ArrowRight, CheckCircle, Zap, Users, Clock, Sparkles, Star } from 'lucide-react';
+import { Loader2, Shield, ArrowRight, CheckCircle, Zap, Users, Clock, Sparkles, Star } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';
@@ -90,9 +90,7 @@ export default function Login() {
           <div className="login-hero-inner">
             {/* Logo */}
             <div className="login-logo">
-              <div className="login-logo-icon">
-                <Calendar className="h-7 w-7 text-white" />
-              </div>
+              <img src="/logo.png" alt="ChronosAI" className="login-logo-img" />
               <div>
                 <h1 className="login-logo-text">ChronosAI</h1>
                 <p className="login-logo-sub">Enterprise Meeting Intelligence</p>
@@ -152,9 +150,7 @@ export default function Login() {
         <div className={`login-form-wrapper ${isAnimated ? 'login-form-wrapper--visible' : ''}`}>
           {/* Mobile logo */}
           <div className="login-mobile-logo">
-            <div className="login-logo-icon login-logo-icon--lg">
-              <Calendar className="h-8 w-8 text-white" />
-            </div>
+            <img src="/logo.png" alt="ChronosAI" className="login-logo-img login-logo-img--lg" />
             <h1 className="login-logo-text login-logo-text--lg">ChronosAI</h1>
             <p className="login-logo-sub">Enterprise AI Meeting Scheduler</p>
           </div>
@@ -237,7 +233,7 @@ export default function Login() {
           <div className="login-overlay-inner">
             <div className="login-overlay-spinner">
               <div className="login-overlay-ring" />
-              <Calendar className="h-6 w-6 text-blue-400 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <img src="/logo.png" alt="" className="h-6 w-auto absolute top-1/2 left-1/2" style={{ transform: 'translate(-50%, -50%)' }} />
             </div>
             <p className="login-overlay-text">Authenticating...</p>
             <p className="login-overlay-sub">Connecting to your Microsoft account</p>
