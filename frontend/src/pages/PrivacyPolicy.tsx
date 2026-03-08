@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
           
           <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground text-lg">
-            Last updated: December 2024
+            Last updated: March 8, 2026
           </p>
         </div>
 
@@ -73,15 +73,15 @@ export default function PrivacyPolicy() {
               
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  ChronosAI is a major project developed by Ashutosh Sahoo, a B.Tech Computer Science 
-                  student, for academic demonstration purposes. This Privacy Policy explains how we collect, 
-                  use, and protect your information when you use our web application.
+                  ChronosAI is an AI-powered meeting scheduler and calendar management platform that 
+                  integrates with Google Calendar to provide intelligent scheduling assistance. This Privacy Policy 
+                  explains how we collect, use, and protect your information when you use our web application.
                 </p>
                 
                 <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                   <p className="text-sm">
-                    <strong className="text-primary">Important:</strong> This is a non-commercial 
-                    educational project. We do not sell, rent, or monetize your personal information.
+                    <strong className="text-primary">Important:</strong> We are committed to protecting your privacy 
+                    and ensuring your data is handled securely and transparently.
                   </p>
                 </div>
                 
@@ -89,9 +89,9 @@ export default function PrivacyPolicy() {
                 <ul className="list-disc list-inside space-y-2 ml-4">
                   <li>Minimal data collection - only what's necessary for functionality</li>
                   <li>Transparent data usage - you always know what we're doing</li>
-                  <li>Educational purpose - this project is for learning and demonstration</li>
+                  <li>Secure storage - encrypted data transmission and storage</li>
                   <li>Your control - you can access and delete your data anytime</li>
-                  <li>Student development - built as part of academic curriculum</li>
+                  <li>Privacy by design - privacy built into every feature</li>
                 </ul>
               </div>
             </div>
@@ -258,12 +258,12 @@ export default function PrivacyPolicy() {
               </p>
               <div className="bg-muted/30 rounded-lg p-4">
                 <p className="text-sm">
-                  <strong>Developer:</strong> Ashutosh Sahoo<br />
-                  <strong>Project Type:</strong> B.Tech Computer Science Major Project<br />
-                  <strong>Purpose:</strong> Educational Demonstration<br />
-                  <strong>Email:</strong> sahoashutosh2022@gmail.com<br />
-                  <strong>GitHub:</strong> https://github.com/johan-droid<br />
-                  <strong>LinkedIn:</strong> https://www.linkedin.com/in/ashutosh-sahoo-064064280
+                  <strong>Developer:</strong> ChronosAI Team<br />
+                  <strong>Project Type:</strong> AI-Powered Scheduling Platform<br />
+                  <strong>Purpose:</strong> Intelligent Calendar Management<br />
+                  <strong>Email:</strong> hello@chronosai.com<br />
+                  <strong>GitHub:</strong> https://github.com/johan-droid/ChronusAI<br />
+                  <strong>Website:</strong> https://chronusai.onrender.com
                 </p>
               </div>
             </div>

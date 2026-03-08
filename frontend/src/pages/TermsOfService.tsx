@@ -34,7 +34,7 @@ export default function TermsOfService() {
           
           <h1 className="text-4xl font-bold text-white mb-4">Terms of Service</h1>
           <p className="text-muted-foreground text-lg">
-            Last updated: December 2024
+            Last updated: March 8, 2026
           </p>
         </div>
 
@@ -73,33 +73,31 @@ export default function TermsOfService() {
               
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Welcome to ChronosAI! These Terms of Service govern your use of our web application, 
-                  which is a major project developed by Ashutosh Sahoo, a B.Tech Computer Science student, 
-                  for educational and demonstration purposes.
+                  Welcome to ChronosAI! These Terms of Service govern your use of our AI-powered meeting scheduler 
+                  and calendar management platform. By accessing or using ChronosAI, you agree to be bound by these terms.
                 </p>
                 
                 <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                   <p className="text-sm">
-                    <strong className="text-primary">Important Notice:</strong> ChronosAI is a non-commercial 
-                    educational project. By using this service, you acknowledge that this is a student 
-                    major project and not a commercial product.
+                    <strong className="text-primary">Important Notice:</strong> ChronosAI is an AI-powered scheduling platform 
+                    that integrates with Google Calendar to provide intelligent meeting management. Please read these terms carefully.
                   </p>
                 </div>
                 
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">What is ChronosAI?</h3>
                 <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>A calendar integration web application</li>
-                  <li>B.Tech Computer Science major project for academic assessment</li>
-                  <li>Developed by Ashutosh Sahoo as part of college curriculum</li>
-                  <li>Demonstrates modern web development capabilities</li>
-                  <li>Integrates with Google Calendar API for functionality</li>
-                  <li>Built as a learning and educational tool</li>
+                  <li>AI-powered meeting scheduler and calendar management platform</li>
+                  <li>Integrates with Google Calendar API for seamless functionality</li>
+                  <li>Provides intelligent scheduling suggestions and conflict resolution</li>
+                  <li>Offers natural language meeting management through AI chat</li>
+                  <li>Built with modern web technologies and security best practices</li>
+                  <li>Designed to optimize your time and calendar management</li>
                 </ul>
                 
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Acceptance of Terms</h3>
                 <p>
-                  By accessing or using ChronosAI, you agree to these Terms of Service. 
-                  If you do not agree to these terms, please do not use the application.
+                  By accessing or using ChronosAI, you acknowledge that you have read, understood, and agree 
+                  to be bound by these Terms of Service. If you do not agree to these terms, please do not use the application.
                 </p>
               </div>
             </div>
@@ -217,8 +215,8 @@ export default function TermsOfService() {
                 <h3 className="text-lg font-medium text-white mb-3">ChronosAI Ownership</h3>
                 <p>
                   The ChronosAI application, including its code, design, and functionality, 
-                  is the intellectual property of Ashutosh Sahoo, developed as a B.Tech Computer Science 
-                  major project. The project is owned by the student developer and their educational institution.
+                  is the intellectual property of the ChronosAI development team. The platform 
+                  is protected by intellectual property laws and international treaties.
                 </p>
                 
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Your Content</h3>
@@ -230,33 +228,29 @@ export default function TermsOfService() {
                   <li>Access your calendar data for service functionality</li>
                   <li>Process your data to provide calendar features</li>
                   <li>Store necessary data for service operation</li>
+                  <li>Improve our AI algorithms using anonymized usage patterns</li>
                 </ul>
                 
-                <h3 className="text-lg font-medium text-white mt-6 mb-3">Google Services</h3>
+                <h3 className="text-lg font-medium text-white mt-6 mb-3">Third-Party Services</h3>
                 <p>
                   Google Calendar and related services are owned by Google LLC. 
                   Our use of these services is subject to Google's terms and conditions. 
                   We do not claim any ownership over Google's intellectual property.
                 </p>
                 
-                <h3 className="text-lg font-medium text-white mt-6 mb-3">Educational Use</h3>
+                <h3 className="text-lg font-medium text-white mt-6 mb-3">AI Technology</h3>
                 <p>
-                  This project may be used for educational purposes, including:
+                  Our AI scheduling technology is proprietary and protected. 
+                  The AI models and algorithms used for intelligent scheduling are 
+                  the intellectual property of ChronosAI.
                 </p>
-                <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
-                  <li>Academic assessment and grading</li>
-                  <li>Technical demonstrations</li>
-                  <li>Portfolio and resume purposes</li>
-                  <li>Educational research and study</li>
-                  <li>College curriculum requirements</li>
-                </ul>
                 
                 <div className="bg-muted/30 rounded-lg p-4 mt-6">
                   <h4 className="font-medium text-white mb-2">Attribution</h4>
                   <p className="text-sm">
-                    If you reference or use this project in academic or professional contexts, 
-                    please provide appropriate attribution to Ashutosh Sahoo as the developer 
-                    and acknowledge its educational nature as a B.Tech Computer Science major project.
+                    If you reference or use ChronosAI in academic or professional contexts, 
+                    please provide appropriate attribution to the ChronosAI development team 
+                    and include a link to our website.
                   </p>
                 </div>
               </div>
@@ -296,12 +290,12 @@ export default function TermsOfService() {
                 <h4 className="font-medium text-white mb-2">Contact Information</h4>
                 <div className="bg-muted/30 rounded-lg p-4">
                   <p className="text-sm">
-                    <strong>Developer:</strong> Ashutosh Sahoo<br />
-                    <strong>Project Type:</strong> B.Tech Computer Science Major Project<br />
-                    <strong>Purpose:</strong> Educational Demonstration<br />
-                    <strong>Email:</strong> sahoashutosh2022@gmail.com<br />
-                    <strong>GitHub:</strong> https://github.com/johan-droid<br />
-                    <strong>LinkedIn:</strong> https://www.linkedin.com/in/ashutosh-sahoo-064064280
+                    <strong>Developer:</strong> ChronosAI Team<br />
+                    <strong>Project Type:</strong> AI-Powered Scheduling Platform<br />
+                    <strong>Purpose:</strong> Intelligent Calendar Management<br />
+                    <strong>Email:</strong> hello@chronosai.com<br />
+                    <strong>GitHub:</strong> https://github.com/johan-droid/ChronusAI<br />
+                    <strong>Website:</strong> https://chronusai.onrender.com
                   </p>
                 </div>
               </div>
