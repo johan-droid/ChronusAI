@@ -7,6 +7,10 @@ export const useMeetings = () => {
     queryKey: ['meetings'],
     queryFn: () => apiClient.getMeetings(),
     refetchInterval: 60000, // Refresh every minute
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    staleTime: 30000, // Consider data stale after 30 seconds
+    gcTime: 300000, // Keep in cache for 5 minutes (gcTime replaced cacheTime)
   });
 };
 

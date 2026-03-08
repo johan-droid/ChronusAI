@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List
+import structlog
 
 from fastapi import APIRouter, Depends, HTTPException, status
 import uuid
@@ -14,21 +15,93 @@ from app.models.meeting import Meeting
 from app.models.user import User
 from app.schemas.meeting import Attendee, MeetingCreate, MeetingRead, MeetingUpdate
 
+logger = structlog.get_logger()
+
 router = APIRouter(prefix="/meetings", tags=["meetings"])
+
+
+async def sync_google_calendar_meetings(current_user: User, calendar_provider, db: AsyncSession):
+    """Sync meetings from Google Calendar to local database."""
+    try:
+        # Get meetings from Google Calendar for the next 30 days
+        end_time = datetime.now(timezone.utc) + timedelta(days=30)
+        start_time = datetime.now(timezone.utc) - timedelta(days=7)  # Include past 7 days
+        
+        # Fetch events from Google Calendar
+        events = await calendar_provider.list_events(start_time, end_time)
+        
+        # Sync each event to database
+        for event in events:
+            # Check if meeting already exists
+            result = await db.execute(
+                select(Meeting).where(
+                    and_(
+                        Meeting.user_id == current_user.id,
+                        Meeting.external_event_id == event.id
+                    )
+                )
+            )
+            existing_meeting = result.scalar_one_or_none()
+            
+            if existing_meeting:
+                # Update existing meeting
+                existing_meeting.title = event.summary
+                existing_meeting.description = event.description
+                existing_meeting.start_time = event.start
+                existing_meeting.end_time = event.end
+                existing_meeting.attendees = [attendee.model_dump() for attendee in event.attendees] if event.attendees else []
+                existing_meeting.status = "scheduled"
+                existing_meeting.updated_at = datetime.now(timezone.utc)
+            else:
+                # Create new meeting
+                meeting = Meeting(
+                    user_id=current_user.id,
+                    external_event_id=event.id,
+                    title=event.summary,
+                    description=event.description,
+                    start_time=event.start,
+                    end_time=event.end,
+                    attendees=[attendee.model_dump() for attendee in event.attendees] if event.attendees else [],
+                    status="scheduled",
+                    provider=current_user.provider,
+                    raw_user_input="Synced from Google Calendar"
+                )
+                db.add(meeting)
+        
+        await db.commit()
+        logger.info("google_calendar_synced", user_id=current_user.id, events_count=len(events))
+        
+    except Exception as e:
+        logger.error("google_calendar_sync_failed", error=str(e), user_id=current_user.id)
+        # Don't raise exception - continue with cached data
 
 
 @router.get("/", response_model=List[MeetingRead])
 async def get_meetings(
     current_user: User = Depends(get_current_user),
+    calendar_provider = Depends(get_calendar_provider),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all meetings for the current user."""
-    result = await db.execute(
-        select(Meeting)
-        .where(and_(Meeting.user_id == current_user.id, Meeting.status != "canceled"))
-        .order_by(Meeting.start_time)
-    )
-    return list(result.scalars().all())
+    """Get all meetings for the current user with Google Calendar sync."""
+    try:
+        # First, sync meetings from Google Calendar
+        await sync_google_calendar_meetings(current_user, calendar_provider, db)
+        
+        # Then get meetings from database
+        result = await db.execute(
+            select(Meeting)
+            .where(and_(Meeting.user_id == current_user.id, Meeting.status != "canceled"))
+            .order_by(Meeting.start_time)
+        )
+        return list(result.scalars().all())
+    except Exception as e:
+        # If sync fails, still return cached meetings from database
+        result = await db.execute(
+            select(Meeting)
+            .where(and_(Meeting.user_id == current_user.id, Meeting.status != "canceled"))
+            .order_by(Meeting.start_time)
+        )
+        return list(result.scalars().all())
 
 
 @router.get("/{meeting_id}", response_model=MeetingRead)
