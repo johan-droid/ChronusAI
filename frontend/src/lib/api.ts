@@ -76,7 +76,12 @@ class ApiClient {
   // Auth endpoints
   async getAuthUrl(provider: 'google' | 'outlook'): Promise<AuthUrlResponse> {
     try {
-      const response = await this.client.get(`/auth/${provider}/login`);
+      // Google OAuth is at root level, Microsoft OAuth is at /api/v1
+      const baseUrl = provider === 'google' 
+        ? API_BASE_URL.replace('/api/v1', '') // Remove /api/v1 for Google
+        : API_BASE_URL; // Keep /api/v1 for Microsoft
+      
+      const response = await this.client.get(`${baseUrl}/auth/${provider}/login`);
       return response.data;
     } catch (error: any) {
       console.error('Auth URL error:', error);
