@@ -24,6 +24,7 @@ from app.models.user import User
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.meeting import Attendee, MeetingCreate
 from app.services.llm_service import llm_service
+from app.services.ai_scheduling_service import ai_scheduling_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 logger = structlog.get_logger()
@@ -49,6 +50,8 @@ async def send_message(
         parsed_intent = await llm_service.parse_intent(
             str(payload.message),
             str(current_user.timezone),
+            str(current_user.email),
+            str(current_user.name or "User"),
             context,
         )
         
@@ -72,12 +75,36 @@ async def send_message(
             response = await handle_query_availability(
                 parsed_intent, current_user, calendar_provider
             )
-        else:
-            # Use the response from the AI directly
-            response = ChatResponse(
-                response=parsed_intent.response,
-                intent=parsed_intent.intent
+        elif parsed_intent.intent == "find_time":
+            response = await handle_find_optimal_time(
+                parsed_intent, current_user, calendar_provider
             )
+        elif parsed_intent.intent == "suggest_times":
+            response = await handle_ai_suggestions(
+                parsed_intent, current_user, calendar_provider, db
+            )
+        elif parsed_intent.intent == "list_meetings":
+            response = await handle_list_meetings(
+                parsed_intent, current_user, calendar_provider, db
+            )
+        else:
+            # Use the response from the AI directly or generate helpful response
+            if parsed_intent.response and parsed_intent.response.strip():
+                response = ChatResponse(
+                    response=parsed_intent.response,
+                    intent=parsed_intent.intent
+                )
+            else:
+                # Generate helpful response with user context
+                helpful_response = await llm_service.generate_helpful_response(
+                    payload.message,
+                    str(current_user.name or "User"),
+                    str(current_user.email)
+                )
+                response = ChatResponse(
+                    response=helpful_response,
+                    intent="chat"
+                )
         
         # Add bot response to context
         context.append({"role": "assistant", "content": response.response})
@@ -336,4 +363,156 @@ async def handle_query_availability(intent, user: User, calendar_provider):
         return ChatResponse(
             response="I couldn't check your availability right now. Please try again.",
             intent="check_availability"
+        )
+
+
+async def handle_find_optimal_time(intent, user: User, calendar_provider):
+    """Handle finding optimal meeting times with AI."""
+    try:
+        # Extract parameters from intent or use defaults
+        duration = intent.duration_minutes or 60
+        attendees = intent.attendees or [user.email]
+        meeting_type = intent.meeting_type or "meeting"
+        
+        # Get AI suggestions for optimal times
+        suggestions = await ai_scheduling_service.suggest_optimal_meeting_times(
+            duration_minutes=duration,
+            attendees=attendees,
+            meeting_type=meeting_type,
+            user_timezone=str(user.timezone),
+            preferred_days=None,
+            time_constraints={}
+        )
+        
+        if suggestions.get("optimal_times"):
+            times_text = "\n".join([
+                f"• {suggestion['time']}: {suggestion['reason']}"
+                for suggestion in suggestions["optimal_times"][:3]
+            ])
+            return ChatResponse(
+                response=f"🎯 Here are the best times for your {meeting_type}:\n{times_text}\n\nWould you like me to schedule one of these?",
+                intent="find_time",
+                suggestions=suggestions.get("optimal_times", [])
+            )
+        else:
+            return ChatResponse(
+                response="I couldn't find optimal times right now. Would you like me to check your availability instead?",
+                intent="find_time"
+            )
+            
+    except Exception as e:
+        logger.error("find_optimal_time_failed", error=str(e))
+        return ChatResponse(
+            response="I couldn't find optimal meeting times. Please try again.",
+            intent="find_time"
+        )
+
+
+async def handle_ai_suggestions(intent, user: User, calendar_provider, db: AsyncSession):
+    """Handle AI-powered scheduling suggestions."""
+    try:
+        # Get user's recent meetings for analysis
+        result = await db.execute(
+            select(Meeting)
+            .where(Meeting.user_id == user.id)
+            .order_by(Meeting.start_time.desc())
+            .limit(20)
+        )
+        recent_meetings = result.scalars().all()
+        
+        # Convert events to dict format for AI analysis
+        events_data = []
+        for meeting in recent_meetings:
+            events_data.append({
+                "title": meeting.title,
+                "start_time": meeting.start_time.isoformat(),
+                "end_time": meeting.end_time.isoformat(),
+                "attendees": meeting.attendees,
+                "status": meeting.status
+            })
+        
+        # Get AI analysis and recommendations
+        date_range = (
+            datetime.now(timezone.utc) - timedelta(days=30),
+            datetime.now(timezone.utc)
+        )
+        
+        analysis = await ai_scheduling_service.analyze_calendar_patterns(
+            events_data, str(user.timezone), date_range
+        )
+        
+        if analysis.get("recommendations"):
+            recommendations_text = "\n".join([
+                f"• {rec.get('description', 'Suggestion')}"
+                for rec in analysis["recommendations"][:5]
+            ])
+            return ChatResponse(
+                response=f"🧠 Based on your calendar patterns, here are my suggestions:\n{recommendations_text}\n\nWould you like me to help implement any of these?",
+                intent="suggest_times",
+                analysis=analysis
+            )
+        else:
+            return ChatResponse(
+                response="I need more calendar data to provide personalized suggestions. Let's schedule a few more meetings first!",
+                intent="suggest_times"
+            )
+            
+    except Exception as e:
+        logger.error("ai_suggestions_failed", error=str(e))
+        return ChatResponse(
+            response="I couldn't generate AI suggestions right now. Please try again.",
+            intent="suggest_times"
+        )
+
+
+async def handle_list_meetings(intent, user: User, calendar_provider, db: AsyncSession):
+    """Handle listing meetings with AI intelligence."""
+    try:
+        # Get upcoming meetings
+        result = await db.execute(
+            select(Meeting)
+            .where(
+                and_(
+                    Meeting.user_id == user.id,
+                    Meeting.start_time > datetime.now(timezone.utc),
+                    Meeting.status == "scheduled"
+                )
+            )
+            .order_by(Meeting.start_time.asc())
+            .limit(10)
+        )
+        meetings = result.scalars().all()
+        
+        if not meetings:
+            return ChatResponse(
+                response="📅 You have no upcoming meetings scheduled.",
+                intent="list_meetings"
+            )
+        
+        # Format meetings with AI insights
+        meetings_text = []
+        for meeting in meetings:
+            try:
+                local_time = meeting.start_time.astimezone(ZoneInfo(str(user.timezone)))
+                formatted_time = local_time.strftime("%A, %B %d at %I:%M %p")
+                meetings_text.append(f"• {meeting.title} - {formatted_time}")
+            except Exception:
+                meetings_text.append(f"• {meeting.title} - {meeting.start_time}")
+        
+        return ChatResponse(
+            response=f"📅 Your upcoming meetings:\n{chr(10).join(meetings_text)}\n\nWould you like me to help you manage any of these?",
+            intent="list_meetings",
+            meetings=[{
+                "id": str(m.id),
+                "title": m.title,
+                "start_time": m.start_time.isoformat(),
+                "end_time": m.end_time.isoformat()
+            } for m in meetings]
+        )
+        
+    except Exception as e:
+        logger.error("list_meetings_failed", error=str(e))
+        return ChatResponse(
+            response="I couldn't retrieve your meetings. Please try again.",
+            intent="list_meetings"
         )

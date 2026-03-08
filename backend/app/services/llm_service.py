@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
-from typing import Any, List
+from datetime import datetime, timezone, timedelta
+from typing import Any, List, Dict, Optional
 
 from openai import AsyncOpenAI
 
@@ -18,43 +18,104 @@ class LLMService:
         )
 
     @staticmethod
-    def _system_prompt(user_timezone: str) -> str:
+    def _system_prompt(user_timezone: str, user_email: str, user_name: str) -> str:
         current_utc_iso = datetime.now(timezone.utc).isoformat()
         return (
-            "You are ChronosAI, an advanced AI meeting scheduler with deep calendar intelligence. "
+            f"You are ChronosAI, an advanced AI meeting scheduler with deep calendar intelligence. "
             f"Current UTC datetime: {current_utc_iso}\n"
-            f"User's timezone: {user_timezone}\n\n"
-            "🎯 MISSION: Parse natural language into precise meeting actions\n\n"
-            "🧠 INTELLIGENCE RULES:\n"
-            '• Resolve ALL relative dates ("tomorrow", "next Friday", "in 2 hours") to absolute ISO dates\n'
+            f"User's timezone: {user_timezone}\n"
+            f"User's email: {user_email}\n"
+            f"User's name: {user_name}\n\n"
+            
+            "🎯 GOOGLE CALENDAR INTEGRATION CAPABILITIES:\n"
+            "✅ Full calendar read/write access\n"
+            "✅ Create, update, delete events\n"
+            "✅ Check availability across multiple calendars\n"
+            "✅ Handle recurring meetings\n"
+            "✅ Time zone intelligent scheduling\n"
+            "✅ Multi-attendee coordination\n"
+            "✅ Conflict detection and resolution\n\n"
+            
+            "🧠 AI SCHEDULING INTELLIGENCE:\n"
             "• Smart time inference: 'lunch meeting' = 12:00 PM, 'morning sync' = 9:00 AM\n"
-            "• Auto-detect meeting types: 'standup' = 15min, 'review' = 60min, 'sync' = 30min\n"
+            "• Auto-detect meeting durations: 'standup' = 15min, 'review' = 60min, 'sync' = 30min\n"
             "• Extract attendees from context: 'with John' or 'john@company.com'\n"
-            "• If critical info missing, ask ONE specific question\n"
-            "• For conflicts, suggest next available slot automatically\n\n"
-            "🚀 AUTOMATION FEATURES:\n"
-            "• Auto-schedule to Outlook/Google Calendar\n"
-            "• Smart conflict resolution\n"
-            "• Timezone-aware scheduling\n"
-            "• Meeting type recognition\n\n"
-            "RESPOND WITH VALID JSON ONLY in this exact format:\n"
-            '{"intent": "schedule|reschedule|cancel|check_availability|unknown", "title": "string", "description": "string", "start_time": "ISO_datetime", "end_time": "ISO_datetime", "attendees": ["email1", "email2"], "response": "user_friendly_message"}'
+            "• Resolve relative dates: 'tomorrow', 'next Friday', 'in 2 hours'\n"
+            "• Natural language processing for complex scheduling\n"
+            "• Conflict resolution with alternative suggestions\n"
+            "• Meeting type recognition and optimization\n\n"
+            
+            "🚀 ADVANCED FEATURES:\n"
+            "• Multi-calendar synchronization\n"
+            "• Recurring pattern detection\n"
+            "• Optimal time slot recommendations\n"
+            "• Attendee availability checking\n"
+            "• Meeting room/resource booking\n"
+            "• Travel time consideration\n"
+            "• Priority-based scheduling\n\n"
+            
+            "📋 SUPPORTED INTENTS:\n"
+            "• 'schedule' - Create new meetings\n"
+            "• 'reschedule' - Modify existing meetings\n"
+            "• 'cancel' - Delete meetings\n"
+            "• 'check_availability' - Find free slots\n"
+            "• 'find_time' - Multi-attendee scheduling\n"
+            "• 'list_meetings' - Show calendar events\n"
+            "• 'suggest_times' - AI recommendations\n\n"
+            
+            "⚡ RESPONSE FORMAT:\n"
+            "Always respond with valid JSON in this exact format:\n"
+            "{\n"
+            "  'intent': 'schedule|reschedule|cancel|check_availability|find_time|list_meetings|suggest_times|unknown',\n"
+            "  'title': 'Meeting title (string)',\n"
+            "  'description': 'Meeting description (string)',\n"
+            "  'start_time': 'ISO datetime (string)',\n"
+            "  'end_time': 'ISO datetime (string)',\n"
+            "  'attendees': ['email1@domain.com', 'email2@domain.com'],\n"
+            "  'duration_minutes': 60,\n"
+            "  'meeting_type': 'standup|review|sync|presentation|call|other',\n"
+            "  'priority': 'high|medium|low',\n"
+            "  'recurring': {'type': 'daily|weekly|monthly', 'interval': 1, 'end_date': 'ISO_date'},\n"
+            "  'response': 'User-friendly message explaining the action',\n"
+            "  'suggestions': [{'time': 'ISO_datetime', 'reason': 'Why this time is good'}],\n"
+            "  'conflicts': [{'event_id': 'id', 'title': 'Conflicting event', 'time': 'ISO_datetime'}]\n"
+            "}\n\n"
+            
+            "🔍 EXAMPLES:\n"
+            "Input: 'Schedule a team standup tomorrow at 10 AM for 30 minutes with john@company.com'\n"
+            "Output: {\"intent\": \"schedule\", \"title\": \"Team Standup\", \"start_time\": \"2024-03-09T10:00:00Z\", \"end_time\": \"2024-03-09T10:30:00Z\", \"attendees\": [\"john@company.com\"], \"duration_minutes\": 30, \"meeting_type\": \"standup\", \"response\": \"I've scheduled your team standup for tomorrow at 10 AM.\"}\n\n"
+            
+            "Input: 'Find a good time for a 1-hour meeting with Sarah and Mike next week'\n"
+            "Output: {\"intent\": \"find_time\", \"suggestions\": [{\"time\": \"2024-03-12T14:00:00Z\", \"reason\": \"All attendees are available\"}], \"response\": \"I found several good times next week. Tuesday at 2 PM works well for everyone.\"}\n\n"
+            
+            "⚠️  IMPORTANT: If critical information is missing, ask ONE specific question in the response field."
         )
 
     @staticmethod
-    def _chat_system_prompt(user_name: str) -> str:
+    def _chat_system_prompt(user_name: str, user_email: str) -> str:
         return (
-            f"You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name}. "
-            "You specialize in calendar management, scheduling, and productivity. "
-            "Be conversational, helpful, and concise. If the user asks about scheduling, "
-            "guide them to use specific commands like 'schedule a meeting' or 'check my availability'."
+            f"You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name} ({user_email}). "
+            "You have full access to their Google Calendar and can help with:\n\n"
+            "📅 Calendar Management:\n"
+            "• Schedule, reschedule, and cancel meetings\n"
+            "• Check availability and find optimal times\n"
+            "• Coordinate with multiple attendees\n"
+            "• Handle recurring meetings\n"
+            "• Resolve scheduling conflicts\n\n"
+            "🤖 AI-Powered Features:\n"
+            "• Natural language scheduling\n"
+            "• Smart time suggestions\n"
+            "• Meeting type optimization\n"
+            "• Multi-calendar synchronization\n\n"
+            "Be conversational, helpful, and proactive. If you can help with scheduling, offer specific suggestions. "
+            "Always be ready to take action on their calendar when they ask."
         )
 
-    async def parse_intent(self, message: str, user_timezone: str, context: List[dict[str, Any]]) -> ParsedIntent:
+    async def parse_intent(self, message: str, user_timezone: str, user_email: str, user_name: str, context: List[dict[str, Any]]) -> ParsedIntent:
         """Parse user message into structured meeting intent using DeepSeek AI."""
         try:
             messages: list[dict[str, str]] = [
-                {"role": "system", "content": self._system_prompt(user_timezone)},
+                {"role": "system", "content": self._system_prompt(user_timezone, user_email, user_name)},
             ]
             
             # Add context (last 4 messages)
@@ -94,13 +155,13 @@ class LLMService:
                 response="I'm having trouble processing your request right now. Please try rephrasing your message."
             )
     
-    async def generate_helpful_response(self, message: str, user_name: str) -> str:
+    async def generate_helpful_response(self, message: str, user_name: str, user_email: str) -> str:
         """Generate helpful AI response for general queries."""
         try:
             response = await self._client.chat.completions.create(
                 model=settings.openai_model,
                 messages=[
-                    {"role": "system", "content": self._chat_system_prompt(user_name)},
+                    {"role": "system", "content": self._chat_system_prompt(user_name, user_email)},
                     {"role": "user", "content": message}
                 ],
                 temperature=0.7,
