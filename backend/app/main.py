@@ -90,7 +90,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         str(settings.frontend_url),
-        "https://chronusai.netlify.app",
+        "https://chronus-ai.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
         *settings.cors_origins
