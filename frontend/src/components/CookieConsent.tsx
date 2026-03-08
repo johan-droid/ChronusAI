@@ -9,12 +9,25 @@ interface CookieConsentProps {
 export default function CookieConsent({ onAccept, onReject }: CookieConsentProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // Check if user has already made a choice
     const consent = localStorage.getItem('cookie-consent');
-    if (!consent) {
-      setIsVisible(true);
+    const analytics = localStorage.getItem('cookie-analytics');
+    const marketing = localStorage.getItem('cookie-marketing');
+    
+    // Only show if no consent has been given
+    if (!consent || !analytics || !marketing) {
+      // Add a small delay to ensure the page is fully loaded
+      const timer = setTimeout(() => {
+        setIsVisible(true);
+        setIsInitialized(true);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    } else {
+      setIsInitialized(true);
     }
   }, []);
 
@@ -24,6 +37,11 @@ export default function CookieConsent({ onAccept, onReject }: CookieConsentProps
     localStorage.setItem('cookie-marketing', 'false');
     setIsVisible(false);
     onAccept?.();
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { 
+      detail: { consent: 'accepted' } 
+    }));
   };
 
   const handleReject = () => {
@@ -32,16 +50,25 @@ export default function CookieConsent({ onAccept, onReject }: CookieConsentProps
     localStorage.setItem('cookie-marketing', 'false');
     setIsVisible(false);
     onReject?.();
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new CustomEvent('cookieConsentUpdated', { 
+      detail: { consent: 'rejected' } 
+    }));
   };
 
   const handleCustomize = () => {
     setShowDetails(true);
   };
 
+  // Don't render anything until initialized
+  if (!isInitialized) return null;
+
+  // Don't show if consent has been given
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border/50 shadow-2xl animate-slide-up">
+    <div className="fixed bottom-0 left-0 right-0 z-[100] bg-background/95 backdrop-blur-lg border-t border-border/50 shadow-2xl animate-slide-up">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3 flex-1">
