@@ -47,4 +47,4 @@ services:
       - key: MICROSOFT_TENANT_ID
         value: common
       - key: FRONTEND_URL
-        value: https://chronus-ai.vercel.app
+        value: https://chronos-ai-theta.vercel.app
