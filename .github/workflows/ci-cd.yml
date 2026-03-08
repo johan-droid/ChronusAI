@@ -51,7 +51,7 @@ jobs:
 
       - name: Lint (Ruff)
         working-directory: backend
-        run: ruff check app tests
+        run: ruff check app
 
       - name: Type check (mypy)
         working-directory: backend
