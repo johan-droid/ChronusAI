@@ -248,7 +248,7 @@ export default function LandingPage() {
               </h1>
 
               <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                Transform your calendar management with AI-powered scheduling. Simply tell ChronosAI what you need in plain English, and watch it handle complex scheduling automatically.
+                Transform your calendar management with AI-powered scheduling. Simply tell ChronusAI what you need in plain English, and watch it handle complex scheduling automatically.
               </p>
             </div>
 
@@ -442,7 +442,7 @@ export default function LandingPage() {
                 <span className="gradient-text block">scheduling workflow?</span>
               </h2>
               <p className="text-xl text-muted-foreground">
-                Join thousands of teams already using ChronosAI to save time and eliminate scheduling conflicts.
+                Join thousands of teams already using ChronusAI to save time and eliminate scheduling conflicts.
               </p>
             </div>
 

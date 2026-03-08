@@ -149,6 +149,24 @@ class OAuth2Provider:
             
             return response.json()
 
+    async def get_user_info(self, access_token: str) -> Dict[str, Any]:
+        """Get user information from the OAuth provider."""
+        if self.provider == "google":
+            userinfo_url = "https://www.googleapis.com/oauth2/v3/userinfo"
+        elif self.provider == "outlook":
+            userinfo_url = "https://graph.microsoft.com/v1.0/me"
+        else:
+            raise ValueError(f"Unsupported provider for user info: {self.provider}")
+            
+        async with httpx.AsyncClient() as client:
+            headers = {"Authorization": f"Bearer {access_token}"}
+            response = await client.get(userinfo_url, headers=headers)
+            
+            if response.status_code != 200:
+                raise Exception(f"Failed to get user info: {response.text}")
+            
+            return response.json()
+
 
 def get_oauth_provider(provider: str) -> OAuth2Provider:
     """Get OAuth provider instance."""
