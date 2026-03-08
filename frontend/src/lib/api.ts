@@ -4,7 +4,19 @@ import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse } from '
 import { cacheManager, clearAuthCache } from './cache';
 import { useAuthStore } from '../store/authStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const getBaseUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  // Ensure it always ends with /api/v1 (avoid double versioning or missing versioning)
+  let url = envUrl.replace(/\/$/, '');
+  if (!url.endsWith('/api/v1') && !url.endsWith('/api')) {
+    url = `${url}/api/v1`;
+  } else if (url.endsWith('/api')) {
+    url = `${url}/v1`;
+  }
+  return url;
+};
+
+const API_BASE_URL = getBaseUrl();
 
 class ApiClient {
   private client: AxiosInstance;
@@ -76,7 +88,7 @@ class ApiClient {
   // Auth endpoints
   async getAuthUrl(provider: 'google' | 'outlook' | 'zoom'): Promise<AuthUrlResponse> {
     try {
-      const response = await this.client.get(`/auth/${provider}/login`);
+      const response = await this.client.get(`auth/${provider}/login`);
       return response.data;
     } catch (error: unknown) {
       console.error('Auth URL error:', error);
@@ -85,12 +97,12 @@ class ApiClient {
   }
 
   async login(data: any): Promise<{ access_token: string; refresh_token: string; user: User }> {
-    const response = await this.client.post('/auth/login', data);
+    const response = await this.client.post('auth/login', data);
     return response.data;
   }
 
   async signup(data: any): Promise<{ access_token: string; refresh_token: string; user: User }> {
-    const response = await this.client.post('/auth/signup', data);
+    const response = await this.client.post('auth/signup', data);
     return response.data;
   }
 
@@ -98,19 +110,19 @@ class ApiClient {
     const cached = cacheManager.get('user:current') as User | null;
     if (cached) return cached;
 
-    const response = await this.client.get('/users/me');
+    const response = await this.client.get('users/me');
     cacheManager.set('user:current', response.data, 10 * 60 * 1000);
     return response.data;
   }
 
   async checkStatus(): Promise<{ online: boolean; latency: string }> {
-    const response = await this.client.get('/status');
+    const response = await this.client.get('status');
     return response.data;
   }
 
   // Chat endpoints
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
-    const response = await this.client.post('/chat/message', request);
+    const response = await this.client.post('chat/message', request);
     return response.data;
   }
 
@@ -119,23 +131,23 @@ class ApiClient {
     const cached = cacheManager.get('meetings:list') as Meeting[] | null;
     if (cached) return cached;
 
-    const response = await this.client.get('/meetings');
+    const response = await this.client.get('meetings');
     cacheManager.set('meetings:list', response.data, 2 * 60 * 1000);
     return response.data;
   }
 
   async getMeeting(meetingId: string): Promise<Meeting> {
-    const response = await this.client.get(`/meetings/${meetingId}`);
+    const response = await this.client.get(`meetings/${meetingId}`);
     return response.data;
   }
 
   async updateMeeting(meetingId: string, updates: Partial<Meeting>): Promise<Meeting> {
-    const response = await this.client.put(`/meetings/${meetingId}`, updates);
+    const response = await this.client.put(`meetings/${meetingId}`, updates);
     return response.data;
   }
 
   async deleteMeeting(meetingId: string): Promise<{ message: string }> {
-    const response = await this.client.delete(`/meetings/${meetingId}`);
+    const response = await this.client.delete(`meetings/${meetingId}`);
     cacheManager.invalidatePattern('meetings');
     return response.data;
   }
@@ -143,21 +155,21 @@ class ApiClient {
   // Auth methods
   async logout(): Promise<{ message: string; logout_url?: string; provider?: string }> {
     const { refreshToken } = useAuthStore.getState();
-    const response = await this.client.post('/auth/logout', {}, {
+    const response = await this.client.post('auth/logout', {}, {
       headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {}
     });
     return response.data;
   }
 
   async logoutAll(): Promise<{ message: string; logout_url?: string; provider?: string }> {
-    const response = await this.client.post('/auth/logout-all');
+    const response = await this.client.post('auth/logout-all');
     // Broadcast logout to all tabs/windows
     localStorage.setItem('logout-all', Date.now().toString());
     return response.data;
   }
 
   async deleteAccount(): Promise<{ message: string; provider?: string }> {
-    const response = await this.client.delete('/auth/account');
+    const response = await this.client.delete('auth/account');
     return response.data;
   }
 
@@ -187,7 +199,7 @@ class ApiClient {
   }> {
     const params = new URLSearchParams({ date });
     if (timezone) params.append('timezone', timezone);
-    const response = await this.client.get(`/availability?${params.toString()}`);
+    const response = await this.client.get(`availability?${params.toString()}`);
     return response.data;
   }
 }

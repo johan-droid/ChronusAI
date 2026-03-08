@@ -81,9 +81,7 @@ class Settings(BaseSettings):
         # Add production URLs to CORS
         if is_production:
             production_urls = [
-                "https://chronusai.onrender.com",
-                "https://chronos-ai.netlify.app",
-                "https://chronus-ai.vercel.app"
+                "https://chronusai.onrender.com"
             ]
             for url in production_urls:
                 if url not in self.cors_origins:

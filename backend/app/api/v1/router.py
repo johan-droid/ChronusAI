@@ -15,7 +15,7 @@ api_router = APIRouter(
 )
 
 # OAuth endpoints
-api_router.include_router(auth.microsoft_router, tags=["authentication"])
+api_router.include_router(auth.microsoft_router, prefix="/auth", tags=["authentication"])
 api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
 api_router.include_router(availability.router)
 api_router.include_router(calendar.router)
