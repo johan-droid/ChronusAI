@@ -46,6 +46,7 @@ class ZoomClient:
                 raise Exception(f"Failed to create Zoom meeting: {response.text}")
             
             return response.json()
+        raise Exception("Unreachable")
 
     async def get_meeting(self, meeting_id: str) -> Dict[str, Any]:
         """Get Zoom meeting details."""
@@ -55,6 +56,7 @@ class ZoomClient:
             if response.status_code != 200:
                 raise Exception(f"Failed to get Zoom meeting: {response.text}")
             return response.json()
+        raise Exception("Unreachable")
 
     async def update_meeting(
         self,
@@ -81,6 +83,7 @@ class ZoomClient:
                 logger.error("zoom_meeting_update_failed", status=response.status_code, text=response.text)
                 raise Exception(f"Failed to update Zoom meeting: {response.text}")
             return await self.get_meeting(meeting_id)
+        raise Exception("Unreachable")
 
     async def delete_meeting(self, meeting_id: str) -> bool:
         """Delete a Zoom meeting."""
@@ -88,6 +91,7 @@ class ZoomClient:
         async with httpx.AsyncClient() as client:
             response = await client.delete(url, headers=self.headers)
             return response.status_code == 204
+        raise Exception("Unreachable")
 
 class ZoomOAuth:
     def __init__(self):
@@ -128,6 +132,7 @@ class ZoomOAuth:
             if response.status_code != 200:
                 raise Exception(f"Zoom token exchange failed: {response.text}")
             return response.json()
+        raise Exception("Unreachable")
 
     async def refresh_token(self, refresh_token: str) -> Dict[str, Any]:
         """Refresh Zoom access token."""
@@ -148,3 +153,4 @@ class ZoomOAuth:
             if response.status_code != 200:
                 raise Exception(f"Zoom token refresh failed: {response.text}")
             return response.json()
+        raise Exception("Unreachable")

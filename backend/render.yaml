@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: chronosai-api
+    name: chronusai-api
     runtime: python
     region: oregon
     plan: free
@@ -47,4 +47,4 @@ services:
       - key: MICROSOFT_TENANT_ID
         value: common
       - key: FRONTEND_URL
-        value: https://chronus-ai.vercel.app
+        value: https://chronusai.netlify.app

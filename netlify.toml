@@ -9,7 +9,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://chronosai.onrender.com/api/:splat"
+  to = "https://chronusai.onrender.com/api/:splat"
   status = 200
   force = true
 
@@ -38,8 +38,8 @@
     Cache-Control = "public, max-age=31536000, immutable"
 
 [context.production.environment]
-  VITE_API_URL = "https://chronosai.onrender.com"
+  VITE_API_URL = "https://chronusai.onrender.com"
 
 [context.deploy-preview.environment]
-  VITE_API_URL = "https://chronosai.onrender.com"
+  VITE_API_URL = "https://chronusai.onrender.com"
   NODE_ENV = "production"
