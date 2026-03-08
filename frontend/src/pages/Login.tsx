@@ -52,13 +52,22 @@ export default function Login() {
           if (!userData || !userData.id || !userData.email) {
             throw new Error('Invalid user data received');
           }
+          // Normalize user shape (backend may return name or full_name)
+          const user = {
+            ...userData,
+            id: String(userData.id),
+            full_name: (userData as any).full_name ?? (userData as any).name ?? userData.email,
+          };
 
-          useAuthStore.getState().setAuth(userData, accessToken, refreshToken);
-          await new Promise(resolve => setTimeout(resolve, 100));
+          useAuthStore.getState().setAuth(user, accessToken, refreshToken);
           navigate('/dashboard', { replace: true });
         } catch (error) {
           console.error('Authentication failed:', error);
-          useAuthStore.getState().logout();
+          useAuthStore.setState({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false });
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('auth-storage');
+            sessionStorage.clear();
+          }
           clearAllCache();
           setError('Authentication failed. Please try again.');
           setIsLoading(false);
@@ -76,9 +85,13 @@ export default function Login() {
     try {
       setIsLoading(true);
       setError('');
-      useAuthStore.getState().logout();
+      // Clear auth state and storage without redirecting (logout() would redirect and prevent Google from opening)
+      useAuthStore.setState({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false });
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth-storage');
+        sessionStorage.clear();
+      }
       clearAllCache();
-      sessionStorage.clear();
 
       const response = await apiClient.getAuthUrl(provider);
       if (!response || !response.auth_url) {
@@ -150,8 +163,8 @@ export default function Login() {
       <div className="stars opacity-20" />
       <div className="space-particles opacity-20" />
 
-      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 lg:p-8">
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 items-center">
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-6 sm:gap-8 items-center">
 
           {/* Left Side - Visual Content */}
           <div className="hidden lg:flex flex-col space-y-8 animate-slide-in-left">
@@ -219,7 +232,7 @@ export default function Login() {
                   <button
                     onClick={() => handleOAuthLogin('google')}
                     disabled={isLoading}
-                    className="w-full h-[60px] bg-white hover:bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold shadow-lg hover:scale-[1.02] disabled:opacity-50"
+                    className="w-full min-h-[52px] h-[52px] sm:h-[60px] bg-white hover:bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 touch-manipulation"
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -232,7 +245,7 @@ export default function Login() {
                   <button
                     onClick={() => handleOAuthLogin('outlook')}
                     disabled={isLoading}
-                    className="w-full h-[60px] bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold hover:scale-[1.02] disabled:opacity-50"
+                    className="w-full min-h-[52px] h-[52px] sm:h-[60px] bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 touch-manipulation"
                   >
                     <svg className="h-5 w-5" viewBox="0 0 24 24">
                       <rect x="2" y="2" width="9" height="9" fill="#F25022" />

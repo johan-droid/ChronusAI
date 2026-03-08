@@ -167,24 +167,28 @@ function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuthStore();
 
-  // Check if current URL is an OAuth callback
-  const isOAuthCallback = location.pathname.includes('/auth/') ||
+  // Login page with tokens in URL = success callback; let Login component handle it
+  const isLoginWithTokens = location.pathname === '/login' && location.search.includes('access_token=');
+
+  // Other OAuth callback URLs (e.g. /auth/..., code= without access_token yet)
+  const isOAuthCallback = !isLoginWithTokens && (
+    location.pathname.includes('/auth/') ||
     location.pathname.includes('/callback') ||
-    location.search.includes('code=') ||
-    location.search.includes('access_token=');
+    location.search.includes('code=')
+  );
 
   useEffect(() => {
-    // If user is not authenticated and we're on an OAuth callback URL,
-    // redirect to login to prevent back button navigation issues
+    if (isLoginWithTokens) return;
     if (!isLoading && !isAuthenticated && isOAuthCallback) {
-      // Clear the problematic URL from history
       window.history.replaceState({}, document.title, '/login');
-      // Force navigation to login
       window.location.href = '/login' + location.search;
     }
-  }, [isAuthenticated, isLoading, isOAuthCallback]);
+  }, [isAuthenticated, isLoading, isOAuthCallback, isLoginWithTokens, location.search]);
 
-  // If on OAuth callback URL and not authenticated, show loading
+  // When on /login?access_token=..., always render children so Login can process the callback
+  if (isLoginWithTokens) {
+    return <>{children}</>;
+  }
   if (!isLoading && !isAuthenticated && isOAuthCallback) {
     return <PageLoader />;
   }

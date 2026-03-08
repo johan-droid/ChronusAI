@@ -247,31 +247,44 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
             raw_user_input=raw_user_input,
         )
 
-        external_event_id = await calendar_provider.create_event(meeting_create)
-        
-        meeting_url = None
-        if getattr(intent, "meeting_platform", None) == "zoom":
-            from app.core.zoom import ZoomClient
-            # Get Zoom credentials
+        platform = getattr(intent, "meeting_platform", None) or "none"
+        add_video = None
+        if platform == "meet" and str(user.provider) == "google":
+            add_video = "google_meet"
+        elif platform == "teams" and str(user.provider) == "outlook":
+            add_video = "teams"
+
+        create_result = await calendar_provider.create_event(
+            meeting_create,
+            add_video_conference=add_video,
+        )
+        external_event_id = create_result.event_id
+        meeting_url = create_result.meeting_url
+
+        zoom_meeting_id = None
+        if platform == "zoom":
             res = await db.execute(
                 select(OAuthCredential).where(
                     and_(
                         OAuthCredential.user_id == user.id,
-                        OAuthCredential.provider == "zoom"
+                        OAuthCredential.provider == "zoom",
                     )
                 )
             )
             zoom_cred = res.scalar_one_or_none()
             if zoom_cred:
+                from app.core.zoom import ZoomClient
                 zoom_client = ZoomClient(token_encryptor.decrypt(zoom_cred.access_token))
+                duration_min = max(15, min(720, int((end_time - start_time).total_seconds() / 60)))
                 zoom_meeting = await zoom_client.create_meeting(
                     topic=title,
                     start_time=start_time,
-                    duration=int((end_time - start_time).total_seconds() / 60)
+                    duration_minutes=duration_min,
+                    description=meeting_create.description,
                 )
                 meeting_url = zoom_meeting.get("join_url")
-                # Update external description with Zoom link
-                meeting_create.description = f"{meeting_create.description}\n\nZoom Meeting: {meeting_url}"
+                zoom_meeting_id = str(zoom_meeting.get("id", ""))
+                meeting_create.description = f"{meeting_create.description or ''}\n\nZoom: {meeting_url}"
                 await calendar_provider.update_event(external_event_id, meeting_create)
 
         meeting = Meeting(
@@ -285,6 +298,7 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
             status="scheduled",
             provider=user.provider,
             meeting_url=meeting_url,
+            zoom_meeting_id=zoom_meeting_id or None,
             raw_user_input=raw_user_input,
         )
 
@@ -342,14 +356,30 @@ async def handle_cancel_meeting(intent: ParsedIntent, user: User, calendar_provi
         if not meeting:
             return ChatResponse(
                 response="No scheduled meetings found to cancel.",
-                intent="cancel"
+                intent="cancel",
             )
-        
-        # Delete from calendar
+
+        if getattr(meeting, "zoom_meeting_id", None):
+            res = await db.execute(
+                select(OAuthCredential).where(
+                    and_(
+                        OAuthCredential.user_id == user.id,
+                        OAuthCredential.provider == "zoom",
+                    )
+                )
+            )
+            zoom_cred = res.scalar_one_or_none()
+            if zoom_cred:
+                try:
+                    from app.core.zoom import ZoomClient
+                    zoom_client = ZoomClient(token_encryptor.decrypt(zoom_cred.access_token))
+                    await zoom_client.delete_meeting(meeting.zoom_meeting_id)
+                except Exception as ze:
+                    logger.warning("zoom_delete_on_cancel_failed", error=str(ze))
+
         if meeting.external_event_id:
             await calendar_provider.delete_event(meeting.external_event_id)
-        
-        # Update database
+
         meeting.status = "canceled"  # type: ignore[assignment]
         await db.commit()
         
@@ -451,10 +481,32 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
                     requires_clarification=True
                 )
         
-        # Update the meeting in Google Calendar
         try:
             from app.schemas.meeting import MeetingCreate, Attendee
-            
+
+            if getattr(meeting, "zoom_meeting_id", None):
+                res = await db.execute(
+                    select(OAuthCredential).where(
+                        and_(
+                            OAuthCredential.user_id == user.id,
+                            OAuthCredential.provider == "zoom",
+                        )
+                    )
+                )
+                zoom_cred = res.scalar_one_or_none()
+                if zoom_cred:
+                    try:
+                        from app.core.zoom import ZoomClient
+                        zoom_client = ZoomClient(token_encryptor.decrypt(zoom_cred.access_token))
+                        await zoom_client.update_meeting(
+                            meeting.zoom_meeting_id,
+                            topic=intent.title or meeting.title,
+                            start_time=new_start_time,
+                            duration_minutes=int((new_end_time - new_start_time).total_seconds() / 60),
+                        )
+                    except Exception as ze:
+                        logger.warning("zoom_update_on_reschedule_failed", error=str(ze))
+
             updated_meeting = MeetingCreate(
                 title=intent.title or meeting.title,
                 description=intent.description or meeting.description,
@@ -462,10 +514,9 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
                 end_time=new_end_time,
                 attendees=[Attendee(email=e) for e in attendees_emails],
                 provider=str(user.provider),
-                raw_user_input=f"Rescheduled: {meeting.title}"
+                raw_user_input=f"Rescheduled: {meeting.title}",
             )
-            
-            # Update in Google Calendar
+
             await calendar_provider.update_event(meeting.external_event_id, updated_meeting)
             
             # Update in database

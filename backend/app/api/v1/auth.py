@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -258,7 +259,7 @@ async def oauth_callback(
         
         # Redirect to frontend with tokens
         frontend_url = str(settings.frontend_url)
-        redirect_url = f"{frontend_url}/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
+        redirect_url = f"{frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
         
         logger.info("OAuth callback completed successfully", provider=provider, user_id=user.id)
         return RedirectResponse(url=redirect_url)
@@ -311,12 +312,16 @@ async def update_user_oauth_credentials(db: AsyncSession, user: User, provider: 
 
 async def create_new_user(db: AsyncSession, user_info: dict, provider: str, token_data: dict) -> User:
     """Create a new user with OAuth credentials."""
+    name = user_info.get("name") or user_info.get("email", "").split("@")[0] or ""
     user = User(
         email=user_info["email"],
-        name=user_info.get("name", ""),
+        name=name,
+        full_name=name,
         hashed_password="",  # OAuth users don't have passwords
         is_active=True,
-        is_verified=True
+        is_verified=True,
+        provider=provider,
+        timezone="UTC",
     )
     db.add(user)
     await db.flush()  # Get the user ID
@@ -335,32 +340,44 @@ async def create_new_user(db: AsyncSession, user_info: dict, provider: str, toke
     return user
 
 
-@router.get("/refresh")
+def get_refresh_token_from_header(request: Request) -> str:
+    """Extract Bearer refresh token from Authorization header."""
+    auth = request.headers.get("Authorization") or request.headers.get("authorization") or ""
+    if not auth.startswith("Bearer ") and not auth.startswith("bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing or invalid Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return auth.split(" ", 1)[1].strip()
+
+
+@router.post("/refresh")
 async def refresh_token(
-    refresh_token: str = Depends(get_current_user),
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Refresh access token using refresh token."""
+    """Refresh access token using refresh token (POST with Bearer refresh token)."""
     try:
-        # Decode and validate refresh token
-        token_data = decode_refresh_token(refresh_token)
-        user_id = token_data["sub"]
-        
-        # Get user
+        token_string = get_refresh_token_from_header(request)
+        token_data = decode_refresh_token(token_string)
+        user_id_str = token_data["sub"]
+        user_id = uuid.UUID(user_id_str)
+
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
-        
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found"
             )
-        
-        # Create new access token
+
         access_token = create_access_token(subject=str(user.id))
-        
         return {"access_token": access_token}
-        
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Token refresh failed", error=str(e))
         raise HTTPException(

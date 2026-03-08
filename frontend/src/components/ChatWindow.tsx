@@ -10,9 +10,8 @@ const QUICK_PROMPTS = [
   { icon: Sparkles, text: "Reschedule my 3pm meeting to 4pm" },
 ];
 
-// Memoized Status Bar Component
 const StatusBar = memo(() => (
-  <div className="px-4 py-3 glass border-b border-white/5 animate-slide-down">
+  <div className="px-3 sm:px-4 py-2.5 sm:py-3 glass border-b border-white/5 animate-slide-down shrink-0">
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="relative">
@@ -44,7 +43,7 @@ const QuickPrompt = memo(({ prompt, onClick }: {
 }) => (
   <button
     onClick={() => onClick(prompt.text)}
-    className="glass-card rounded-2xl p-4 text-left hover:bg-slate-700/50 hover:border-blue-500/30 smooth-transition group hover-lift animate-scale-in"
+    className="glass-card rounded-2xl p-4 text-left hover:bg-slate-700/50 hover:border-blue-500/30 smooth-transition group hover-lift animate-scale-in min-h-[56px] active:scale-[0.98] touch-manipulation"
   >
     <div className="flex items-center gap-3">
       <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 smooth-transition">
@@ -74,7 +73,7 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
         Schedule, reschedule, or check availability using natural language
       </p>
     </div>
-    <div className="grid grid-cols-1 gap-2 w-full max-w-lg">
+    <div className="grid grid-cols-1 gap-2 sm:gap-3 w-full max-w-lg px-1">
       {QUICK_PROMPTS.map((prompt, i) => (
         <div key={i} style={{ animationDelay: `${0.2 + i * 0.1}s` }}>
           <QuickPrompt prompt={prompt} onClick={onQuickPrompt} />
@@ -156,7 +155,7 @@ export default function ChatWindow() {
     <div className="flex flex-col h-full">
       <StatusBar />
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 overscroll-contain">
         {messages.length === 0 && (
           <EmptyState onQuickPrompt={handleQuickPrompt} />
         )}
@@ -185,22 +184,22 @@ export default function ChatWindow() {
         <div ref={messagesEndRef} />
       </div>
       
-      <form onSubmit={handleSubmit} className="border-t border-white/5 p-3 glass animate-slide-up">
-        <div className="flex gap-2">
+      <form onSubmit={handleSubmit} className="border-t border-white/5 p-3 sm:p-4 glass animate-slide-up shrink-0 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex gap-2 sm:gap-3">
           <textarea
             ref={textareaRef}
             value={message}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Ask AI to schedule, reschedule, or check availability..."
-            className="flex-1 min-h-[48px] max-h-[120px] px-4 py-3 glass-card rounded-2xl text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 smooth-transition"
+            placeholder="Schedule, reschedule, or check availability..."
+            className="flex-1 min-h-[48px] max-h-[120px] px-3 sm:px-4 py-3 glass-card rounded-xl sm:rounded-2xl text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 smooth-transition"
             rows={1}
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={!message.trim() || isLoading}
-            className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl hover:shadow-lg hover:shadow-blue-500/50 hover:scale-105 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center flex-shrink-0 animate-glow-pulse"
+            className="w-12 h-12 min-w-[48px] min-h-[48px] bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:shadow-lg hover:shadow-blue-500/50 hover:scale-105 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center flex-shrink-0 animate-glow-pulse touch-manipulation active:scale-95"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

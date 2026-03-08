@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Optional
 from datetime import datetime
-from app.services.calendar_provider import CalendarProvider, TimeSlot
+from app.services.calendar_provider import CalendarProvider, TimeSlot, CreateEventResult
 from app.schemas.meeting import MeetingCreate
 import httpx
 
@@ -52,43 +52,58 @@ class OutlookCalendarAdapter(CalendarProvider):
             
             return busy_slots
     
-    async def create_event(self, meeting: MeetingCreate) -> str:
-        """Create an event in Outlook Calendar."""
+    async def create_event(
+        self,
+        meeting: MeetingCreate,
+        *,
+        add_video_conference: Optional[str] = None,
+    ) -> CreateEventResult:
+        """Create an event in Outlook/Microsoft Graph. add_video_conference='teams' adds Teams online meeting (Graph policy: isOnlineMeeting)."""
         async with httpx.AsyncClient() as client:
             event_body = {
                 "subject": meeting.title,
                 "body": {
                     "contentType": "Text",
-                    "content": meeting.description or ""
+                    "content": meeting.description or "",
                 },
                 "start": {
                     "dateTime": meeting.start_time.isoformat(),
-                    "timeZone": "UTC"
+                    "timeZone": "UTC",
                 },
                 "end": {
                     "dateTime": meeting.end_time.isoformat(),
-                    "timeZone": "UTC"
+                    "timeZone": "UTC",
                 },
                 "attendees": [
                     {
-                        "emailAddress": {
-                            "address": a.email
-                        },
-                        "type": "required"
-                    } for a in (meeting.attendees or [])
-                ]
+                        "emailAddress": {"address": a.email},
+                        "type": "required",
+                    }
+                    for a in (meeting.attendees or [])
+                ],
             }
-            
+            if add_video_conference == "teams":
+                event_body["isOnlineMeeting"] = True
+                event_body["onlineMeetingProvider"] = "teamsForBusiness"
+
             response = await client.post(
                 f"{self.base_url}/me/calendar/events",
                 headers=self.headers,
-                json=event_body
+                json=event_body,
             )
-            
+
             if response.status_code != 201:
                 raise Exception(f"Outlook Calendar API error: {response.text}")
-            
-            return response.json()["id"]
+
+            data = response.json()
+            event_id = data["id"]
+            meeting_url = None
+            online_meeting = data.get("onlineMeeting") or data.get("onlineMeetingUrl")
+            if isinstance(online_meeting, dict) and online_meeting.get("joinUrl"):
+                meeting_url = online_meeting["joinUrl"]
+            elif isinstance(online_meeting, str):
+                meeting_url = online_meeting
+            return CreateEventResult(event_id=event_id, meeting_url=meeting_url)
     
     async def delete_event(self, external_event_id: str) -> bool:
         """Delete an event from Outlook Calendar."""

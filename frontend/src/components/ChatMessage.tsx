@@ -35,8 +35,8 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
         </div>
       )}
 
-      <div className={`max-w-[80%] sm:max-w-[70%]`}>
-        <div className={`px-4 py-3 rounded-3xl shadow-lg transition-all duration-200 ${isUser
+      <div className={`max-w-[90%] sm:max-w-[70%]`}>
+        <div className={`px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl sm:rounded-3xl shadow-lg transition-all duration-200 ${isUser
             ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white'
             : 'bg-slate-800/80 backdrop-blur-xl border border-white/10 text-slate-100'
           } ${isTyping ? 'animate-pulse' : ''}`}>
@@ -49,7 +49,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
           </div>
 
           {!isUser && message.meeting?.meeting_url && (
-            <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-between gap-3 animate-slide-up">
+            <div className="mt-3 p-2.5 sm:p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl sm:rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 animate-slide-up">
               <div className="flex items-center gap-2 overflow-hidden">
                 <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-blue-400 font-bold text-xs">Z</span>
@@ -63,7 +63,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
                 href={message.meeting.meeting_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold rounded-lg transition-colors flex-shrink-0"
+                className="px-3 py-2 min-h-[44px] flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg transition-colors flex-shrink-0 touch-manipulation"
               >
                 Join
               </a>

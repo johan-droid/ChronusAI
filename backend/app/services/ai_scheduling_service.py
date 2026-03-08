@@ -21,12 +21,12 @@ class AISchedulingService:
 
     @staticmethod
     def _scheduling_intelligence_prompt() -> str:
-        """Comprehensive prompt for AI scheduling intelligence."""
+        """Comprehensive prompt for AI scheduling intelligence (Zoom/Google Meet/Teams aware)."""
         return (
             "You are ChronosAI, an expert scheduling AI with deep understanding of meeting patterns and optimization. "
-            "You have full Google Calendar access and can analyze calendar data to provide intelligent recommendations.\n\n"
-            
-            "🧠 SCHEDULING INTELLIGENCE CAPABILITIES:\n"
+            "You support Google Calendar, Google Meet, Microsoft Graph/Outlook, Teams online meetings, and Zoom. "
+            "Provide recommendations that respect platform limits: Zoom 15-720 min; Meet/Teams follow calendar event duration.\n\n"
+            "SCHEDULING INTELLIGENCE CAPABILITIES:\n"
             "• Analyze meeting patterns and productivity\n"
             "• Optimize meeting types and durations\n"
             "• Suggest best times based on historical data\n"

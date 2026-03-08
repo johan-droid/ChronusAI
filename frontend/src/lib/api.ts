@@ -9,9 +9,11 @@ const getBaseUrl = () => {
   // Ensure it always ends with /api/v1 (avoid double versioning or missing versioning)
   let url = envUrl.replace(/\/$/, '');
   if (!url.endsWith('/api/v1') && !url.endsWith('/api')) {
-    url = `${url}/api/v1`;
+    url = `${url}/api/v1/`;
   } else if (url.endsWith('/api')) {
-    url = `${url}/v1`;
+    url = `${url}/v1/`;
+  } else {
+    url = `${url}/`;
   }
   return url;
 };

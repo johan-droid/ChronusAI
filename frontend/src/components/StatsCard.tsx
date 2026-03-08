@@ -37,21 +37,19 @@ export default function StatsCard({ title, value, description, icon }: StatsCard
   }, [targetValue])
 
   return (
-    <div className="group relative overflow-hidden rounded-2xl bg-slate-900/50 border border-white/5 backdrop-blur-xl p-6 hover:border-blue-500/30 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
+    <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl p-4 sm:p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05] hover:shadow-xl hover:shadow-blue-500/5">
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
       <div className="relative z-10">
-        <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start justify-between mb-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20">
-            <div className="text-blue-400">
-              {icon}
-            </div>
+            <div className="text-blue-400">{icon}</div>
           </div>
         </div>
 
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <p className="text-sm font-medium text-slate-400">{title}</p>
-          <p className="text-3xl font-bold text-white">
+          <p className="text-2xl sm:text-3xl font-bold text-white tabular-nums">
             {typeof value === 'number' ? displayValue : value}
           </p>
           {description && (
@@ -60,5 +58,5 @@ export default function StatsCard({ title, value, description, icon }: StatsCard
         </div>
       </div>
     </div>
-  )
+  );
 }

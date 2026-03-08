@@ -1,6 +1,7 @@
-from typing import List
+import uuid
+from typing import List, Optional
 from datetime import datetime, timezone
-from app.services.calendar_provider import CalendarProvider, TimeSlot
+from app.services.calendar_provider import CalendarProvider, TimeSlot, CreateEventResult
 from app.schemas.meeting import MeetingCreate, Attendee
 import httpx
 import structlog
@@ -135,33 +136,57 @@ class GoogleCalendarAdapter(CalendarProvider):
             logger.error("Error parsing datetime", datetime_obj=datetime_obj, error=str(e))
             return datetime.now(timezone.utc)
     
-    async def create_event(self, meeting: MeetingCreate) -> str:
-        """Create an event in Google Calendar."""
+    async def create_event(
+        self,
+        meeting: MeetingCreate,
+        *,
+        add_video_conference: Optional[str] = None,
+    ) -> CreateEventResult:
+        """Create an event in Google Calendar. add_video_conference='google_meet' adds a Meet link (Google policy: conferenceData)."""
         async with httpx.AsyncClient() as client:
             event_body = {
                 "summary": meeting.title,
-                "description": meeting.description,
+                "description": meeting.description or "",
                 "start": {
                     "dateTime": meeting.start_time.isoformat(),
-                    "timeZone": "UTC"
+                    "timeZone": "UTC",
                 },
                 "end": {
                     "dateTime": meeting.end_time.isoformat(),
-                    "timeZone": "UTC"
+                    "timeZone": "UTC",
                 },
                 "attendees": [{"email": a.email} for a in (meeting.attendees or [])],
             }
-            
+            if add_video_conference == "google_meet":
+                event_body["conferenceData"] = {
+                    "createRequest": {
+                        "requestId": str(uuid.uuid4()),
+                        "conferenceSolutionKey": {"type": "hangoutsMeet"},
+                    }
+                }
+            params = {}
+            if add_video_conference == "google_meet":
+                params["conferenceDataVersion"] = "1"
+
             response = await client.post(
                 f"{self.base_url}/calendars/primary/events",
                 headers=self.headers,
-                json=event_body
+                params=params or None,
+                json=event_body,
             )
-            
+
             if response.status_code != 200:
                 raise Exception(f"Google Calendar API error: {response.text}")
-            
-            return response.json()["id"]
+
+            data = response.json()
+            event_id = data["id"]
+            meeting_url = None
+            entry_points = (data.get("conferenceData") or {}).get("entryPoints") or []
+            for ep in entry_points:
+                if ep.get("entryPointType") == "video":
+                    meeting_url = ep.get("uri")
+                    break
+            return CreateEventResult(event_id=event_id, meeting_url=meeting_url)
     
     async def delete_event(self, external_event_id: str) -> bool:
         """Delete an event from Google Calendar."""

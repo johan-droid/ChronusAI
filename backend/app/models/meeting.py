@@ -28,6 +28,7 @@ class Meeting(Base):
     status = Column(String(20), nullable=False, default="scheduled")  # scheduled, canceled, rescheduled, pending
     provider = Column(String(20), nullable=False)
     meeting_url = Column(String(1024))  # Zoom/Teams/Meet link
+    zoom_meeting_id = Column(String(64), nullable=True)  # Zoom meeting ID for update/delete
     raw_user_input = Column(Text)  # The original NL request, for audit trail
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

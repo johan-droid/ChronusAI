@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from typing import List, Optional
 
 from app.schemas.meeting import MeetingCreate
 
@@ -10,9 +10,16 @@ from app.schemas.meeting import MeetingCreate
 class TimeSlot:
     start: datetime
     end: datetime
-    
+
     def duration_minutes(self) -> int:
         return int((self.end - self.start).total_seconds() / 60)
+
+
+@dataclass
+class CreateEventResult:
+    """Result of creating a calendar event; may include video conference link."""
+    event_id: str
+    meeting_url: Optional[str] = None
 
 
 class CalendarProvider(ABC):
@@ -22,8 +29,13 @@ class CalendarProvider(ABC):
         pass
 
     @abstractmethod
-    async def create_event(self, meeting: MeetingCreate) -> str:
-        """Creates calendar event and returns the external event ID."""
+    async def create_event(
+        self,
+        meeting: MeetingCreate,
+        *,
+        add_video_conference: Optional[str] = None,
+    ) -> CreateEventResult:
+        """Creates calendar event. add_video_conference: 'google_meet' | 'teams' | None. Returns event ID and optional meeting URL."""
         pass
 
     @abstractmethod

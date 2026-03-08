@@ -1,22 +1,30 @@
-from pydantic import BaseModel
-from typing import Optional, List, Literal
+from pydantic import BaseModel, Field
+from typing import Optional, List, Literal, Any
 
 
 class ParsedIntent(BaseModel):
     intent: Literal[
-        "schedule", 
-        "reschedule", 
-        "cancel", 
-        "check_availability", 
-        "unknown"
-    ]
+        "schedule",
+        "reschedule",
+        "cancel",
+        "check_availability",
+        "find_time",
+        "list_meetings",
+        "suggest_times",
+        "unknown",
+    ] = "unknown"
     title: Optional[str] = None
     description: Optional[str] = None
     start_time: Optional[str] = None  # ISO datetime string
     end_time: Optional[str] = None    # ISO datetime string
-    attendees: List[str] = []         # Email addresses as strings
-    meeting_platform: Optional[str] = None  # zoom, meet, teams
-    response: str                     # User-friendly response message
+    attendees: List[str] = Field(default_factory=list)  # Email addresses
+    duration_minutes: Optional[int] = None
+    meeting_type: Optional[str] = None   # standup, review, sync, presentation, call, other
+    meeting_platform: Optional[Literal["zoom", "meet", "teams", "none"]] = None
+    response: str = ""
+    suggestions: Optional[List[dict[str, Any]]] = None
+    conflicts: Optional[List[dict[str, Any]]] = None
+    recurring: Optional[dict[str, Any]] = None
 
 
 class ChatRequest(BaseModel):
@@ -28,7 +36,7 @@ class ChatResponse(BaseModel):
     intent: str
     meeting: Optional[dict] = None
     requires_clarification: bool = False
-    suggestions: Optional[List[str]] = None
+    suggestions: Optional[List[Any]] = None  # e.g. [{"time": "ISO", "reason": "..."}]
     confidence: Optional[float] = None
 
 

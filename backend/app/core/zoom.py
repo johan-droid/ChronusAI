@@ -56,6 +56,32 @@ class ZoomClient:
                 raise Exception(f"Failed to get Zoom meeting: {response.text}")
             return response.json()
 
+    async def update_meeting(
+        self,
+        meeting_id: str,
+        *,
+        topic: Optional[str] = None,
+        start_time: Optional[datetime] = None,
+        duration_minutes: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Update a Zoom meeting (policy: PATCH /meetings/{id})."""
+        url = f"{self.base_url}/meetings/{meeting_id}"
+        payload: Dict[str, Any] = {}
+        if topic is not None:
+            payload["topic"] = topic
+        if start_time is not None:
+            payload["start_time"] = start_time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if duration_minutes is not None:
+            payload["duration"] = duration_minutes
+        if not payload:
+            return await self.get_meeting(meeting_id)
+        async with httpx.AsyncClient() as client:
+            response = await client.patch(url, headers=self.headers, json=payload)
+            if response.status_code != 204:
+                logger.error("zoom_meeting_update_failed", status=response.status_code, text=response.text)
+                raise Exception(f"Failed to update Zoom meeting: {response.text}")
+            return await self.get_meeting(meeting_id)
+
     async def delete_meeting(self, meeting_id: str) -> bool:
         """Delete a Zoom meeting."""
         url = f"{self.base_url}/meetings/{meeting_id}"
