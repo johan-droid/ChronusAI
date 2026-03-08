@@ -47,6 +47,11 @@ class Settings(BaseSettings):
     microsoft_redirect_uri: Optional[AnyHttpUrl] = AnyHttpUrl("http://localhost:8000/api/v1/auth/outlook/callback")
     microsoft_tenant_id: str = "common"
 
+    # Zoom OAuth
+    zoom_client_id: Optional[str] = None
+    zoom_client_secret: Optional[str] = None
+    zoom_redirect_uri: Optional[AnyHttpUrl] = AnyHttpUrl("http://localhost:8000/api/v1/auth/zoom/callback")
+
     # JWT
     jwt_secret_key: str
     jwt_algorithm: str = "HS256"
@@ -61,9 +66,11 @@ class Settings(BaseSettings):
         is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
         if is_production:
             if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
-                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/auth/google/callback")
+                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
             if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
                 self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
+            if not self.zoom_redirect_uri or "localhost" in str(self.zoom_redirect_uri):
+                self.zoom_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/zoom/callback")
             if "localhost" in str(self.frontend_url):
                 self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
         
@@ -75,6 +82,7 @@ class Settings(BaseSettings):
         if is_production:
             production_urls = [
                 "https://chronusai.onrender.com",
+                "https://chronos-ai.netlify.app",
                 "https://chronus-ai.vercel.app"
             ]
             for url in production_urls:

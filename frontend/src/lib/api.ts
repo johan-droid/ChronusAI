@@ -37,20 +37,20 @@ class ApiClient {
       (response: AxiosResponse) => response,
       async (error) => {
         const originalRequest = error.config;
-        
+
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          
+
           try {
             const { refreshToken, updateAccessToken } = useAuthStore.getState();
             if (refreshToken) {
               const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
                 headers: { Authorization: `Bearer ${refreshToken}` }
               });
-              
+
               const { access_token } = response.data;
               updateAccessToken(access_token);
-              
+
               // Retry original request
               originalRequest.headers.Authorization = `Bearer ${access_token}`;
               return this.client(originalRequest);
@@ -62,31 +62,36 @@ class ApiClient {
             return Promise.reject(refreshError);
           }
         }
-        
+
         if (error.response?.status === 401) {
           clearAuthCache();
           window.location.href = '/login';
         }
-        
+
         return Promise.reject(error);
       }
     );
   }
 
   // Auth endpoints
-  async getAuthUrl(provider: 'google' | 'outlook'): Promise<AuthUrlResponse> {
+  async getAuthUrl(provider: 'google' | 'outlook' | 'zoom'): Promise<AuthUrlResponse> {
     try {
-      // Google OAuth is at root level, Microsoft OAuth is at /api/v1
-      const baseUrl = provider === 'google' 
-        ? API_BASE_URL.replace('/api/v1', '') // Remove /api/v1 for Google
-        : API_BASE_URL; // Keep /api/v1 for Microsoft
-      
-      const response = await this.client.get(`${baseUrl}/auth/${provider}/login`);
+      const response = await this.client.get(`/auth/${provider}/login`);
       return response.data;
     } catch (error: unknown) {
       console.error('Auth URL error:', error);
       throw error;
     }
+  }
+
+  async login(data: any): Promise<{ access_token: string; refresh_token: string; user: User }> {
+    const response = await this.client.post('/auth/login', data);
+    return response.data;
+  }
+
+  async signup(data: any): Promise<{ access_token: string; refresh_token: string; user: User }> {
+    const response = await this.client.post('/auth/signup', data);
+    return response.data;
   }
 
   async getCurrentUser(): Promise<User> {

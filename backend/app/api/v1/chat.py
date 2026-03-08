@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time, timedelta
+from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import structlog
@@ -11,7 +11,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rate_limit import limiter
-from app.core.security import hash_user_id
+from app.core.security import hash_user_id, token_encryptor
 from app.db.session import get_db
 from app.dependencies import (
     get_calendar_provider,
@@ -19,9 +19,10 @@ from app.dependencies import (
     get_current_user,
     save_conversation_context,
 )
+from app.models.oauth_credential import OAuthCredential
 from app.models.meeting import Meeting
 from app.models.user import User
-from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.chat import ChatRequest, ChatResponse, ParsedIntent
 from app.schemas.meeting import Attendee, MeetingCreate
 from app.services.llm_service import llm_service
 from app.services.ai_scheduling_service import ai_scheduling_service
@@ -130,7 +131,7 @@ async def send_message(
             user_id_hash=hash_user_id(str(current_user.id)),
             intent=parsed_intent.intent,
             outcome="clarification" if response.requires_clarification else "completed",
-            duration_ms=round((_time.perf_counter() - start) * 1000, 2),
+            duration_ms=int((_time.perf_counter() - start) * 1000),
         )
         
         return response
@@ -167,7 +168,7 @@ def _day_window_local(target_date, user_tz: str) -> tuple[datetime, datetime]:
     return start_local, end_local
 
 
-async def handle_create_meeting(intent, user: User, calendar_provider, db: AsyncSession, raw_user_input: str):
+async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession, raw_user_input: str) -> ChatResponse:
     """Handle meeting creation intent."""
     try:
         # Check if we have enough information
@@ -247,6 +248,31 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
         )
 
         external_event_id = await calendar_provider.create_event(meeting_create)
+        
+        meeting_url = None
+        if getattr(intent, "meeting_platform", None) == "zoom":
+            from app.core.zoom import ZoomClient
+            # Get Zoom credentials
+            res = await db.execute(
+                select(OAuthCredential).where(
+                    and_(
+                        OAuthCredential.user_id == user.id,
+                        OAuthCredential.provider == "zoom"
+                    )
+                )
+            )
+            zoom_cred = res.scalar_one_or_none()
+            if zoom_cred:
+                zoom_client = ZoomClient(token_encryptor.decrypt(zoom_cred.access_token))
+                zoom_meeting = await zoom_client.create_meeting(
+                    topic=title,
+                    start_time=start_time,
+                    duration=int((end_time - start_time).total_seconds() / 60)
+                )
+                meeting_url = zoom_meeting.get("join_url")
+                # Update external description with Zoom link
+                meeting_create.description = f"{meeting_create.description}\n\nZoom Meeting: {meeting_url}"
+                await calendar_provider.update_event(external_event_id, meeting_create)
 
         meeting = Meeting(
             user_id=user.id,
@@ -258,6 +284,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
             attendees=[a.model_dump() for a in meeting_create.attendees],
             status="scheduled",
             provider=user.provider,
+            meeting_url=meeting_url,
             raw_user_input=raw_user_input,
         )
 
@@ -287,7 +314,8 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
                 "start_time": meeting.start_time.isoformat(),
                 "end_time": meeting.end_time.isoformat(),
                 "attendees": meeting.attendees,
-                "status": meeting.status
+                "status": meeting.status,
+                "meeting_url": meeting.meeting_url
             }
         )
         
@@ -299,7 +327,7 @@ async def handle_create_meeting(intent, user: User, calendar_provider, db: Async
         )
 
 
-async def handle_cancel_meeting(intent, user: User, calendar_provider, db: AsyncSession):
+async def handle_cancel_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle meeting cancellation intent."""
     try:
         # Find the most recent scheduled meeting
@@ -338,7 +366,7 @@ async def handle_cancel_meeting(intent, user: User, calendar_provider, db: Async
         )
 
 
-async def handle_update_meeting(intent, user: User, calendar_provider, db: AsyncSession):
+async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle meeting update/reschedule intent with AI intelligence."""
     try:
         # Parse new time from intent
@@ -494,7 +522,7 @@ async def handle_update_meeting(intent, user: User, calendar_provider, db: Async
         )
 
 
-async def handle_query_availability(intent, user: User, calendar_provider):
+async def handle_query_availability(intent: ParsedIntent, user: User, calendar_provider) -> ChatResponse:
     """Handle availability query intent."""
     try:
         # Default to today if no specific time provided
@@ -535,7 +563,7 @@ async def handle_query_availability(intent, user: User, calendar_provider):
         )
 
 
-async def handle_find_optimal_time(intent, user: User, calendar_provider):
+async def handle_find_optimal_time(intent: ParsedIntent, user: User, calendar_provider) -> ChatResponse:
     """Handle finding optimal meeting times with AI."""
     try:
         # Extract parameters from intent or use defaults
@@ -577,7 +605,7 @@ async def handle_find_optimal_time(intent, user: User, calendar_provider):
         )
 
 
-async def handle_ai_suggestions(intent, user: User, calendar_provider, db: AsyncSession):
+async def handle_ai_suggestions(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle AI-powered scheduling suggestions."""
     try:
         # Get user's recent meetings for analysis
@@ -634,7 +662,7 @@ async def handle_ai_suggestions(intent, user: User, calendar_provider, db: Async
         )
 
 
-async def handle_list_meetings(intent, user: User, calendar_provider, db: AsyncSession):
+async def handle_list_meetings(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle listing meetings with AI intelligence."""
     try:
         # Get upcoming meetings

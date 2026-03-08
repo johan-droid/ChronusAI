@@ -3,14 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
 import AuthDebug from '../components/AuthDebug';
-import { Loader2, Shield, Sparkles, Zap, Lock } from 'lucide-react';
+import { Loader2, Shield, Sparkles, Zap, Lock, Mail, Key, User as UserIcon, ArrowRight } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';
 
+type AuthMode = 'login' | 'signup' | 'oauth';
+
 export default function Login() {
+  const [mode, setMode] = useState<AuthMode>('oauth');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,16 +29,11 @@ export default function Login() {
     const refreshToken = urlParams.get('refresh_token');
 
     if (accessToken && refreshToken) {
-      // Validate tokens before setting auth
       setIsLoading(true);
-
-      // Clear URL immediately for security
       window.history.replaceState({}, document.title, '/login');
 
-      // Verify tokens with backend
       (async () => {
         try {
-          // Set temporary auth to make API call
           useAuthStore.getState().setAuth(
             {
               id: '',
@@ -45,25 +48,16 @@ export default function Login() {
             refreshToken
           );
 
-          // Fetch and verify user data
           const userData = await apiClient.getCurrentUser();
-
-          // Only proceed if we got valid user data
           if (!userData || !userData.id || !userData.email) {
             throw new Error('Invalid user data received');
           }
 
-          // Set authenticated state with real user data
           useAuthStore.getState().setAuth(userData, accessToken, refreshToken);
-
-          // Small delay to ensure auth state is properly set
           await new Promise(resolve => setTimeout(resolve, 100));
-
-          // Navigate to dashboard
           navigate('/dashboard', { replace: true });
         } catch (error) {
           console.error('Authentication failed:', error);
-          // Clear any partial auth state
           useAuthStore.getState().logout();
           clearAllCache();
           setError('Authentication failed. Please try again.');
@@ -71,7 +65,6 @@ export default function Login() {
         }
       })();
     } else {
-      // Check if user is already authenticated
       const { isAuthenticated } = useAuthStore.getState();
       if (isAuthenticated) {
         navigate('/dashboard', { replace: true });
@@ -83,48 +76,60 @@ export default function Login() {
     try {
       setIsLoading(true);
       setError('');
-
-      // Clear any existing auth state
       useAuthStore.getState().logout();
       clearAllCache();
       sessionStorage.clear();
 
       const response = await apiClient.getAuthUrl(provider);
-
       if (!response || !response.auth_url) {
         throw new Error('No auth URL received from server');
       }
 
-      // Validate state parameter
-      if (!response.state || response.state.length < 32) {
-        throw new Error('Invalid security state received');
+      if (response.state) {
+        sessionStorage.setItem('oauth_state', response.state);
       }
-
-      // Store state for CSRF protection
-      sessionStorage.setItem('oauth_state', response.state);
       sessionStorage.setItem('oauth_provider', provider);
       sessionStorage.setItem('oauth_timestamp', Date.now().toString());
 
-      if (response.verifier) {
-        sessionStorage.setItem('oauth_verifier', response.verifier);
-      }
-
-      // Redirect to OAuth provider
       window.location.href = response.auth_url;
     } catch (error: unknown) {
       console.error('OAuth login error:', error);
       const errorMsg = (error as any)?.response?.data?.detail || (error as Error)?.message || 'Failed to initiate login';
       setError(errorMsg);
       setIsLoading(false);
-
-      // Clear any partial state
       sessionStorage.clear();
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setIsLoading(true);
+      setError('');
+
+      let response;
+      if (mode === 'signup') {
+        response = await apiClient.signup(formData);
+      } else {
+        response = await apiClient.login({
+          email: formData.email,
+          password: formData.password
+        });
+      }
+
+      const { user, access_token, refresh_token } = response;
+      useAuthStore.getState().setAuth(user, access_token, refresh_token);
+      navigate('/dashboard', { replace: true });
+    } catch (error: unknown) {
+      console.error('Email auth error:', error);
+      const errorMsg = (error as any)?.response?.data?.detail || (error as Error)?.message || 'Authentication failed';
+      setError(errorMsg);
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-transparent text-foreground relative overflow-hidden font-sans">
-      {/* Dynamic ColorBends Background - Full Page Coverage */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
         <ColorBends
           colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
@@ -142,290 +147,233 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030303]/50 to-[#030303]" />
       </div>
 
-      {/* Legacy Galaxy Elements (Subtle) */}
       <div className="stars opacity-20" />
       <div className="space-particles opacity-20" />
-      <div className="planet planet-1 opacity-20" />
-      <div className="planet planet-2 opacity-20" />
 
-      {/* Main Content - Side by Side */}
-      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row pt-8 lg:pt-0">
-        {/* Left Side - Login Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-8">
-          <div className="w-full max-w-md">
-            {/* Logo & Header */}
-            <div className="text-center mb-4 lg:mb-8 animate-fade-in">
-              <div className="flex justify-center mb-3">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 blur-2xl opacity-50 animate-pulse" />
-                  <div className="relative w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl lg:rounded-2xl flex items-center justify-center shadow-2xl">
-                    <AnimatedLogo className="h-6 w-6 lg:h-8 lg:w-8" />
-                  </div>
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 lg:p-8">
+        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-8 items-center">
+
+          {/* Left Side - Visual Content */}
+          <div className="hidden lg:flex flex-col space-y-8 animate-slide-in-left">
+            <div>
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                  <AnimatedLogo className="h-8 w-8" />
                 </div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">ChronosAI</h1>
               </div>
-              <h1 className="text-xl lg:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">ChronosAI</h1>
-              <p className="text-slate-400 text-xs lg:text-sm">AI-Powered Calendar Scheduling</p>
-            </div>
-
-            {/* Login Card */}
-            <div className="glass-card rounded-2xl lg:rounded-3xl p-6 lg:p-8 shadow-2xl animate-slide-in-left border-white/5 bg-white/[0.01]">
-              <div className="text-center mb-4 lg:mb-6">
-                <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">Welcome Back</h2>
-                <p className="text-muted-foreground text-sm">Sign in to manage your calendar</p>
-              </div>
-
-              {error && (
-                <div className="mb-4 lg:mb-6 p-3 lg:p-4 bg-red-500/10 border border-red-500/30 rounded-xl lg:rounded-2xl animate-fade-in">
-                  <p className="text-xs lg:text-sm text-red-400 text-center">{error}</p>
-                </div>
-              )}
-
-              <div className="space-y-3">
-                {/* Google Login */}
-                <button
-                  onClick={() => handleOAuthLogin('google')}
-                  disabled={isLoading}
-                  className="w-full group bg-white hover:bg-gray-50 text-gray-900 rounded-xl lg:rounded-2xl p-3 lg:p-4 h-[52px] lg:h-[60px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]"
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    {isLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <svg className="h-5 w-5" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                      </svg>
-                    )}
-                    <span className="font-semibold text-sm lg:text-base">Continue with Google</span>
-                  </div>
-                </button>
-
-                {/* Microsoft Login */}
-                <button
-                  onClick={() => handleOAuthLogin('outlook')}
-                  disabled={isLoading}
-                  className="w-full group bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-foreground rounded-xl lg:rounded-2xl p-3 lg:p-4 h-[52px] lg:h-[60px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
-                >
-                  <div className="flex items-center justify-center gap-3">
-                    {isLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <svg className="h-5 w-5" viewBox="0 0 24 24">
-                        <rect x="2" y="2" width="9" height="9" fill="#F25022" />
-                        <rect x="2" y="13" width="9" height="9" fill="#7FBA00" />
-                        <rect x="13" y="2" width="9" height="9" fill="#00A4EF" />
-                        <rect x="13" y="13" width="9" height="9" fill="#FFB900" />
-                      </svg>
-                    )}
-                    <span className="font-semibold text-sm lg:text-base">Continue with Microsoft</span>
-                  </div>
-                </button>
-              </div>
-
-              {/* Divider */}
-              <div className="relative my-4 lg:my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/10" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="bg-transparent px-3 text-muted-foreground">Secure Authentication</span>
-                </div>
-              </div>
-
-              {/* Features */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Shield className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-green-400" />
-                  <span className="text-xs lg:text-xs">Enterprise-grade security with OAuth 2.0</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Sparkles className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-blue-400" />
-                  <span className="text-xs lg:text-xs">AI-powered meeting scheduling</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Zap className="h-3 w-3 lg:h-3.5 lg:w-3.5 text-purple-400" />
-                  <span className="text-xs lg:text-xs">Instant calendar synchronization</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="mt-4 lg:mt-6 text-center">
-              <div className="flex items-center justify-center gap-3 lg:gap-4 text-xs text-slate-500">
-                <div className="flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  <span className="text-xs">SOC 2 Compliant</span>
-                </div>
-                <span className="text-xs">•</span>
-                <span className="text-xs">GDPR Ready</span>
-                <span className="text-xs">•</span>
-                <span className="text-xs">99.9% Uptime</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side - Welcome Content */}
-        <div className="hidden lg:flex relative z-10 w-1/2 items-center justify-center p-12 border-l border-white/5">
-          <div className="max-w-xl animate-slide-in-right">
-            <div className="space-y-8">
-              {/* Main Heading */}
-              <div>
-                <h2 className="text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-                  Schedule Smarter,
-                  <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    Not Harder
-                  </span>
-                </h2>
-                <p className="text-lg lg:text-xl text-slate-300 leading-relaxed">
-                  Transform your calendar management with AI-powered scheduling that understands natural language.
-                </p>
-              </div>
-
-              {/* Feature Highlights */}
-              <div className="space-y-6">
-                <div className="flex gap-4 items-start group">
-                  <div className="flex-shrink-0 w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-xl lg:rounded-2xl flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform">
-                    <Sparkles className="h-5 w-5 lg:h-6 lg:w-6 text-blue-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Natural Language Processing</h3>
-                    <p className="text-slate-400 text-sm lg:text-base">Simply type "Schedule a meeting with John tomorrow at 3pm" and let AI handle the rest.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 items-start group">
-                  <div className="flex-shrink-0 w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-xl lg:rounded-2xl flex items-center justify-center border border-purple-500/30 group-hover:scale-110 transition-transform">
-                    <Zap className="h-5 w-5 lg:h-6 lg:w-6 text-purple-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Instant Synchronization</h3>
-                    <p className="text-slate-400 text-sm lg:text-base">Real-time sync with Google Calendar and Microsoft Outlook keeps everyone on the same page.</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-4 items-start group">
-                  <div className="flex-shrink-0 w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-xl lg:rounded-2xl flex items-center justify-center border border-pink-500/30 group-hover:scale-110 transition-transform">
-                    <Shield className="h-5 w-5 lg:h-6 lg:w-6 text-pink-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-base lg:text-lg font-semibold text-white mb-1">Enterprise Security</h3>
-                    <p className="text-slate-400 text-sm lg:text-base">Bank-level encryption and OAuth 2.0 authentication protect your sensitive calendar data.</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 lg:gap-6 pt-6 lg:pt-8 border-t border-white/10">
-                <div className="text-center">
-                  <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-1">10K+</div>
-                  <div className="text-xs lg:text-sm text-slate-400">Active Users</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">50K+</div>
-                  <div className="text-xs lg:text-sm text-slate-400">Meetings Scheduled</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent mb-1">99.9%</div>
-                  <div className="text-xs lg:text-sm text-slate-400">Uptime</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Welcome Content - Below Login */}
-      <div className="lg:hidden relative z-10 bg-white/[0.02] backdrop-blur-xl border-t border-white/5 p-4 pb-8">
-        <div className="max-w-xl mx-auto animate-slide-in-up">
-          <div className="space-y-4">
-            {/* Mobile Heading */}
-            <div className="text-center">
-              <h2 className="text-xl font-bold text-white mb-2 leading-tight">
+              <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
                 Schedule Smarter,
                 <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Not Harder
                 </span>
               </h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Transform your calendar management with AI-powered scheduling that understands natural language.
+              <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
+                The most advanced AI scheduling assistant that understands your time like you do.
               </p>
             </div>
 
-            {/* Mobile Feature Highlights */}
-            <div className="space-y-3">
-              <div className="flex gap-3 items-start">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-lg flex items-center justify-center border border-blue-500/30">
-                  <Sparkles className="h-4 w-4 text-blue-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Natural Language Processing</h3>
-                  <p className="text-slate-400 text-xs">Simply type "Schedule a meeting with John tomorrow at 3pm" and let AI handle the rest.</p>
-                </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="glass-card p-4 space-y-2">
+                <Sparkles className="h-5 w-5 text-blue-400" />
+                <h3 className="font-semibold text-white">Smart NLP</h3>
+                <p className="text-xs text-slate-400">Natural language processing for human-like interactions.</p>
               </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg flex items-center justify-center border border-purple-500/30">
-                  <Zap className="h-4 w-4 text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Instant Synchronization</h3>
-                  <p className="text-slate-400 text-xs">Real-time sync with Google Calendar and Microsoft Outlook keeps everyone on the same page.</p>
-                </div>
-              </div>
-
-              <div className="flex gap-3 items-start">
-                <div className="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-pink-500/20 to-pink-600/20 rounded-lg flex items-center justify-center border border-pink-500/30">
-                  <Shield className="h-4 w-4 text-pink-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white mb-1">Enterprise Security</h3>
-                  <p className="text-slate-400 text-xs">Bank-level encryption and OAuth 2.0 authentication protect your sensitive calendar data.</p>
-                </div>
+              <div className="glass-card p-4 space-y-2">
+                <Zap className="h-5 w-5 text-purple-400" />
+                <h3 className="font-semibold text-white">Auto-Sync</h3>
+                <p className="text-xs text-slate-400">Real-time calendar synchronization across all platforms.</p>
               </div>
             </div>
+          </div>
 
-            {/* Mobile Stats */}
-            <div className="grid grid-cols-3 gap-3 pt-3 border-t border-white/10">
-              <div className="text-center">
-                <div className="text-lg font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-1">10K+</div>
-                <div className="text-xs text-slate-400">Users</div>
+          {/* Right Side - Auth Forms */}
+          <div className="w-full max-w-md mx-auto animate-slide-in-right">
+            <div className="glass-card rounded-3xl p-8 shadow-2xl border-white/5 bg-white/[0.02] backdrop-blur-2xl">
+
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="lg:hidden flex justify-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-2xl">
+                    <AnimatedLogo className="h-6 w-6" />
+                  </div>
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                </h2>
+                <p className="text-slate-400 text-sm">
+                  {mode === 'oauth' ? 'Choose your preferred login method' : 'Enter your details to continue'}
+                </p>
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-1">50K+</div>
-                <div className="text-xs text-slate-400">Meetings</div>
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl animate-fade-in flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
+
+              {/* Auth Selection */}
+              {mode === 'oauth' ? (
+                <div className="space-y-4">
+                  <button
+                    onClick={() => handleOAuthLogin('google')}
+                    disabled={isLoading}
+                    className="w-full h-[60px] bg-white hover:bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold shadow-lg hover:scale-[1.02] disabled:opacity-50"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Continue with Google
+                  </button>
+                  <button
+                    onClick={() => handleOAuthLogin('outlook')}
+                    disabled={isLoading}
+                    className="w-full h-[60px] bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold hover:scale-[1.02] disabled:opacity-50"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                      <rect x="2" y="2" width="9" height="9" fill="#F25022" />
+                      <rect x="2" y="13" width="9" height="9" fill="#7FBA00" />
+                      <rect x="13" y="2" width="9" height="9" fill="#00A4EF" />
+                      <rect x="13" y="13" width="9" height="9" fill="#FFB900" />
+                    </svg>
+                    Continue with Microsoft
+                  </button>
+
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-white/10" />
+                    </div>
+                    <div className="relative flex justify-center text-xs">
+                      <span className="bg-[#0b0c10] px-3 text-slate-500 font-medium">OR USE EMAIL</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setMode('login')}
+                    className="w-full py-3 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                  >
+                    Continue with Email & Password
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleEmailAuth} className="space-y-4">
+                  {mode === 'signup' && (
+                    <div className="space-y-2">
+                      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+                      <div className="relative">
+                        <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                        <input
+                          type="text"
+                          required
+                          placeholder="John Doe"
+                          className="w-full bg-white/[0.03] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600"
+                          value={formData.name}
+                          onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                      <input
+                        type="email"
+                        required
+                        placeholder="hello@example.com"
+                        className="w-full bg-white/[0.03] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600"
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
+                      <input
+                        type="password"
+                        required
+                        minLength={8}
+                        placeholder="••••••••"
+                        className="w-full bg-white/[0.03] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600"
+                        value={formData.password}
+                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-[52px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold shadow-xl transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 mt-6"
+                  >
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'login' ? 'Sign In' : 'Create Account'}
+                  </button>
+
+                  <div className="flex flex-col gap-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+                      className="text-sm text-slate-400 hover:text-white transition-colors"
+                    >
+                      {mode === 'login' ? "Don't have an account? Create one" : "Already have an account? Sign in"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMode('oauth')}
+                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center justify-center gap-1"
+                    >
+                      Wait, use Social Login instead
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+
+            {/* Verification Badges */}
+            <div className="mt-8 flex items-center justify-center gap-6 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+              <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                <Shield className="h-3 w-3" />
+                SOC 2 TYPE II
               </div>
-              <div className="text-center">
-                <div className="text-lg font-bold bg-gradient-to-r from-pink-400 to-orange-400 bg-clip-text text-transparent mb-1">99.9%</div>
-                <div className="text-xs text-slate-400">Uptime</div>
+              <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                <Lock className="h-3 w-3" />
+                GDPR COMPLIANT
+              </div>
+              <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                <Sparkles className="h-3 w-3" />
+                ISO 27001
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-50">
+      {isLoading && mode === 'oauth' && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] animate-fade-in">
           <div className="text-center space-y-4">
             <div className="relative inline-block">
-              <div className="absolute inset-0 animate-spin">
-                <div className="h-16 w-16 rounded-full border-4 border-blue-500/20 border-t-blue-500" />
-              </div>
-              <AnimatedLogo className="h-8 w-8 text-blue-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="absolute inset-0 animate-ping opacity-20 bg-blue-500 rounded-full" />
+              <div className="relative w-16 h-16 border-4 border-blue-500 border-t-transparent animate-spin rounded-full shadow-2xl" />
             </div>
-            <div>
-              <p className="text-white font-medium">Authenticating...</p>
-              <p className="text-slate-400 text-sm">Connecting to your calendar</p>
+            <div className="space-y-1">
+              <p className="text-white font-bold text-lg">Authenticating...</p>
+              <p className="text-slate-400 text-sm">Please wait while we connect your account</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Debug Component */}
-      <AuthDebug />
+      {/* AuthDebug only in Dev */}
+      {import.meta.env.DEV && <AuthDebug />}
     </div>
   );
 }

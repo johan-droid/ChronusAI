@@ -74,6 +74,7 @@ class LLMService:
             "  'attendees': ['email1@domain.com', 'email2@domain.com'],\n"
             "  'duration_minutes': 60,\n"
             "  'meeting_type': 'standup|review|sync|presentation|call|other',\n"
+            "  'meeting_platform': 'zoom|meet|teams|none',\n"
             "  'priority': 'high|medium|low',\n"
             "  'recurring': {'type': 'daily|weekly|monthly', 'interval': 1, 'end_date': 'ISO_date'},\n"
             "  'response': 'User-friendly message explaining the action',\n"

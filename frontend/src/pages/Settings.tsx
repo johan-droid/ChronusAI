@@ -17,9 +17,9 @@ export default function Settings() {
     try {
       setDeleteLoading(true);
       setDeleteError('');
-      
+
       await apiClient.deleteAccount();
-      
+
       clearAuthCache();
       logout();
       navigate('/login');
@@ -52,12 +52,58 @@ export default function Settings() {
                 <p className="text-white">{user?.email}</p>
               </div>
               <div>
-                <label className="text-xs text-slate-400">Provider</label>
+                <label className="text-xs text-slate-400">Primary Provider</label>
                 <p className="text-white capitalize">{user?.provider || 'Unknown'}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-400">Timezone</label>
                 <p className="text-white">{user?.timezone || 'UTC'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Connected Services */}
+          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Connected Services</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                    <span className="text-blue-400 font-bold">Z</span>
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">Zoom</p>
+                    <p className="text-xs text-slate-400">Enable AI to create Zoom meetings</p>
+                  </div>
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const { auth_url } = await apiClient.getAuthUrl('zoom');
+                      window.location.href = auth_url;
+                    } catch (error) {
+                      console.error('Failed to connect Zoom:', error);
+                    }
+                  }}
+                  className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  Connect
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5 opacity-50">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${user?.provider === 'google' ? 'bg-red-500/10 border-red-500/20' : 'bg-blue-500/10 border-blue-500/20'
+                    }`}>
+                    <span className={user?.provider === 'google' ? 'text-red-400 font-bold' : 'text-blue-400 font-bold'}>
+                      {user?.provider === 'google' ? 'G' : 'M'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-white font-medium capitalize">{user?.provider}</p>
+                    <p className="text-xs text-slate-400 text-green-400">Primary Account Connected</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

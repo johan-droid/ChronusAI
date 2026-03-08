@@ -6,21 +6,119 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.oauth import get_oauth_provider
-from app.core.security import create_access_token, token_encryptor, create_refresh_token, decode_refresh_token, revoke_session, revoke_all_user_sessions, hash_user_id, mask_email
+from typing import List, Optional
+from pydantic import BaseModel, EmailStr, Field
+from app.core.security import (
+    create_access_token, 
+    token_encryptor, 
+    create_refresh_token, 
+    decode_refresh_token, 
+    revoke_session, 
+    revoke_all_user_sessions, 
+    hash_user_id, 
+    mask_email,
+    get_password_hash,
+    verify_password
+)
 from app.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.oauth_credential import OAuthCredential
 from app.models.user import User
+from app.core.zoom import ZoomOAuth
 import structlog
 
 logger = structlog.get_logger()
 
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserSignup(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    full_name: str | None = None
+    name: str | None = None
+
 router = APIRouter(tags=["authentication"])
+
+@router.post("/signup")
+async def signup(user_in: UserSignup, db: AsyncSession = Depends(get_db)):
+    """Register a new user with email and password."""
+    # Check if user already exists
+    result = await db.execute(select(User).where(User.email == user_in.email))
+    if result.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email already exists"
+        )
+    
+    # Create new user
+    new_user = User(
+        email=user_in.email,
+        full_name=user_in.full_name,
+        name=user_in.name or user_in.full_name,
+        hashed_password=get_password_hash(user_in.password),
+        provider="email",
+        timezone="UTC"
+    )
+    db.add(new_user)
+    try:
+        await db.commit()
+        await db.refresh(new_user)
+    except Exception as e:
+        await db.rollback()
+        logger.error("Failed to create user", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not create user account"
+        )
+    
+    # Create tokens
+    access_token = create_access_token(subject=str(new_user.id))
+    refresh_token = create_refresh_token(subject=str(new_user.id))
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": {
+            "id": str(new_user.id),
+            "email": new_user.email,
+            "full_name": new_user.full_name,
+            "name": new_user.name
+        }
+    }
+
+@router.post("/login")
+async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
+    """Authenticate user with email and password."""
+    result = await db.execute(select(User).where(User.email == user_in.email))
+    user = result.scalar_one_or_none()
+    
+    if not user or not user.hashed_password or not verify_password(user_in.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password"
+        )
+    
+    # Create tokens
+    access_token = create_access_token(subject=str(user.id))
+    refresh_token = create_refresh_token(subject=str(user.id))
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": {
+            "id": str(user.id),
+            "email": user.email,
+            "full_name": user.full_name,
+            "name": user.name
+        }
+    }
 
 # Separate route for Microsoft OAuth with /api/v1 prefix
 microsoft_router = APIRouter(tags=["authentication"])
@@ -92,7 +190,8 @@ async def oauth_callback(
     """Handle OAuth callback from provider with enhanced security and error handling."""
     try:
         # Debug logging
-        logger.info("OAuth callback received", provider=provider, state=state[:10] + "...", code_length=len(code))
+        state_str = str(state)
+        logger.info("OAuth callback received", provider=provider, state=state_str[:10] + "...", code_length=len(code))
         
         # Validate provider
         if provider not in ["google", "outlook"]:
@@ -151,8 +250,8 @@ async def oauth_callback(
             logger.info("Created new user", user_id=user.id, provider=provider)
         
         # Create access and refresh tokens
-        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
-        refresh_token = create_refresh_token(user_id=user.id)
+        access_token = create_access_token(subject=str(user.id))
+        refresh_token = create_refresh_token(subject=str(user.id))
         
         # Store refresh token
         await token_encryptor.store_refresh_token(user.id, refresh_token)
@@ -182,7 +281,12 @@ async def update_user_oauth_credentials(db: AsyncSession, user: User, provider: 
     
     # Update or create OAuth credentials
     result = await db.execute(
-        select(OAuthCredential).where(OAuthCredential.user_id == user.id, OAuthCredential.provider == provider)
+        select(OAuthCredential).where(
+            and_(
+                OAuthCredential.user_id == user.id,
+                OAuthCredential.provider == provider
+            )
+        )
     )
     oauth_credential = result.scalar_one_or_none()
     
@@ -253,7 +357,7 @@ async def refresh_token(
             )
         
         # Create new access token
-        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+        access_token = create_access_token(subject=str(user.id))
         
         return {"access_token": access_token}
         
@@ -313,6 +417,69 @@ async def get_current_user_info(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get user information"
         )
+
+
+@router.get("/zoom/login")
+async def zoom_login(
+    current_user: User = Depends(get_current_user),
+):
+    """Initiate Zoom OAuth flow."""
+    zoom_oauth = ZoomOAuth()
+    state = secrets.token_urlsafe(32)
+    auth_url = zoom_oauth.get_authorization_url(state)
+    return {"auth_url": auth_url, "state": state}
+
+
+@router.get("/zoom/callback")
+async def zoom_callback(
+    code: str,
+    state: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Handle Zoom OAuth callback."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+        
+    try:
+        zoom_oauth = ZoomOAuth()
+        tokens = await zoom_oauth.exchange_code_for_tokens(code)
+        
+        # Store or update Zoom credentials
+        result = await db.execute(
+            select(OAuthCredential).where(
+                and_(
+                    OAuthCredential.user_id == current_user.id,
+                    OAuthCredential.provider == "zoom"
+                )
+            )
+        )
+        credential = result.scalar_one_or_none()
+        
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=tokens.get("expires_in", 3600))
+        
+        if not credential:
+            credential = OAuthCredential(
+                user_id=current_user.id,
+                provider="zoom",
+                access_token=token_encryptor.encrypt(tokens["access_token"]),
+                refresh_token=token_encryptor.encrypt(tokens["refresh_token"]) if "refresh_token" in tokens else None,
+                expires_at=expires_at
+            )
+            db.add(credential)
+        else:
+            credential.access_token = token_encryptor.encrypt(tokens["access_token"])
+            if "refresh_token" in tokens:
+                credential.refresh_token = token_encryptor.encrypt(tokens["refresh_token"])
+            credential.expires_at = expires_at
+            credential.updated_at = datetime.now(timezone.utc)
+            
+        await db.commit()
+        return RedirectResponse(url=f"{settings.frontend_url}/settings?zoom=connected")
+        
+    except Exception as e:
+        logger.error("zoom_callback_failed", error=str(e), user_id=current_user.id)
+        return RedirectResponse(url=f"{settings.frontend_url}/settings?zoom=error")
 
 
 # Include Microsoft router

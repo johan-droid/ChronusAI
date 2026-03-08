@@ -10,6 +10,9 @@ from jose import jwt, JWTError
 
 from app.config import settings
 
+# In-memory session storage (should be Redis in production)
+_active_sessions: Dict[str, Dict[str, Any]] = {}
+
 
 class TokenEncryptor:
     def __init__(self, key: bytes):
@@ -105,7 +108,7 @@ def revoke_session(refresh_token: str) -> bool:
         payload = jwt.decode(refresh_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         jti = payload.get("jti")
         if jti and jti in _active_sessions:
-            del _active_sessions[jti]
+            _active_sessions.pop(jti, None)
             return True
     except JWTError:
         pass
@@ -122,7 +125,7 @@ def revoke_all_user_sessions(user_id: str) -> int:
             to_remove.append(jti)
     
     for jti in to_remove:
-        del _active_sessions[jti]
+        _active_sessions.pop(jti, None)
         revoked += 1
     
     return revoked
@@ -135,13 +138,34 @@ def cleanup_expired_sessions() -> int:
     
     for jti, session in _active_sessions.items():
         # Remove sessions older than 7 days or inactive for 24 hours
-        if (now - session["created_at"]).days > 7 or (now - session["last_used"]).hours > 24:
+        created_at = session.get("created_at")
+        last_used = session.get("last_used")
+        
+        if isinstance(created_at, datetime) and isinstance(last_used, datetime):
+            if (now - created_at).days > 7 or (now - last_used).total_seconds() > 24 * 3600:
+                expired.append(jti)
+        else:
             expired.append(jti)
     
     for jti in expired:
-        del _active_sessions[jti]
+        _active_sessions.pop(jti, None)
     
     return len(expired)
+
+
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a hashed one."""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return pwd_context.hash(password)
 
 
 def hash_user_id(user_id: str) -> str:

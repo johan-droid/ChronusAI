@@ -5,7 +5,7 @@ import uuid
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import decode_access_token, token_encryptor
@@ -51,7 +51,14 @@ async def get_calendar_provider(
 ) -> CalendarProvider:
     """Get appropriate calendar provider for user."""
     try:
-        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
+        result = await db.execute(
+            select(OAuthCredential).where(
+                and_(
+                    OAuthCredential.user_id == current_user.id,
+                    OAuthCredential.provider == current_user.provider
+                )
+            )
+        )
         oauth_credential = result.scalar_one_or_none()
         if oauth_credential is None:
             raise HTTPException(

@@ -1,5 +1,6 @@
 fastapi[all]
 uvicorn[standard]
+passlib[bcrypt]
 
 sqlalchemy[asyncio]
 aiosqlite

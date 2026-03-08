@@ -91,9 +91,14 @@ const PageLoader = () => (
 // Mobile Navigation Component
 const MobileNavigation = memo(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
   const isMobile = isMobileDevice();
 
-  if (!isMobile) return null;
+  // Hide hamburger on Login, Signup and Landing pages
+  const hidePaths = ['/login', '/signup', '/'];
+  const currentPath = location.pathname.replace(/\/$/, '') || '/';
+
+  if (!isMobile || hidePaths.includes(currentPath)) return null;
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border/30">

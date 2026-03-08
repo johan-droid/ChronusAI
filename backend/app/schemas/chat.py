@@ -15,6 +15,7 @@ class ParsedIntent(BaseModel):
     start_time: Optional[str] = None  # ISO datetime string
     end_time: Optional[str] = None    # ISO datetime string
     attendees: List[str] = []         # Email addresses as strings
+    meeting_platform: Optional[str] = None  # zoom, meet, teams
     response: str                     # User-friendly response message
 
 

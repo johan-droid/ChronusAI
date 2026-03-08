@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import uvicorn
 from contextlib import asynccontextmanager
 import structlog
 import time
@@ -122,7 +123,7 @@ async def log_requests(request: Request, call_next):
         method=request.method,
         url=str(request.url),
         status_code=response.status_code,
-        duration_ms=round((time.perf_counter() - start) * 1000, 2),
+        duration_ms=int((time.perf_counter() - start) * 1000),
     )
     
     return response
@@ -131,9 +132,7 @@ async def log_requests(request: Request, call_next):
 # Include API routes
 app.include_router(api_router)
 
-# Include Google OAuth routes at root level (no /api/v1 prefix)
-from app.api.v1 import auth
-app.include_router(auth.router, prefix="/auth", tags=["authentication"])
+# API routes are included via api_router which already includes auth.router at /api/v1/auth
 
 
 @app.get("/")
@@ -198,7 +197,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",

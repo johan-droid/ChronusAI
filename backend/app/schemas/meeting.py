@@ -17,6 +17,7 @@ class MeetingBase(BaseModel):
     end_time: datetime
     attendees: List[Attendee] = []
     provider: str
+    meeting_url: Optional[str] = None
 
 
 class MeetingCreate(MeetingBase):

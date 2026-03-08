@@ -3,7 +3,7 @@ export interface User {
   email: string;
   full_name?: string;
   timezone: string;
-  provider: 'google' | 'outlook';
+  provider: 'google' | 'outlook' | 'zoom' | 'email';
   created_at: string;
   updated_at: string;
 }
@@ -24,7 +24,8 @@ export interface Meeting {
   end_time: string;
   attendees: Attendee[];
   status: 'scheduled' | 'canceled' | 'rescheduled' | 'pending';
-  provider: 'google' | 'outlook';
+  provider: 'google' | 'outlook' | 'zoom' | 'email';
+  meeting_url?: string;
   raw_user_input?: string;
   created_at: string;
   updated_at: string;
@@ -34,6 +35,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  meeting?: Meeting;
 }
 
 export interface ChatRequest {
