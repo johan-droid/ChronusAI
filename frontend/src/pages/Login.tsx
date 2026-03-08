@@ -7,29 +7,14 @@ import { Loader2, Shield, Sparkles, Zap, Lock } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';
-import { getCookieConsent } from '../utils/cookieConsent';
 
 export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [cookieConsentChecked, setCookieConsentChecked] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     clearAllCache();
-    
-    // Check cookie consent status
-    const consentStatus = getCookieConsent();
-    if (!consentStatus.isComplete) {
-      // If no consent given, show a small delay then proceed
-      // The cookie consent banner will appear and user can accept
-      const timer = setTimeout(() => {
-        setCookieConsentChecked(true);
-      }, 1500);
-      return () => clearTimeout(timer);
-    } else {
-      setCookieConsentChecked(true);
-    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');

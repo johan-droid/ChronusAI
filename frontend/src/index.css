@@ -866,11 +866,6 @@ html, body {
 .animate-slide-up {
   animation: slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-.animate-glow-pulse {
-  animation: glow-pulse 2s ease-in-out infinite;
-}
-
 /* Z-index Management */
 .z-background { z-index: -10; }
 .z-stars { z-index: -5; }
@@ -906,16 +901,6 @@ footer {
   border-top: 1px solid hsl(var(--border) / 0.3);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-}
-
-/* Cookie Consent Z-index Fix */
-.fixed.bottom-0 {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100 !important;
-  pointer-events: auto;
 }
 
 /* Background Elements Z-index */

@@ -5,7 +5,6 @@ import { Toaster } from 'sonner';
 import { lazy, Suspense, memo, useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import Footer from './components/Footer';
-import CookieConsent from './components/CookieConsent';
 import './index.css';
 
 // Lazy load components for better performance
@@ -206,32 +205,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function App() {
   const [isMobile, setIsMobile] = useState(false);
-  const [cookieConsentGiven, setCookieConsentGiven] = useState(false);
   
   useEffect(() => {
     setIsMobile(isMobileDevice());
-    
-    // Check cookie consent status
-    const consent = localStorage.getItem('cookie-consent');
-    const analytics = localStorage.getItem('cookie-analytics');
-    const marketing = localStorage.getItem('cookie-marketing');
-    
-    if (consent && analytics && marketing) {
-      setCookieConsentGiven(true);
-    }
-    
-    // Listen for cookie consent updates
-    const handleCookieConsentUpdate = () => {
-      const consent = localStorage.getItem('cookie-consent');
-      const analytics = localStorage.getItem('cookie-analytics');
-      const marketing = localStorage.getItem('cookie-marketing');
-      
-      if (consent && analytics && marketing) {
-        setCookieConsentGiven(true);
-      }
-    };
-    
-    window.addEventListener('cookieConsentUpdated', handleCookieConsentUpdate);
     
     // Add Android-specific optimizations
     if (isAndroidDevice()) {
@@ -252,13 +228,8 @@ function App() {
       
       return () => {
         document.removeEventListener('touchstart', handleTouchStart);
-        window.removeEventListener('cookieConsentUpdated', handleCookieConsentUpdate);
       };
     }
-    
-    return () => {
-      window.removeEventListener('cookieConsentUpdated', handleCookieConsentUpdate);
-    };
   }, []);
   
   return (
@@ -325,9 +296,6 @@ function App() {
           </main>
           
           <Footer />
-          
-          {/* Only show CookieConsent if consent hasn't been given */}
-          {!cookieConsentGiven && <CookieConsent />}
         </div>
       </Router>
       <Toaster 
@@ -340,7 +308,7 @@ function App() {
             border: '1px solid rgba(255, 140, 0, 0.2)',
             color: 'white',
             ...(isMobile && {
-              bottom: cookieConsentGiven ? '20px' : '120px', // Adjust position if cookie consent is visible
+              bottom: '20px',
               left: '50%',
               transform: 'translateX(-50%)',
               right: 'auto',
