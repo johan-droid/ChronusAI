@@ -2,16 +2,15 @@
 Calendar API endpoints for Google Calendar integration
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.services.google_calendar_service import GoogleCalendarService, TimeSlot, CalendarEvent, CalendarInfo
+from app.services.google_calendar_service import GoogleCalendarService
 from app.schemas.meeting import MeetingCreate
+from app.dependencies import get_current_user
+from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
 logger = structlog.get_logger()

@@ -374,3 +374,75 @@ test_calendar_integration.py
 README_LOCAL_DEVELOPMENT.md
 GOOGLE_OAUTH_SETUP.md
 README_GOOGLE_CALENDAR.md
+
+# OAuth setup script (keep local)
+google_oauth_setup.py
+
+# Additional security files
+*.key
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+
+# API keys and secrets
+config/secrets.py
+secrets/
+.secrets.json
+*.env.production
+*.env.staging
+
+# Build artifacts
+frontend/dist/
+frontend/build/
+backend/build/
+
+# Cache directories
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Coverage and testing
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+.hypothesis/
+
+# IDE specific files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.idea/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS specific files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+
+# Local configuration files
+config/local.py
+config/local.json
+local_settings.py
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Logs
+logs/
+*.log
