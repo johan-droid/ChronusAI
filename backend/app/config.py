@@ -39,12 +39,12 @@ class Settings(BaseSettings):
     # Google OAuth
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None
-    google_redirect_uri: Optional[AnyHttpUrl] = None
+    google_redirect_uri: Optional[AnyHttpUrl] = AnyHttpUrl("http://localhost:8000/api/v1/auth/google/callback")
 
     # Microsoft OAuth
     microsoft_client_id: Optional[str] = None
     microsoft_client_secret: Optional[str] = None
-    microsoft_redirect_uri: Optional[AnyHttpUrl] = None
+    microsoft_redirect_uri: Optional[AnyHttpUrl] = AnyHttpUrl("http://localhost:8000/api/v1/auth/outlook/callback")
     microsoft_tenant_id: str = "common"
 
     # JWT
@@ -61,11 +61,25 @@ class Settings(BaseSettings):
         is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
         if is_production:
             if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
-                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/auth/google/callback")
+                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
             if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
                 self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
             if "localhost" in str(self.frontend_url):
-                self.frontend_url = AnyHttpUrl("https://chronus-ai.vercel.app")
+                self.frontend_url = AnyHttpUrl("https://chronusai.onrender.com")
+        
+        # Ensure CORS includes frontend URLs
+        if self.frontend_url and str(self.frontend_url) not in self.cors_origins:
+            self.cors_origins.append(str(self.frontend_url))
+        
+        # Add production URLs to CORS
+        if is_production:
+            production_urls = [
+                "https://chronusai.onrender.com",
+                "https://chronus-ai.vercel.app"
+            ]
+            for url in production_urls:
+                if url not in self.cors_origins:
+                    self.cors_origins.append(url)
 
 
 @lru_cache

@@ -89,361 +89,233 @@ async def oauth_callback(
     state: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """Handle OAuth callback from provider with enhanced security."""
+    """Handle OAuth callback from provider with enhanced security and error handling."""
     try:
         # Debug logging
         logger.info("OAuth callback received", provider=provider, state=state[:10] + "...", code_length=len(code))
         
         # Validate provider
         if provider not in ["google", "outlook"]:
+            logger.error("Unsupported provider in callback", provider=provider)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid provider"
+                detail="Unsupported provider"
             )
-        
-        # Validate state parameter (CSRF protection)
-        if not state:
-            logger.error("State validation failed", state=state, length=len(state) if state else 0)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or missing state parameter"
-            )
-        
-        # Temporarily log state length for debugging
-        logger.info("State validation passed", state_length=len(state))
         
         # Validate code parameter
         if not code or len(code) < 10:
-            logger.error("Code validation failed", code=code[:10] + "...", length=len(code) if code else 0)
+            logger.error("Invalid authorization code", code_length=len(code) if code else 0)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid authorization code"
             )
         
+        # Get OAuth provider
         oauth_provider = get_oauth_provider(provider)
         
-        # Exchange code for tokens (no PKCE verifier needed with client_secret)
+        # Exchange authorization code for tokens
         try:
-            tokens = await oauth_provider.exchange_code_for_tokens(code, None)
-        except Exception as token_error:
-            logger.error("token_exchange_failed", error=str(token_error), provider=provider)
+            token_data = await oauth_provider.exchange_code_for_tokens(code)
+            logger.info("Successfully exchanged code for tokens", provider=provider)
+        except Exception as e:
+            logger.error("Failed to exchange code for tokens", provider=provider, error=str(e))
             raise HTTPException(
-                status_code=400, 
-                detail="Token exchange failed. Please try again."
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to exchange authorization code: {str(e)}"
             )
-
-        access_token = tokens.get("access_token")
-        if not access_token or len(access_token) < 20:
-            raise HTTPException(status_code=400, detail="Invalid access token received")
-
-        # Fetch user profile with timeout
-        async with httpx.AsyncClient(timeout=30) as client:
-            try:
-                if provider == "google":
-                    profile_resp = await client.get(
-                        "https://www.googleapis.com/oauth2/v2/userinfo",
-                        headers={"Authorization": f"Bearer {access_token}"},
-                    )
-                    profile_resp.raise_for_status()
-                    profile = profile_resp.json()
-                    user_email = profile.get("email")
-                    full_name = profile.get("name")
-                    email_verified = profile.get("verified_email", False)
-                    
-                    # Require verified email for Google
-                    if not email_verified:
-                        raise HTTPException(
-                            status_code=400,
-                            detail="Email not verified. Please verify your email with Google."
-                        )
-                else:
-                    profile_resp = await client.get(
-                        "https://graph.microsoft.com/v1.0/me",
-                        headers={"Authorization": f"Bearer {access_token}"},
-                    )
-                    profile_resp.raise_for_status()
-                    profile = profile_resp.json()
-                    user_email = profile.get("mail") or profile.get("userPrincipalName")
-                    full_name = profile.get("displayName")
-            except httpx.HTTPError as http_err:
-                logger.error("profile_fetch_failed", error=str(http_err), provider=provider)
-                raise HTTPException(
-                    status_code=400,
-                    detail="Failed to fetch user profile. Please try again."
-                )
-
-        if not user_email or "@" not in user_email:
-            raise HTTPException(status_code=400, detail="Invalid email address received")
-
-        # Find or create user
-        result = await db.execute(select(User).where(User.email == user_email))
-        user = result.scalar_one_or_none()
-        if user is None:
-            user = User(email=user_email, full_name=full_name, provider=provider, timezone="UTC")
-            db.add(user)
-            await db.commit()
-            await db.refresh(user)
-            logger.info("new_user_created", email=mask_email(user_email), provider=provider)
-        else:
-            setattr(user, 'provider', provider)
-            if full_name and not user.full_name:
-                setattr(user, 'full_name', full_name)
-            await db.commit()
         
-        # Encrypt and store tokens
-        encrypted_access = token_encryptor.encrypt(access_token)
-        refresh_token = tokens.get("refresh_token") or ""
-        encrypted_refresh = token_encryptor.encrypt(refresh_token) if refresh_token else token_encryptor.encrypt("")
-        
-        # Calculate expiry
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=int(tokens.get("expires_in", 3600)))
-        
-        # Store or update OAuth credentials
-        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == user.id))
-        existing_cred = result.scalar_one_or_none()
-        scopes = tokens.get("scope", "")
-        scopes_list = scopes.split() if isinstance(scopes, str) else None
-        
-        if existing_cred:
-            setattr(existing_cred, 'access_token', encrypted_access)
-            setattr(existing_cred, 'refresh_token', encrypted_refresh)
-            setattr(existing_cred, 'expires_at', expires_at)
-            setattr(existing_cred, 'scopes', scopes_list)
-        else:
-            oauth_cred = OAuthCredential(
-                user_id=user.id,
-                access_token=encrypted_access,
-                refresh_token=encrypted_refresh,
-                expires_at=expires_at,
-                scopes=scopes_list
+        # Get user info from provider
+        try:
+            user_info = await oauth_provider.get_user_info(token_data["access_token"])
+            logger.info("Successfully retrieved user info", provider=provider, email=user_info.get("email"))
+        except Exception as e:
+            logger.error("Failed to get user info", provider=provider, error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to retrieve user information: {str(e)}"
             )
-            db.add(oauth_cred)
         
-        await db.commit()
-        
-        # Create JWT tokens with enhanced security
-        jwt_access_token = create_access_token(str(user.id))
-        jwt_refresh_token = create_refresh_token(str(user.id))
-        
-        logger.info(
-            "user_authenticated",
-            user_id_hash=hash_user_id(str(user.id)),
-            email=mask_email(user_email),
-            provider=provider
+        # Check if user exists
+        result = await db.execute(
+            select(User).where(User.email == user_info["email"])
         )
+        user = result.scalar_one_or_none()
+        
+        if user:
+            # Update existing user's OAuth credentials
+            await update_user_oauth_credentials(db, user, provider, token_data, user_info)
+            logger.info("Updated existing user OAuth credentials", user_id=user.id, provider=provider)
+        else:
+            # Create new user
+            user = await create_new_user(db, user_info, provider, token_data)
+            logger.info("Created new user", user_id=user.id, provider=provider)
+        
+        # Create access and refresh tokens
+        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+        refresh_token = create_refresh_token(user_id=user.id)
+        
+        # Store refresh token
+        await token_encryptor.store_refresh_token(user.id, refresh_token)
         
         # Redirect to frontend with tokens
-        redirect_url = f"{settings.frontend_url}/login?access_token={jwt_access_token}&refresh_token={jwt_refresh_token}"
+        frontend_url = str(settings.frontend_url)
+        redirect_url = f"{frontend_url}/auth/callback?access_token={access_token}&refresh_token={refresh_token}"
+        
+        logger.info("OAuth callback completed successfully", provider=provider, user_id=user.id)
         return RedirectResponse(url=redirect_url)
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("oauth_callback_failed", error=str(e), provider=provider)
+        logger.error("Unexpected error in OAuth callback", provider=provider, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication failed. Please try again."
+            detail=f"OAuth callback failed: {str(e)}"
         )
 
 
-@router.post("/refresh")
+async def update_user_oauth_credentials(db: AsyncSession, user: User, provider: str, token_data: dict, user_info: dict):
+    """Update existing user's OAuth credentials."""
+    # Update user info if needed
+    if user_info.get("name") and user.name != user_info["name"]:
+        user.name = user_info["name"]
+    
+    # Update or create OAuth credentials
+    result = await db.execute(
+        select(OAuthCredential).where(OAuthCredential.user_id == user.id, OAuthCredential.provider == provider)
+    )
+    oauth_credential = result.scalar_one_or_none()
+    
+    if oauth_credential:
+        # Update existing credential
+        oauth_credential.access_token = token_data["access_token"]
+        oauth_credential.refresh_token = token_data.get("refresh_token")
+        oauth_credential.expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+    else:
+        # Create new credential
+        oauth_credential = OAuthCredential(
+            user_id=user.id,
+            provider=provider,
+            access_token=token_data["access_token"],
+            refresh_token=token_data.get("refresh_token"),
+            expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+        )
+        db.add(oauth_credential)
+    
+    await db.commit()
+
+
+async def create_new_user(db: AsyncSession, user_info: dict, provider: str, token_data: dict) -> User:
+    """Create a new user with OAuth credentials."""
+    user = User(
+        email=user_info["email"],
+        name=user_info.get("name", ""),
+        hashed_password="",  # OAuth users don't have passwords
+        is_active=True,
+        is_verified=True
+    )
+    db.add(user)
+    await db.flush()  # Get the user ID
+    
+    # Create OAuth credentials
+    oauth_credential = OAuthCredential(
+        user_id=user.id,
+        provider=provider,
+        access_token=token_data["access_token"],
+        refresh_token=token_data.get("refresh_token"),
+        expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+    )
+    db.add(oauth_credential)
+    await db.commit()
+    
+    return user
+
+
+@router.get("/refresh")
 async def refresh_token(
-    request: Request,
+    refresh_token: str = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Refresh access token using refresh token."""
     try:
-        auth_header = request.headers.get("authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing refresh token")
+        # Decode and validate refresh token
+        token_data = decode_refresh_token(refresh_token)
+        user_id = token_data["sub"]
         
-        refresh_token = auth_header.split(" ")[1]
-        payload = decode_refresh_token(refresh_token)
-        user_id = payload.get("sub")
-        
-        if not user_id:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
-        
-        # Verify user still exists
+        # Get user
         result = await db.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
+        
         if not user:
-            raise HTTPException(status_code=401, detail="User not found")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
         
         # Create new access token
-        new_access_token = create_access_token(str(user.id))
+        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
         
-        return {
-            "access_token": new_access_token,
-            "token_type": "bearer",
-            "expires_in": settings.jwt_expire_minutes * 60
-        }
+        return {"access_token": access_token}
         
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+    except Exception as e:
+        logger.error("Token refresh failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Failed to refresh token"
+        )
 
 
 @router.post("/logout")
 async def logout(
-    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Logout user and revoke refresh token."""
+    """Logout user and revoke tokens."""
     try:
-        auth_header = request.headers.get("x-refresh-token")
-        if auth_header:
-            revoke_session(auth_header)
+        # Revoke all user sessions
+        await revoke_all_user_sessions(current_user.id)
         
-        # Get OAuth credentials to revoke tokens
-        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
-        oauth_cred = result.scalar_one_or_none()
-        
-        logout_url = None
-        if oauth_cred and current_user.provider:
-            try:
-                provider_str = str(current_user.provider)
-                oauth_provider = get_oauth_provider(provider_str)
-                
-                # Revoke tokens if provider supports it
-                if oauth_cred.access_token:
-                    access_token_str = str(oauth_cred.access_token)
-                    decrypted_token = token_encryptor.decrypt(access_token_str)
-                    await oauth_provider.revoke_token(decrypted_token)
-                
-                # Get logout URL for frontend redirect
-                frontend_url_str = str(settings.frontend_url)
-                logout_url = oauth_provider.get_logout_url(frontend_url_str)
-            except Exception as e:
-                logger.warning("oauth_revoke_failed", error=str(e))
-        
-        logger.info(
-            "user_logged_out",
-            user_id_hash=hash_user_id(str(current_user.id)),
-            email=mask_email(str(current_user.email))
-        )
-        
-        return {
-            "message": "Logged out successfully",
-            "logout_url": logout_url,
-            "provider": current_user.provider
-        }
+        return {"message": "Logged out successfully"}
         
     except Exception as e:
-        logger.error("logout_failed", error=str(e))
-        return {"message": "Logged out"}
-
-
-@router.post("/logout-all")
-async def logout_all(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Logout from all devices."""
-    try:
-        revoked_count = revoke_all_user_sessions(str(current_user.id))
-        
-        # Get OAuth credentials to revoke tokens
-        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
-        oauth_cred = result.scalar_one_or_none()
-        
-        logout_url = None
-        if oauth_cred and current_user.provider:
-            try:
-                provider_str = str(current_user.provider)
-                oauth_provider = get_oauth_provider(provider_str)
-                
-                # Revoke all tokens
-                if oauth_cred.access_token:
-                    access_token_str = str(oauth_cred.access_token)
-                    decrypted_token = token_encryptor.decrypt(access_token_str)
-                    await oauth_provider.revoke_token(decrypted_token)
-                
-                if oauth_cred.refresh_token:
-                    refresh_token_str = str(oauth_cred.refresh_token)
-                    decrypted_refresh = token_encryptor.decrypt(refresh_token_str)
-                    if decrypted_refresh:
-                        await oauth_provider.revoke_token(decrypted_refresh)
-                
-                # Get logout URL for frontend redirect
-                frontend_url_str = str(settings.frontend_url)
-                logout_url = oauth_provider.get_logout_url(frontend_url_str)
-            except Exception as e:
-                logger.warning("oauth_revoke_all_failed", error=str(e))
-        
-        logger.info(
-            "user_logged_out_all_devices",
-            user_id_hash=hash_user_id(str(current_user.id)),
-            sessions_revoked=revoked_count
-        )
-        
-        return {
-            "message": f"Logged out from {revoked_count} devices",
-            "logout_url": logout_url,
-            "provider": current_user.provider
-        }
-        
-    except Exception as e:
-        logger.error("logout_all_failed", error=str(e))
-        return {"message": "Logged out from all devices"}
-
-
-@router.delete("/account")
-async def delete_account(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Delete user account and all associated data."""
-    try:
-        # Get OAuth credentials to revoke tokens
-        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
-        oauth_cred = result.scalar_one_or_none()
-        
-        # Revoke OAuth tokens before deletion
-        if oauth_cred and current_user.provider:
-            try:
-                provider_str = str(current_user.provider)
-                oauth_provider = get_oauth_provider(provider_str)
-                
-                if oauth_cred.access_token:
-                    access_token_str = str(oauth_cred.access_token)
-                    decrypted_token = token_encryptor.decrypt(access_token_str)
-                    await oauth_provider.revoke_token(decrypted_token)
-                
-                if oauth_cred.refresh_token:
-                    refresh_token_str = str(oauth_cred.refresh_token)
-                    decrypted_refresh = token_encryptor.decrypt(refresh_token_str)
-                    if decrypted_refresh:
-                        await oauth_provider.revoke_token(decrypted_refresh)
-            except Exception as e:
-                logger.warning("oauth_revoke_on_delete_failed", error=str(e))
-        
-        # Revoke all sessions
-        revoke_all_user_sessions(str(current_user.id))
-        
-        # Delete OAuth credentials
-        if oauth_cred:
-            await db.delete(oauth_cred)
-        
-        # Delete user (cascade will delete meetings and other related data)
-        await db.delete(current_user)
-        await db.commit()
-        
-        logger.info(
-            "user_account_deleted",
-            user_id_hash=hash_user_id(str(current_user.id)),
-            email=mask_email(str(current_user.email))
-        )
-        
-        return {
-            "message": "Account deleted successfully",
-            "provider": current_user.provider
-        }
-        
-    except Exception as e:
-        logger.error("account_deletion_failed", error=str(e))
-        await db.rollback()
+        logger.error("Logout failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete account"
+            detail="Failed to logout"
         )
+
+
+@router.get("/me")
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get current user information."""
+    try:
+        # Get OAuth credentials
+        result = await db.execute(
+            select(OAuthCredential).where(OAuthCredential.user_id == current_user.id)
+        )
+        oauth_credentials = result.scalars().all()
+        
+        return {
+            "id": current_user.id,
+            "email": current_user.email,
+            "name": current_user.name,
+            "is_active": current_user.is_active,
+            "is_verified": current_user.is_verified,
+            "oauth_providers": [cred.provider for cred in oauth_credentials]
+        }
+        
+    except Exception as e:
+        logger.error("Failed to get user info", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get user information"
+        )
+
+
+# Include Microsoft router
+api_router = APIRouter()
+api_router.include_router(microsoft_router, prefix="/api/v1")
+api_router.include_router(router, prefix="/api/v1")
