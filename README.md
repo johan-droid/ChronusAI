@@ -275,6 +275,39 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
         <strong>Live Demo</strong>
       </a>
     </div>
+    
+    <!-- Legal Links -->
+    <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;">
+      <a href="./PRIVACY_POLICY.md" 
+         style="color: #e0e0e0; text-decoration: none; font-size: 0.9rem; transition: color 0.3s ease;">
+        Privacy Policy
+      </a>
+      <a href="./TERMS_OF_SERVICE.md" 
+         style="color: #e0e0e0; text-decoration: none; font-size: 0.9rem; transition: color 0.3s ease;">
+        Terms of Service
+      </a>
+      <a href="./SECURITY.md" 
+         style="color: #e0e0e0; text-decoration: none; font-size: 0.9rem; transition: color 0.3s ease;">
+        Security
+      </a>
+      <a href="./README_LOCAL_DEVELOPMENT.md" 
+         style="color: #e0e0e0; text-decoration: none; font-size: 0.9rem; transition: color 0.3s ease;">
+        Development
+      </a>
+    </div>
+    
+    <!-- Copyright and Contact -->
+    <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 1.5rem;">
+      <p style="color: #a0a0a0; font-size: 0.85rem; margin: 0 0 0.5rem 0; text-align: center;">
+        © 2026 ChronosAI. All rights reserved.
+      </p>
+      <p style="color: #808080; font-size: 0.8rem; margin: 0; text-align: center;">
+        Questions? Contact us at <a href="mailto:hello@chronosai.com" style="color: #4ecdc4; text-decoration: none;">hello@chronosai.com</a>
+      </p>
+      <p style="color: #606060; font-size: 0.75rem; margin: 0.5rem 0 0 0; text-align: center;">
+        Built with ❤️ for the future of intelligent scheduling
+      </p>
+    </div>
   </div>
   
   <!-- CSS Animations -->
