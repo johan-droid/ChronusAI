@@ -51,7 +51,7 @@ async def send_message(
             str(payload.message),
             str(current_user.timezone),
             str(current_user.email),
-            str(current_user.name or "User"),
+            str(current_user.full_name or "User"),
             context,
         )
         
@@ -98,7 +98,7 @@ async def send_message(
                 # Generate helpful response with user context
                 helpful_response = await llm_service.generate_helpful_response(
                     payload.message,
-                    str(current_user.name or "User"),
+                    str(current_user.full_name or "User"),
                     str(current_user.email)
                 )
                 response = ChatResponse(
