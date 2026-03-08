@@ -63,7 +63,7 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://chronosai.onrender.com",
+    "VITE_API_URL": "https://chronusai.onrender.com",
     "NODE_ENV": "production"
   },
   "functions": {
