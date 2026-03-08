@@ -7,6 +7,7 @@ from typing import Any, Dict
 
 from cryptography.fernet import Fernet
 from jose import jwt, JWTError
+from passlib.context import CryptContext
 
 from app.config import settings
 
@@ -153,7 +154,6 @@ def cleanup_expired_sessions() -> int:
     return len(expired)
 
 
-from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -170,7 +170,9 @@ def get_password_hash(password: str) -> str:
 
 def hash_user_id(user_id: str) -> str:
     """Hash user ID for logging."""
-    return hashlib.sha256(f"{user_id}:{settings.secret_key}".encode()).hexdigest()[:16]
+    hash_str = str(hashlib.sha256(f"{user_id}:{settings.secret_key}".encode()).hexdigest())
+    return hash_str[:16]  # type: ignore
+
 
 
 def mask_email(email: str) -> str:

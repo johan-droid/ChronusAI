@@ -70,7 +70,7 @@ async def get_calendar_provider(
         if not access_token:
             try:
                 access_token = token_encryptor.decrypt(oauth_credential.access_token)  # type: ignore[arg-type]
-            except Exception as e:
+            except Exception:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="OAuth token decryption failed. Please authenticate again."

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone, timedelta
-from typing import Any, List, Dict, Optional, Tuple
+from datetime import datetime, timezone
+from typing import Any, List, Dict, Tuple
 
 from openai import AsyncOpenAI
 
 from app.config import settings
-from app.schemas.chat import ParsedIntent
 
 
 class AISchedulingService:

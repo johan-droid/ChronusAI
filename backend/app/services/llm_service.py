@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone, timedelta
-from typing import Any, List, Dict, Optional
+from datetime import datetime, timezone
+from typing import Any, List
 
 from openai import AsyncOpenAI
 

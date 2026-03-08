@@ -1,5 +1,5 @@
 import httpx
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from datetime import datetime
 from app.config import settings
 import structlog

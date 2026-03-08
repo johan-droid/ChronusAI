@@ -5,7 +5,6 @@ from app.services.calendar_provider import CalendarProvider, TimeSlot, CreateEve
 from app.schemas.meeting import MeetingCreate, Attendee
 import httpx
 import structlog
-import asyncio
 
 logger = structlog.get_logger()
 

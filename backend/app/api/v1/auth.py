@@ -4,7 +4,6 @@ import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select, and_
@@ -12,17 +11,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.oauth import get_oauth_provider
-from typing import List, Optional
+from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
 from app.core.security import (
     create_access_token, 
     token_encryptor, 
     create_refresh_token, 
     decode_refresh_token, 
-    revoke_session, 
     revoke_all_user_sessions, 
-    hash_user_id, 
-    mask_email,
     get_password_hash,
     verify_password
 )

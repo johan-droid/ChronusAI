@@ -94,7 +94,7 @@ async def get_meetings(
             .order_by(Meeting.start_time)
         )
         return list(result.scalars().all())
-    except Exception as e:
+    except Exception:
         # If sync fails, still return cached meetings from database
         result = await db.execute(
             select(Meeting)
