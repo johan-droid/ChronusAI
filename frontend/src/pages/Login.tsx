@@ -38,6 +38,8 @@ export default function Login() {
               full_name: '',
               timezone: 'UTC',
               provider: 'google',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
             },
             accessToken,
             refreshToken
@@ -211,10 +213,10 @@ export default function Login() {
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
                       <svg className="h-5 w-5" viewBox="0 0 24 24">
-                        <rect x="2" y="2" width="9" height="9" fill="#F25022"/>
-                        <rect x="2" y="13" width="9" height="9" fill="#7FBA00"/>
-                        <rect x="13" y="2" width="9" height="9" fill="#00A4EF"/>
-                        <rect x="13" y="13" width="9" height="9" fill="#FFB900"/>
+                        <rect x="2" y="2" width="9" height="9" fill="#F25022" />
+                        <rect x="2" y="13" width="9" height="9" fill="#7FBA00" />
+                        <rect x="13" y="2" width="9" height="9" fill="#00A4EF" />
+                        <rect x="13" y="13" width="9" height="9" fill="#FFB900" />
                       </svg>
                     )}
                     <span className="font-semibold text-sm lg:text-base">Continue with Microsoft</span>
@@ -421,7 +423,7 @@ export default function Login() {
           </div>
         </div>
       )}
-      
+
       {/* Debug Component */}
       <AuthDebug />
     </div>

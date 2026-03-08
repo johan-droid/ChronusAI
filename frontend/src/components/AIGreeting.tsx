@@ -11,7 +11,7 @@ export default function AIGreeting({ userName }: { userName?: string }) {
     const fetchGreeting = async () => {
       try {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const response = await apiClient.get(`/greetings/personalized?timezone=${timezone}`);
+        const response = await apiClient.get(`/greetings/personalized?timezone=${timezone}`) as any;
         setGreeting(response.data.greeting);
         setLocalTime(response.data.local_time);
       } catch (error) {

@@ -90,7 +90,7 @@ class ApiClient {
   }
 
   async getCurrentUser(): Promise<User> {
-    const cached = cacheManager.get('user:current');
+    const cached = cacheManager.get('user:current') as User | null;
     if (cached) return cached;
 
     const response = await this.client.get('/users/me');
@@ -111,7 +111,7 @@ class ApiClient {
 
   // Meeting endpoints
   async getMeetings(): Promise<Meeting[]> {
-    const cached = cacheManager.get('meetings:list');
+    const cached = cacheManager.get('meetings:list') as Meeting[] | null;
     if (cached) return cached;
 
     const response = await this.client.get('/meetings');
