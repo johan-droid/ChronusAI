@@ -23,8 +23,8 @@ export default function Settings() {
       clearAuthCache();
       logout();
       navigate('/login');
-    } catch (error: any) {
-      setDeleteError(error?.response?.data?.detail || 'Failed to delete account');
+    } catch (error: unknown) {
+      setDeleteError((error as any)?.response?.data?.detail || (error as Error)?.message || 'Failed to delete account');
     } finally {
       setDeleteLoading(false);
     }

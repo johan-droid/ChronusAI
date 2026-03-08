@@ -1,7 +1,7 @@
 // Performance optimization utilities for Vercel free tier
 
 // Debounce function for search inputs and API calls
-export const debounce = <T extends (...args: any[]) => any>(
+export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): ((...args: Parameters<T>) => void) => {
@@ -13,7 +13,7 @@ export const debounce = <T extends (...args: any[]) => any>(
 };
 
 // Throttle function for scroll events and animations
-export const throttle = <T extends (...args: any[]) => any>(
+export const throttle = <T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number
 ): ((...args: Parameters<T>) => void) => {
@@ -167,7 +167,9 @@ export const getMemoryUsage = () => {
     return null;
   }
 
-  const memory = (performance as any).memory;
+  const memory = (performance as { memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+  if (!memory) return null;
+  
   return {
     used: Math.round(memory.usedJSHeapSize / 1048576), // MB
     total: Math.round(memory.totalJSHeapSize / 1048576), // MB

@@ -83,7 +83,7 @@ class ApiClient {
       
       const response = await this.client.get(`${baseUrl}/auth/${provider}/login`);
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Auth URL error:', error);
       throw error;
     }
@@ -157,12 +157,12 @@ class ApiClient {
   }
 
   // Generic methods
-  async get(url: string): Promise<any> {
+  async get(url: string): Promise<unknown> {
     const response = await this.client.get(url);
     return response;
   }
 
-  async delete(url: string): Promise<any> {
+  async delete(url: string): Promise<unknown> {
     const response = await this.client.delete(url);
     return response;
   }

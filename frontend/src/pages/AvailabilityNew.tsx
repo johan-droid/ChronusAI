@@ -34,7 +34,7 @@ export default function Availability() {
       try {
         await apiClient.getCurrentUser();
         await fetchAvailability();
-      } catch (error) {
+      } catch {
         navigate('/login');
       }
     };
@@ -49,8 +49,8 @@ export default function Availability() {
       setTimeSlots(data.slots);
       setAvailableCount(data.available_count);
       setBusyCount(data.busy_count);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to load availability');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.detail || (err as Error)?.message || 'Failed to load availability');
     } finally {
       setLoading(false);
     }

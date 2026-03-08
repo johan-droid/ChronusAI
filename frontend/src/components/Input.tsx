@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+import { forwardRef, useState } from 'react'
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string
@@ -8,7 +8,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, error, label, icon, id, ...props }, ref) => {
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`
+    const [inputId] = useState(() => id || `input-${Math.random().toString(36).substr(2, 9)}`);
     
     return (
       <div className="space-y-2">

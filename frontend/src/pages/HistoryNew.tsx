@@ -25,7 +25,7 @@ export default function History() {
       }
       try {
         await apiClient.getCurrentUser();
-      } catch (error) {
+      } catch {
         navigate('/login');
       }
     };
@@ -37,7 +37,7 @@ export default function History() {
     const matchesSearch = !searchTerm ||
       m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.attendees.some((a: any) => a.email?.toLowerCase().includes(searchTerm.toLowerCase()));
+      m.attendees.some((a: { email?: string }) => a.email?.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesFilter && matchesSearch;
   }).sort((a, b) => {
     const diff = new Date(a.start_time).getTime() - new Date(b.start_time).getTime();

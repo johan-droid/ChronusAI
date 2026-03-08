@@ -22,7 +22,7 @@ export default function Chat() {
       }
       try {
         await apiClient.getCurrentUser();
-      } catch (error) {
+      } catch {
         navigate('/login');
       }
     };

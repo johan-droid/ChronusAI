@@ -204,11 +204,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile] = useState(() => isMobileDevice());
   
   useEffect(() => {
-    setIsMobile(isMobileDevice());
-    
     // Add Android-specific optimizations
     if (isAndroidDevice()) {
       // Prevent zoom on input focus

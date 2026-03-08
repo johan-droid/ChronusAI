@@ -3,7 +3,7 @@
  */
 
 interface CacheEntry {
-  data: any;
+  data: unknown;
   timestamp: number;
   ttl: number;
 }
@@ -12,7 +12,7 @@ class CacheManager {
   private cache: Map<string, CacheEntry> = new Map();
   private readonly DEFAULT_TTL = 5 * 60 * 1000; // 5 minutes
 
-  set(key: string, data: any, ttl: number = this.DEFAULT_TTL): void {
+  set(key: string, data: unknown, ttl: number = this.DEFAULT_TTL): void {
     this.cache.set(key, {
       data,
       timestamp: Date.now(),
@@ -20,7 +20,7 @@ class CacheManager {
     });
   }
 
-  get(key: string): any | null {
+  get(key: string): unknown | null {
     const entry = this.cache.get(key);
     if (!entry) return null;
 

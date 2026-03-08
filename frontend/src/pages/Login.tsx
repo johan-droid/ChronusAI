@@ -32,7 +32,13 @@ export default function Login() {
         try {
           // Set temporary auth to make API call
           useAuthStore.getState().setAuth(
-            { id: '', email: '', full_name: '', timezone: 'UTC', provider: 'google' } as any,
+            {
+              id: '',
+              email: '',
+              full_name: '',
+              timezone: 'UTC',
+              provider: 'google',
+            },
             accessToken,
             refreshToken
           );
@@ -103,9 +109,9 @@ export default function Login() {
 
       // Redirect to OAuth provider
       window.location.href = response.auth_url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('OAuth login error:', error);
-      const errorMsg = error?.response?.data?.detail || error?.message || 'Failed to initiate login';
+      const errorMsg = (error as any)?.response?.data?.detail || (error as Error)?.message || 'Failed to initiate login';
       setError(errorMsg);
       setIsLoading(false);
 

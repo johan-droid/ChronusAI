@@ -17,8 +17,14 @@ const NavigationBar = memo(({
   setMobileMenuOpen,
   setShowLogout
 }: {
-  user: any;
-  navigate: any;
+  user: {
+    id: string;
+    email: string;
+    full_name?: string;
+    timezone: string;
+    provider: string;
+  } | null;
+  navigate: (path: string) => void;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: (open: boolean) => void;
   setShowLogout: (show: boolean) => void;
@@ -113,7 +119,20 @@ const NavigationBar = memo(({
 NavigationBar.displayName = 'NavigationBar';
 
 // Memoized Stats Grid Component
-const StatsGrid = memo(({ stats }: { stats: any }) => (
+const StatsGrid = memo(({ stats }: { 
+  stats: {
+    total: number;
+    scheduled: number;
+    canceled: number;
+    cancelled: number;
+    today: number;
+    thisWeek: number;
+    thisMonth: number;
+    upcoming: number;
+    completed: number;
+    totalAttendees: number;
+  }
+}) => (
   <div className="space-y-6">
     {/* Overview Stats */}
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-slide-up" style={{ animationDelay: '0.1s' }}>
@@ -174,7 +193,7 @@ export default function StatsOverview() {
       }
       try {
         await apiClient.getCurrentUser();
-      } catch (error) {
+      } catch {
         navigate('/login');
       }
     };
@@ -186,6 +205,8 @@ export default function StatsOverview() {
       total: 0,
       scheduled: 0,
       canceled: 0,
+      cancelled: 0,
+      completed: 0,
       today: 0,
       thisWeek: 0,
       thisMonth: 0,
@@ -203,6 +224,8 @@ export default function StatsOverview() {
       total: meetings.length,
       scheduled: meetings.filter(m => m.status === 'scheduled').length,
       canceled: meetings.filter(m => m.status === 'canceled').length,
+      cancelled: meetings.filter(m => m.status === 'canceled').length,
+      completed: meetings.filter(m => m.status === 'scheduled' && new Date(m.start_time) < new Date()).length,
       today: meetings.filter(m => new Date(m.start_time).toDateString() === today).length,
       thisWeek: meetings.filter(m => {
         const meetingDate = new Date(m.start_time);
