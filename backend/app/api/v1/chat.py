@@ -318,11 +318,159 @@ async def handle_cancel_meeting(intent, user: User, calendar_provider, db: Async
 
 
 async def handle_update_meeting(intent, user: User, calendar_provider, db: AsyncSession):
-    """Handle meeting update intent."""
-    return ChatResponse(
-        response="Meeting updates are not yet implemented. You can cancel and reschedule instead.",
-        intent="reschedule"
-    )
+    """Handle meeting update/reschedule intent with AI intelligence."""
+    try:
+        # Parse new time from intent
+        if not intent.start_time:
+            return ChatResponse(
+                response="I need to know when you'd like to reschedule the meeting to. Could you specify a new date and time?",
+                intent="reschedule",
+                requires_clarification=True,
+            )
+        
+        # Parse datetime from ISO string
+        try:
+            new_start_time = datetime.fromisoformat(intent.start_time.replace('Z', '+00:00'))
+            if intent.end_time:
+                new_end_time = datetime.fromisoformat(intent.end_time.replace('Z', '+00:00'))
+            else:
+                # Default 30 minutes or calculate from existing meeting
+                new_end_time = new_start_time + timedelta(minutes=30)
+        except Exception:
+            return ChatResponse(
+                response="I couldn't understand the new time format. Please try again with a clearer date and time.",
+                intent="reschedule",
+                requires_clarification=True,
+            )
+        
+        # Find the most recent scheduled meeting to reschedule
+        result = await db.execute(
+            select(Meeting)
+            .where(and_(Meeting.user_id == user.id, Meeting.status == "scheduled"))
+            .order_by(Meeting.start_time.asc())
+            .limit(1)
+        )
+        meeting = result.scalar_one_or_none()
+        
+        if not meeting:
+            return ChatResponse(
+                response="No scheduled meetings found to reschedule. Would you like to schedule a new meeting instead?",
+                intent="reschedule"
+            )
+        
+        # Check for conflicts at new time
+        attendees_emails = [attendee.get("email") for attendee in meeting.attendees if attendee.get("email")]
+        attendees_emails.append(user.email)
+        
+        busy_slots = await calendar_provider.get_free_busy(
+            new_start_time, new_end_time, attendees_emails
+        )
+        
+        # Check if new slot conflicts (excluding the current meeting)
+        conflict = any(
+            not (new_end_time <= b.start or new_start_time >= b.end) 
+            and b.start != meeting.start_time
+            for b in busy_slots
+        )
+        
+        if conflict:
+            # Use AI to suggest alternative times
+            from app.services.ai_scheduling_service import ai_scheduling_service
+            
+            suggestions = await ai_scheduling_service.suggest_optimal_meeting_times(
+                duration_minutes=int((new_end_time - new_start_time).total_seconds() / 60),
+                attendees=attendees_emails,
+                meeting_type=intent.meeting_type or "meeting",
+                user_timezone=str(user.timezone)
+            )
+            
+            if suggestions.get("optimal_times"):
+                times_text = "\n".join([
+                    f"• {suggestion['time']}: {suggestion['reason']}"
+                    for suggestion in suggestions["optimal_times"][:3]
+                ])
+                return ChatResponse(
+                    response=f"There's a scheduling conflict at that time. Here are some alternatives:\n{times_text}\n\nWould you like me to reschedule to one of these?",
+                    intent="reschedule",
+                    requires_clarification=True,
+                    suggestions=suggestions.get("optimal_times", [])
+                )
+            else:
+                return ChatResponse(
+                    response="There's a scheduling conflict at that time. Would you like me to check your availability and suggest alternatives?",
+                    intent="reschedule",
+                    requires_clarification=True
+                )
+        
+        # Update the meeting in Google Calendar
+        try:
+            from app.schemas.meeting import MeetingCreate, Attendee
+            
+            updated_meeting = MeetingCreate(
+                title=intent.title or meeting.title,
+                description=intent.description or meeting.description,
+                start_time=new_start_time,
+                end_time=new_end_time,
+                attendees=[Attendee(email=e) for e in attendees_emails],
+                provider=str(user.provider),
+                raw_user_input=f"Rescheduled: {meeting.title}"
+            )
+            
+            # Update in Google Calendar
+            await calendar_provider.update_event(meeting.external_event_id, updated_meeting)
+            
+            # Update in database
+            meeting.title = updated_meeting.title
+            meeting.description = updated_meeting.description
+            meeting.start_time = updated_meeting.start_time
+            meeting.end_time = updated_meeting.end_time
+            meeting.attendees = [a.model_dump() for a in updated_meeting.attendees]
+            meeting.raw_user_input = f"Rescheduled: {meeting.title}"
+            
+            await db.commit()
+            await db.refresh(meeting)
+            
+            # Format response with local time
+            try:
+                local_time = new_start_time.astimezone(ZoneInfo(str(user.timezone)))
+                formatted_time = local_time.strftime("%A, %B %d at %I:%M %p")
+            except Exception:
+                formatted_time = new_start_time.strftime("%A, %B %d at %I:%M %p")
+            
+            logger.info(
+                "chat_meeting_rescheduled",
+                user_id_hash=hash_user_id(str(user.id)),
+                provider=user.provider,
+                meeting_id=str(meeting.id),
+                new_time=new_start_time.isoformat()
+            )
+            
+            return ChatResponse(
+                response=f"✅ Meeting rescheduled: {meeting.title} to {formatted_time}",
+                intent="reschedule",
+                meeting={
+                    "id": str(meeting.id),
+                    "title": meeting.title,
+                    "start_time": meeting.start_time.isoformat(),
+                    "end_time": meeting.end_time.isoformat(),
+                    "attendees": meeting.attendees,
+                    "status": meeting.status
+                }
+            )
+            
+        except Exception as e:
+            logger.error("calendar_update_failed", error=str(e))
+            return ChatResponse(
+                response="I had trouble updating the meeting in your calendar. Please try again or check your calendar connection.",
+                intent="reschedule"
+            )
+        
+    except Exception as e:
+        logger.error("chat_reschedule_failed", error=str(e))
+        return ChatResponse(
+            response="I couldn't reschedule that meeting right now. Please try again.",
+            intent="reschedule"
+        )
 
 
 async def handle_query_availability(intent, user: User, calendar_provider):
