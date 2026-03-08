@@ -37,7 +37,7 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_REDIRECT_URI
-        value: https://chronusai.onrender.com/auth/google/callback
+        value: https://chronusai.onrender.com/api/v1/auth/google/callback
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
