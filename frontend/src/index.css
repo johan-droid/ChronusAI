@@ -469,6 +469,343 @@ html, body {
   }
 }
 
+/* Android-Specific Mobile Optimizations */
+@media (max-width: 640px) {
+  /* Touch-friendly interactions */
+  * {
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Input field optimizations for Android */
+  input, textarea, select {
+    font-size: 16px; /* Prevent zoom on focus */
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-border-radius: 0;
+    border-radius: 0;
+  }
+
+  /* Button optimizations for touch */
+  button, .btn-primary, .btn-secondary {
+    min-height: 44px; /* Minimum touch target size */
+    min-width: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
+    -webkit-appearance: none;
+    appearance: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Navigation optimizations */
+  .glass-nav {
+    width: 280px; /* Wider for better touch */
+  }
+
+  .nav-item {
+    padding: 16px 20px;
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  /* Card optimizations */
+  .glass-card, .cosmic-card {
+    margin: 16px;
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  /* Form optimizations */
+  .form-input {
+    padding: 16px;
+    font-size: 16px;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+
+  /* Modal optimizations */
+  .modal-content {
+    margin: 16px;
+    padding: 24px;
+    border-radius: 16px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+  }
+
+  /* Footer optimizations */
+  footer {
+    padding: 24px 16px;
+  }
+
+  footer .grid-cols-3 {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  /* Chat optimizations */
+  .chat-bubble {
+    margin: 8px 0;
+    padding: 12px 16px;
+    border-radius: 16px;
+    max-width: 85%;
+  }
+
+  /* Loading optimizations */
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Background optimizations */
+  .galaxy-bg {
+    opacity: 0.3; /* Reduce background intensity on mobile */
+  }
+
+  .stars {
+    opacity: 0.5;
+  }
+
+  /* Cookie consent optimizations */
+  .cookie-consent {
+    margin: 16px;
+    padding: 20px;
+    border-radius: 16px;
+  }
+
+  .cookie-consent .flex {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .cookie-consent button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+/* Small Android Phones */
+@media (max-width: 480px) {
+  /* Even more touch-friendly */
+  button, .btn-primary, .btn-secondary {
+    min-height: 48px;
+    padding: 14px 20px;
+    font-size: 16px;
+  }
+
+  /* Compact navigation */
+  .glass-nav {
+    width: 100%;
+    height: 100vh;
+  }
+
+  /* Compact cards */
+  .glass-card, .cosmic-card {
+    margin: 12px;
+    padding: 16px;
+  }
+
+  /* Larger touch targets */
+  .nav-item {
+    padding: 20px 24px;
+    min-height: 56px;
+    font-size: 18px;
+  }
+
+  /* Optimized typography */
+  h1 {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+
+  h2 {
+    font-size: 24px;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 20px;
+    line-height: 1.4;
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  /* Full-width buttons on small screens */
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    margin: 8px 0;
+  }
+
+  /* Compact footer */
+  footer {
+    padding: 20px 12px;
+  }
+
+  footer .text-sm {
+    font-size: 14px;
+  }
+
+  /* Optimized spacing */
+  .container, .max-w-7xl {
+    padding: 0 12px;
+  }
+
+  .py-8 {
+    padding-top: 32px;
+    padding-bottom: 32px;
+  }
+
+  .px-4 {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* Better scroll performance */
+  * {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide heavy animations on mobile */
+  .animate-float-gentle,
+  .animate-bounce-gentle {
+    animation: none;
+  }
+
+  /* Simplified background */
+  .galaxy-bg,
+  .stars,
+  .shooting-star {
+    display: none;
+  }
+
+  body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  }
+}
+
+/* Android Landscape Mode */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Compact header */
+  header {
+    padding: 12px 16px;
+  }
+
+  /* Compact navigation */
+  .glass-nav {
+    height: 100vh;
+    padding-top: 60px;
+  }
+
+  /* Compact content */
+  main {
+    padding: 12px;
+  }
+
+  /* Compact cards */
+  .glass-card, .cosmic-card {
+    padding: 16px;
+    margin: 8px;
+  }
+
+  /* Compact footer */
+  footer {
+    padding: 16px;
+  }
+
+  /* Hide background in landscape */
+  .galaxy-bg,
+  .stars,
+  .shooting-star,
+  .planet {
+    display: none;
+  }
+}
+
+/* High DPI Android Devices */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Crisper borders */
+  .glass-card, .cosmic-card, .btn-primary, .btn-secondary {
+    border-width: 0.5px;
+  }
+
+  /* Optimized images */
+  img {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+
+  /* Better text rendering */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Android Browser Specific */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  /* Fallback for older Android browsers */
+  .glass-card, .cosmic-card {
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .btn-primary:hover,
+  .btn-secondary:hover,
+  .nav-item:hover,
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Add active states */
+  .btn-primary:active,
+  .btn-secondary:active,
+  .nav-item:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+
+  /* Better touch feedback */
+  button, .btn-primary, .btn-secondary, .nav-item {
+    position: relative;
+  }
+
+  button::after,
+  .btn-primary::after,
+  .btn-secondary::after,
+  .nav-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: inherit;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.1s ease;
+    pointer-events: none;
+  }
+
+  button:active::after,
+  .btn-primary:active::after,
+  .btn-secondary:active::after,
+  .nav-item:active::after {
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* Logo Animation Classes */
 .animate-bounce-gentle {
   animation: bounce-gentle 2s ease-in-out infinite;

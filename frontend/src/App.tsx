@@ -2,9 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
-import { lazy, Suspense, memo, useEffect } from 'react';
+import { lazy, Suspense, memo, useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
-import LoadingSpinner from './components/LoadingSpinner';
 import Footer from './components/Footer';
 import CookieConsent from './components/CookieConsent';
 import './index.css';
@@ -30,42 +29,132 @@ const queryClient = new QueryClient({
   },
 });
 
+// Android Mobile Detection
+const isAndroidDevice = () => {
+  return /Android/i.test(navigator.userAgent) || /android/i.test(navigator.userAgent);
+};
+
+const isMobileDevice = () => {
+  return /Mobi|Android/i.test(navigator.userAgent);
+};
+
 // Optimized Background Component
-const OptimizedBackground = memo(() => (
-  <>
-    {/* Galaxy Background */}
-    <div className="galaxy-bg" />
-    
-    {/* Optimized Stars - Reduced count for better performance */}
-    <div className="stars">
-      <div className="star" />
-      <div className="star" />
-      <div className="star" />
-      <div className="star" />
-      <div className="star" />
-    </div>
-    
-    {/* Shooting Stars - Reduced for mobile */}
-    <div className="shooting-star" />
-    <div className="shooting-star" />
-    
-    {/* Planets - Hidden on mobile for performance */}
-    <div className="planet planet-1" />
-    <div className="planet planet-2" />
-  </>
-));
+const OptimizedBackground = memo(() => {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+  }, []);
+  
+  if (isMobile) {
+    return null; // No background on mobile for better performance
+  }
+  
+  return (
+    <>
+      {/* Galaxy Background */}
+      <div className="galaxy-bg" />
+      
+      {/* Optimized Stars - Reduced count for better performance */}
+      <div className="stars">
+        <div className="star" />
+        <div className="star" />
+        <div className="star" />
+        <div className="star" />
+        <div className="star" />
+      </div>
+      
+      {/* Shooting Stars - Reduced for mobile */}
+      <div className="shooting-star" />
+      <div className="shooting-star" />
+      
+      {/* Planets - Hidden on mobile for performance */}
+      <div className="planet planet-1" />
+      <div className="planet planet-2" />
+    </>
+  );
+});
 
 OptimizedBackground.displayName = 'OptimizedBackground';
 
-// Loading Component
+// Loading Component with Android optimizations
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="text-center space-y-4">
-      <LoadingSpinner size="lg" />
+      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary/30 border-t-transparent animate-spin rounded-full"></div>
       <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
     </div>
   </div>
 );
+
+// Mobile Navigation Component
+const MobileNavigation = memo(() => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const isMobile = isMobileDevice();
+  
+  if (!isMobile) return null;
+  
+  return (
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border/30">
+      <div className="flex items-center justify-between p-4">
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-2 rounded-lg bg-card/50 border border-border/30 text-foreground"
+          aria-label="Toggle menu"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+      
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-lg border-b border-border/30">
+          <div className="p-4 space-y-2">
+            <a
+              href="/dashboard"
+              className="block px-4 py-3 text-foreground hover:bg-card/50 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Dashboard
+            </a>
+            <a
+              href="/chat"
+              className="block px-4 py-3 text-foreground hover:bg-card/50 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              AI Chat
+            </a>
+            <a
+              href="/availability"
+              className="block px-4 py-3 text-foreground hover:bg-card/50 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Availability
+            </a>
+            <a
+              href="/history"
+              className="block px-4 py-3 text-foreground hover:bg-card/50 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              History
+            </a>
+            <a
+              href="/settings"
+              className="block px-4 py-3 text-foreground hover:bg-card/50 rounded-lg transition-colors"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Settings
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+});
+
+MobileNavigation.displayName = 'MobileNavigation';
 
 // OAuth Callback Guard Component
 function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
@@ -116,11 +205,42 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+    
+    // Add Android-specific optimizations
+    if (isAndroidDevice()) {
+      // Prevent zoom on input focus
+      const handleTouchStart = (e: TouchEvent) => {
+        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+          e.target.style.fontSize = '16px';
+        }
+      };
+      
+      document.addEventListener('touchstart', handleTouchStart);
+      
+      // Add viewport meta tag for Android
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+      
+      return () => {
+        document.removeEventListener('touchstart', handleTouchStart);
+      };
+    }
+  }, []);
+  
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="min-h-screen bg-background relative flex flex-col">
           <OptimizedBackground />
+          
+          {/* Mobile Navigation */}
+          <MobileNavigation />
           
           <main className="flex-1 relative z-5">
             <OAuthCallbackGuard>
@@ -181,7 +301,7 @@ function App() {
         </div>
       </Router>
       <Toaster 
-        position="top-right" 
+        position={isMobile ? "bottom-center" : "top-right"} 
         toastOptions={{
           duration: 4000,
           style: {
@@ -189,6 +309,14 @@ function App() {
             backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 140, 0, 0.2)',
             color: 'white',
+            ...(isMobile && {
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              right: 'auto',
+              margin: '0 auto',
+              maxWidth: 'calc(100vw - 32px)',
+            })
           },
         }}
       />
