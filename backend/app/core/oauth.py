@@ -20,7 +20,9 @@ class OAuth2Provider:
             self.redirect_uri = settings.google_redirect_uri
             self.scopes = [
                 "https://www.googleapis.com/auth/calendar.events",
-                "https://www.googleapis.com/auth/calendar.readonly"
+                "https://www.googleapis.com/auth/calendar.readonly",
+                "https://www.googleapis.com/auth/userinfo.email",
+                "https://www.googleapis.com/auth/userinfo.profile"
             ]
         elif provider == "outlook":
             self.auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
