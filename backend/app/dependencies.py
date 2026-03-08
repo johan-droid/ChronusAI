@@ -49,29 +49,43 @@ async def get_calendar_provider(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> CalendarProvider:
-    """Get the appropriate calendar provider for the user."""
-    result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
-    oauth_credential = result.scalar_one_or_none()
-    if oauth_credential is None:
+    """Get appropriate calendar provider for user."""
+    try:
+        result = await db.execute(select(OAuthCredential).where(OAuthCredential.user_id == current_user.id))
+        oauth_credential = result.scalar_one_or_none()
+        if oauth_credential is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No OAuth credentials found for user. Please authenticate again."
+            )
+        
+        access_token = getattr(request.state, "oauth_access_token", None)
+        if not access_token:
+            try:
+                access_token = token_encryptor.decrypt(oauth_credential.access_token)  # type: ignore[arg-type]
+            except Exception as e:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="OAuth token decryption failed. Please authenticate again."
+                )
+        
+        if current_user.provider == "google":
+            from app.services.google_calendar import GoogleCalendarAdapter
+            return GoogleCalendarAdapter(access_token)
+        elif current_user.provider == "outlook":
+            from app.services.outlook_calendar import OutlookCalendarAdapter
+            return OutlookCalendarAdapter(access_token)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Unsupported provider: {str(current_user.provider)}"
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="No OAuth credentials found for user"
-        )
-    
-    access_token = getattr(request.state, "oauth_access_token", None)
-    if not access_token:
-        access_token = token_encryptor.decrypt(oauth_credential.access_token)  # type: ignore[arg-type]
-    
-    if current_user.provider == "google":
-        from app.services.google_calendar import GoogleCalendarAdapter
-        return GoogleCalendarAdapter(access_token)
-    elif current_user.provider == "outlook":
-        from app.services.outlook_calendar import OutlookCalendarAdapter
-        return OutlookCalendarAdapter(access_token)
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported provider: {str(current_user.provider)}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Calendar provider initialization failed: {str(e)}"
         )
 
 

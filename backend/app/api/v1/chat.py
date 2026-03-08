@@ -43,6 +43,13 @@ async def send_message(
     start = _time.perf_counter()
     
     try:
+        logger.info(
+            "ai_chat_start",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            message_length=len(payload.message),
+            user_email=current_user.email
+        )
+        
         # Get conversation context
         context = await get_conversation_context(str(current_user.id))
         
@@ -53,6 +60,14 @@ async def send_message(
             str(current_user.email),
             str(current_user.full_name or "User"),
             context,
+        )
+        
+        logger.info(
+            "ai_intent_parsed",
+            user_id_hash=hash_user_id(str(current_user.id)),
+            intent=parsed_intent.intent,
+            has_title=bool(parsed_intent.title),
+            has_time=bool(parsed_intent.start_time)
         )
         
         # Add user message to context
@@ -121,7 +136,13 @@ async def send_message(
         return response
         
     except Exception as e:
-        logger.error("ai_chat_failed", error=str(e), user_id_hash=hash_user_id(str(current_user.id)))
+        logger.error(
+            "ai_chat_failed", 
+            error=str(e),
+            error_type=type(e).__name__,
+            user_id_hash=hash_user_id(str(current_user.id)),
+            exc_info=True
+        )
         return ChatResponse(
             response="I'm experiencing some technical difficulties. Please try again in a moment.",
             intent="ERROR"
