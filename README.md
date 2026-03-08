@@ -212,8 +212,169 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 
 ---
 
-<div align="center" style="margin-top: 3rem;">
-  <p style="color: #666;">
-    <strong>Made with ❤️ by the ChronosAI Team</strong>
-  </p>
+<div align="center" style="margin-top: 3rem; position: relative; overflow: hidden; padding: 3rem 0;">
+  
+  <!-- Light Year Speed Ray Animation Background -->
+  <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a0a0a, #1a1a2e); overflow: hidden;">
+    
+    <!-- Animated Light Rays -->
+    <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0;">
+      <defs>
+        <linearGradient id="ray1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:0">
+            <animate attributeName="stop-opacity" values="0;0.8;0" dur="3s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="100%" style="stop-color:#4ecdc4;stop-opacity:0">
+            <animate attributeName="stop-opacity" values="0;0.6;0" dur="3s" repeatCount="indefinite"/>
+          </stop>
+        </linearGradient>
+        <linearGradient id="ray2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#45b7d1;stop-opacity:0">
+            <animate attributeName="stop-opacity" values="0;0.7;0" dur="4s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="100%" style="stop-color:#96ceb4;stop-opacity:0">
+            <animate attributeName="stop-opacity" values="0;0.5;0" dur="4s" repeatCount="indefinite"/>
+          </stop>
+        </linearGradient>
+        <linearGradient id="ray3" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#feca57;stop-opacity:0">
+            <animate attributeName="stop-opacity" values="0;0.6;0" dur="5s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="100%" style="stop-color:#ff9ff3;stop-opacity:0">
+            <animate attributeName="stop-opacity" values="0;0.4;0" dur="5s" repeatCount="indefinite"/>
+          </stop>
+        </linearGradient>
+      </defs>
+      
+      <!-- Speed Light Rays -->
+      <path d="M0,50 L200,0 L200,100 Z" fill="url(#ray1)">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 300,0; 0,0" dur="3s" repeatCount="indefinite"/>
+      </path>
+      <path d="M0,80 L250,0 L250,100 Z" fill="url(#ray2)">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 400,0; 0,0" dur="4s" repeatCount="indefinite"/>
+      </path>
+      <path d="M0,20 L180,0 L180,100 Z" fill="url(#ray3)">
+        <animateTransform attributeName="transform" type="translate" values="0,0; 350,0; 0,0" dur="5s" repeatCount="indefinite"/>
+      </path>
+      
+      <!-- Additional Light Rays from different angles -->
+      <path d="M100,0 L300,50 L100,100 Z" fill="url(#ray1)" opacity="0.5">
+        <animateTransform attributeName="transform" type="translate" values="0,0; -200,0; 0,0" dur="3.5s" repeatCount="indefinite"/>
+      </path>
+      <path d="M150,0 L350,60 L150,100 Z" fill="url(#ray2)" opacity="0.4">
+        <animateTransform attributeName="transform" type="translate" values="0,0; -250,0; 0,0" dur="4.5s" repeatCount="indefinite"/>
+      </path>
+      
+      <!-- Particle Effects -->
+      <circle cx="50" cy="50" r="2" fill="#ff6b6b">
+        <animate attributeName="cx" values="50;300;50" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="100" cy="30" r="1.5" fill="#4ecdc4">
+        <animate attributeName="cx" values="100;350;100" dur="2.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="80" cy="70" r="1" fill="#45b7d1">
+        <animate attributeName="cx" values="80;320;80" dur="3s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="120" cy="40" r="1.5" fill="#feca57">
+        <animate attributeName="cx" values="120;380;120" dur="2.8s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="2.8s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="60" cy="60" r="1" fill="#ff9ff3">
+        <animate attributeName="cx" values="60;340;60" dur="3.2s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;1;0" dur="3.2s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+  </div>
+  
+  <!-- Content Overlay with Readable Text -->
+  <div style="position: relative; z-index: 10; text-align: center; padding: 2rem;">
+    
+    <!-- Glowing ChronosAI Logo -->
+    <div style="margin-bottom: 1.5rem;">
+      <svg width="60" height="60" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 10px rgba(79, 205, 196, 0.8));">
+        <defs>
+          <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4ecdc4;stop-opacity:1">
+              <animate attributeName="stop-color" values="#4ecdc4;#ff6b6b;#45b7d1;#4ecdc4" dur="4s" repeatCount="indefinite"/>
+            </stop>
+            <stop offset="100%" style="stop-color:#45b7d1;stop-opacity:1">
+              <animate attributeName="stop-color" values="#45b7d1;#feca57;#ff9ff3;#45b7d1" dur="4s" repeatCount="indefinite"/>
+            </stop>
+          </linearGradient>
+        </defs>
+        
+        <path d="M8 4h16v4l-6 6 6 6v4H8v-4l6-6-6-6V4z" 
+              fill="none" stroke="url(#logoGradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+        </path>
+        
+        <!-- Animated Particles -->
+        <circle cx="12" cy="8" r="1" fill="#4ecdc4">
+          <animate attributeName="cy" values="8;24;8" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.5;1;0.5" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="20" cy="12" r="1" fill="#ff6b6b">
+          <animate attributeName="cy" values="12;20;12" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.5;1;0.5" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+      </svg>
+    </div>
+    
+    <!-- Main Text with Glow Effect -->
+    <h3 style="color: #ffffff; font-size: 1.8rem; font-weight: 700; margin: 0 0 1rem 0; text-shadow: 0 0 20px rgba(79, 205, 196, 0.8), 0 0 40px rgba(79, 205, 196, 0.4);">
+      <span style="background: linear-gradient(135deg, #4ecdc4, #ff6b6b, #45b7d1, #feca57); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: transparent;">
+        ⏰ ChronosAI
+      </span>
+    </h3>
+    
+    <!-- Subtitle with Animation -->
+    <p style="color: #e0e0e0; font-size: 1.1rem; margin: 0 0 1.5rem 0; text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);">
+      <em style="display: inline-block; animation: fadeInOut 3s infinite;">
+        Intelligent Meeting Scheduler & Calendar Management
+      </em>
+    </p>
+    
+    <!-- Team Credit with Multicolor -->
+    <div style="margin-top: 2rem;">
+      <p style="color: #ffffff; font-size: 1rem; margin: 0; text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);">
+        <span style="display: inline-block; animation: pulse 2s infinite;">
+          <span style="color: #ff6b6b;">❤️</span> 
+        </span>
+        <span style="color: #4ecdc4;">Made with</span>
+        <span style="color: #45b7d1;"> passion by</span>
+        <span style="color: #feca57;"> the</span>
+        <span style="color: #ff9ff3;"> ChronosAI</span>
+        <span style="color: #ffffff;"> Team</span>
+      </p>
+    </div>
+    
+    <!-- Social Links with Glow -->
+    <div style="margin-top: 1.5rem; display: flex; justify-content: center; gap: 1rem;">
+      <a href="https://github.com/johan-droid/ChronusAI" target="_blank" 
+         style="color: #4ecdc4; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #4ecdc4; border-radius: 0.5rem; transition: all 0.3s ease; text-shadow: 0 0 10px rgba(78, 205, 196, 0.8);">
+        GitHub
+      </a>
+      <a href="https://chronusai.onrender.com" target="_blank" 
+         style="color: #ff6b6b; text-decoration: none; padding: 0.5rem 1rem; border: 1px solid #ff6b6b; border-radius: 0.5rem; transition: all 0.3s ease; text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);">
+        Live Demo
+      </a>
+    </div>
+  </div>
+  
+  <!-- CSS Animations -->
+  <style>
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+    
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+  </style>
 </div>
