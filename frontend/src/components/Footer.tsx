@@ -1,9 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Mail, Github, ExternalLink, Heart, Shield, Zap, Calendar, Brain } from 'lucide-react';
-import { useState } from 'react';
 
 export default function Footer() {
-  const [currentYear] = useState(new Date().getFullYear());
   const location = useLocation();
 
   // Hide global footer on landing page, login and signup as they have their own or need minimal design
@@ -39,14 +37,14 @@ export default function Footer() {
 
             <div className="flex items-center gap-3 pt-2">
               <a
-                href="mailto:hello@chronusai.com"
+                href="mailto:sahooashutosh2022@gmail.com"
                 className="w-8 h-8 rounded-lg bg-card/50 border border-border/30 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200 hover:shadow-md"
                 aria-label="Email"
               >
                 <Mail className="w-4 h-4" />
               </a>
               <a
-                href="https://github.com/johan-droid/ChronusAI"
+                href="https://github.com/johan-droid"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg bg-card/50 border border-border/30 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200 hover:shadow-md"
@@ -170,7 +168,7 @@ export default function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-center sm:text-left">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                © {currentYear} ChronusAI. All rights reserved.
+                © 2026 ChronusAI. All rights reserved.
                 <Heart className="w-3 h-3 text-red-500" />
               </p>
               <p className="text-xs text-muted-foreground mt-1">

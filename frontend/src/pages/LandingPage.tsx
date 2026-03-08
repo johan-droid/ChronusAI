@@ -15,7 +15,9 @@ import {
   MessageSquare,
   LayoutGrid,
   Shield,
-  Globe
+  Globe,
+  Mail,
+  Github
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -490,14 +492,14 @@ export default function LandingPage() {
                 The next generation of AI-powered scheduling. Plan, sync, and meet without the friction.
               </p>
               <div className="flex items-center gap-4">
-                <a href="#" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group">
-                  <Globe className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                <a href="mailto:sahooashutosh2022@gmail.com" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group" title="Email">
+                  <Mail className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                 </a>
-                <a href="#" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group">
-                  <MessageSquare className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                <a href="https://github.com/johan-droid" target="_blank" rel="noopener noreferrer" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group" title="GitHub">
+                  <Github className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                 </a>
-                <a href="#" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group">
-                  <Zap className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                <a href="https://chronusai.onrender.com" target="_blank" rel="noopener noreferrer" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group" title="Live Demo">
+                  <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
                 </a>
               </div>
             </div>
@@ -525,8 +527,8 @@ export default function LandingPage() {
             <div className="space-y-6">
               <h4 className="font-bold text-foreground uppercase tracking-widest text-xs">Legal</h4>
               <ul className="space-y-4 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
+                <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors text-left">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors text-left">Terms of Service</button></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Cookie Policy</a></li>
               </ul>
             </div>
@@ -534,7 +536,7 @@ export default function LandingPage() {
 
           <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>© 2024 ChronusAI. Made with ❤️ for world-class teams.</span>
+              <span>© 2026 ChronusAI. Made with ❤️ for world-class teams.</span>
             </div>
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-2">
