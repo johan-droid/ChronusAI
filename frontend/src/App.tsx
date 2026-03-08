@@ -6,6 +6,7 @@ import { lazy, Suspense, memo, useEffect } from 'react';
 import { useAuthStore } from './store/authStore';
 import LoadingSpinner from './components/LoadingSpinner';
 import Footer from './components/Footer';
+import CookieConsent from './components/CookieConsent';
 import './index.css';
 
 // Lazy load components for better performance
@@ -173,6 +174,7 @@ function App() {
             </Suspense>
           </div>
           <Footer />
+          <CookieConsent />
         </OAuthCallbackGuard>
       </Router>
       <Toaster 
