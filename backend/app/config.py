@@ -61,11 +61,11 @@ class Settings(BaseSettings):
         is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
         if is_production:
             if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
-                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
+                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/auth/google/callback")
             if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
                 self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
             if "localhost" in str(self.frontend_url):
-                self.frontend_url = AnyHttpUrl("https://chronusai.onrender.com")
+                self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
         
         # Ensure CORS includes frontend URLs
         if self.frontend_url and str(self.frontend_url) not in self.cors_origins:

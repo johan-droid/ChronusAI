@@ -40,20 +40,20 @@ const isMobileDevice = () => {
 // Optimized Background Component
 const OptimizedBackground = memo(() => {
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     setIsMobile(isMobileDevice());
   }, []);
-  
+
   if (isMobile) {
     return null; // No background on mobile for better performance
   }
-  
+
   return (
     <>
       {/* Galaxy Background */}
       <div className="galaxy-bg" />
-      
+
       {/* Optimized Stars - Reduced count for better performance */}
       <div className="stars">
         <div className="star" />
@@ -62,11 +62,11 @@ const OptimizedBackground = memo(() => {
         <div className="star" />
         <div className="star" />
       </div>
-      
+
       {/* Shooting Stars - Reduced for mobile */}
       <div className="shooting-star" />
       <div className="shooting-star" />
-      
+
       {/* Planets - Hidden on mobile for performance */}
       <div className="planet planet-1" />
       <div className="planet planet-2" />
@@ -90,9 +90,9 @@ const PageLoader = () => (
 const MobileNavigation = memo(() => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = isMobileDevice();
-  
+
   if (!isMobile) return null;
-  
+
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border/30">
       <div className="flex items-center justify-between p-4">
@@ -106,7 +106,7 @@ const MobileNavigation = memo(() => {
           </svg>
         </button>
       </div>
-      
+
       {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-background/95 backdrop-blur-lg border-b border-border/30">
@@ -161,10 +161,10 @@ function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
 
   // Check if current URL is an OAuth callback
-  const isOAuthCallback = location.pathname.includes('/auth/') || 
-                         location.pathname.includes('/callback') ||
-                         location.search.includes('code=') ||
-                         location.search.includes('access_token=');
+  const isOAuthCallback = location.pathname.includes('/auth/') ||
+    location.pathname.includes('/callback') ||
+    location.search.includes('code=') ||
+    location.search.includes('access_token=');
 
   useEffect(() => {
     // If user is not authenticated and we're on an OAuth callback URL,
@@ -173,7 +173,7 @@ function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
       // Clear the problematic URL from history
       window.history.replaceState({}, document.title, '/login');
       // Force navigation to login
-      window.location.href = '/login';
+      window.location.href = '/login' + location.search;
     }
   }, [isAuthenticated, isLoading, isOAuthCallback]);
 
@@ -187,25 +187,25 @@ function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
-  
+
   // Show loading indicator while checking authentication
   if (isLoading) {
     return <PageLoader />;
   }
-  
+
   if (!isAuthenticated) {
     // Clear any OAuth remnants and redirect
     sessionStorage.clear();
     localStorage.removeItem('auth-storage');
     return <Navigate to="/login" replace />;
   }
-  
+
   return <>{children}</>;
 }
 
 function App() {
   const [isMobile] = useState(() => isMobileDevice());
-  
+
   useEffect(() => {
     // Add Android-specific optimizations
     if (isAndroidDevice()) {
@@ -215,75 +215,75 @@ function App() {
           e.target.style.fontSize = '16px';
         }
       };
-      
+
       document.addEventListener('touchstart', handleTouchStart);
-      
+
       // Add viewport meta tag for Android
       const viewport = document.querySelector('meta[name="viewport"]');
       if (viewport) {
         viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
       }
-      
+
       return () => {
         document.removeEventListener('touchstart', handleTouchStart);
       };
     }
   }, []);
-  
+
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <div className="min-h-screen bg-background relative flex flex-col">
           <OptimizedBackground />
-          
+
           {/* Mobile Navigation */}
           <MobileNavigation />
-          
+
           <main className="flex-1 relative z-5">
             <OAuthCallbackGuard>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/login" element={<Login />} />
-                  <Route 
-                    path="/dashboard" 
+                  <Route
+                    path="/dashboard"
                     element={
                       <ProtectedRoute>
                         <StatsOverview />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/chat" 
+                  <Route
+                    path="/chat"
                     element={
                       <ProtectedRoute>
                         <Chat />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/availability" 
+                  <Route
+                    path="/availability"
                     element={
                       <ProtectedRoute>
                         <Availability />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/history" 
+                  <Route
+                    path="/history"
                     element={
                       <ProtectedRoute>
                         <History />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/settings" 
+                  <Route
+                    path="/settings"
                     element={
                       <ProtectedRoute>
                         <Settings />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />
@@ -292,12 +292,12 @@ function App() {
               </Suspense>
             </OAuthCallbackGuard>
           </main>
-          
+
           <Footer />
         </div>
       </Router>
-      <Toaster 
-        position={isMobile ? "bottom-center" : "top-right"} 
+      <Toaster
+        position={isMobile ? "bottom-center" : "top-right"}
         toastOptions={{
           duration: 4000,
           style: {
