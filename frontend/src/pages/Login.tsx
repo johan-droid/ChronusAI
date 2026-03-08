@@ -123,7 +123,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-[#030303] text-foreground relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-transparent text-foreground relative overflow-hidden font-sans">
       {/* Dynamic ColorBends Background - Full Page Coverage */}
       <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
         <ColorBends
@@ -149,7 +149,7 @@ export default function Login() {
       <div className="planet planet-2 opacity-20" />
 
       {/* Main Content - Side by Side */}
-      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row">
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row pt-8 lg:pt-0">
         {/* Left Side - Login Form */}
         <div className="w-full lg:w-1/2 flex items-center justify-center p-6 lg:p-8">
           <div className="w-full max-w-md">
@@ -185,7 +185,7 @@ export default function Login() {
                 <button
                   onClick={() => handleOAuthLogin('google')}
                   disabled={isLoading}
-                  className="w-full group bg-white hover:bg-gray-50 text-gray-900 rounded-xl lg:rounded-2xl p-3 lg:p-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]"
+                  className="w-full group bg-white hover:bg-gray-50 text-gray-900 rounded-xl lg:rounded-2xl p-3 lg:p-4 h-[52px] lg:h-[60px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl hover:scale-[1.02]"
                 >
                   <div className="flex items-center justify-center gap-3">
                     {isLoading ? (
@@ -206,7 +206,7 @@ export default function Login() {
                 <button
                   onClick={() => handleOAuthLogin('outlook')}
                   disabled={isLoading}
-                  className="w-full group glass-card border-white/10 hover:border-white/20 text-foreground rounded-xl lg:rounded-2xl p-3 lg:p-4 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white/[0.02] hover:scale-[1.02]"
+                  className="w-full group bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-foreground rounded-xl lg:rounded-2xl p-3 lg:p-4 h-[52px] lg:h-[60px] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02]"
                 >
                   <div className="flex items-center justify-center gap-3">
                     {isLoading ? (

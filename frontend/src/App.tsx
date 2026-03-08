@@ -46,7 +46,9 @@ const OptimizedBackground = memo(() => {
   }, []);
 
   if (isMobile) {
-    return null; // No background on mobile for better performance
+    return (
+      <div className="galaxy-bg opacity-30" />
+    );
   }
 
   return (
