@@ -39,7 +39,6 @@
 
 [context.production.environment]
   VITE_API_URL = "https://chronosai.onrender.com"
-  NODE_ENV = "production"
 
 [context.deploy-preview.environment]
   VITE_API_URL = "https://chronosai.onrender.com"
