@@ -119,63 +119,66 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <OAuthCallbackGuard>
-          <div className="min-h-screen bg-background relative">
-            <OptimizedBackground />
-            
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login" element={<Login />} />
-                <Route 
-                  path="/dashboard" 
-                  element={
-                    <ProtectedRoute>
-                      <StatsOverview />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/chat" 
-                  element={
-                    <ProtectedRoute>
-                      <Chat />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/availability" 
-                  element={
-                    <ProtectedRoute>
-                      <Availability />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/history" 
-                  element={
-                    <ProtectedRoute>
-                      <History />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
-                  path="/settings" 
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms-of-service" element={<TermsOfService />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Suspense>
-          </div>
+        <div className="min-h-screen bg-background relative flex flex-col">
+          <OptimizedBackground />
+          
+          <main className="flex-1 relative z-5">
+            <OAuthCallbackGuard>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route 
+                    path="/dashboard" 
+                    element={
+                      <ProtectedRoute>
+                        <StatsOverview />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/chat" 
+                    element={
+                      <ProtectedRoute>
+                        <Chat />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/availability" 
+                    element={
+                      <ProtectedRoute>
+                        <Availability />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/history" 
+                    element={
+                      <ProtectedRoute>
+                        <History />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/settings" 
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms-of-service" element={<TermsOfService />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
+            </OAuthCallbackGuard>
+          </main>
+          
           <Footer />
           <CookieConsent />
-        </OAuthCallbackGuard>
+        </div>
       </Router>
       <Toaster 
         position="top-right" 
