@@ -94,6 +94,26 @@ module.exports = {
       },
       transitionTimingFunction: {
         'bounce-gentle': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'ease-in-out-circ': 'cubic-bezier(0.85, 0, 0.15, 1)',
+        'ease-out-back': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
+      spacing: {
+        '18': '4.5rem',
+        '88': '22rem',
+        '128': '32rem',
+      },
+      borderRadius: {
+        '4xl': '2rem',
+      },
+      backdropBlur: {
+        xs: '2px',
+      },
+      boxShadow: {
+        'glow': '0 0 20px rgba(59, 130, 246, 0.3)',
+        'glow-lg': '0 0 40px rgba(59, 130, 246, 0.4)',
+      },
+      screens: {
+        '3xl': '1600px',
       },
     },
   },
