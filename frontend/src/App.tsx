@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
@@ -66,6 +66,36 @@ const PageLoader = () => (
   </div>
 );
 
+// OAuth Callback Guard Component
+function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const { isAuthenticated, isLoading } = useAuthStore();
+
+  // Check if current URL is an OAuth callback
+  const isOAuthCallback = location.pathname.includes('/auth/') || 
+                         location.pathname.includes('/callback') ||
+                         location.search.includes('code=') ||
+                         location.search.includes('access_token=');
+
+  useEffect(() => {
+    // If user is not authenticated and we're on an OAuth callback URL,
+    // redirect to login to prevent back button navigation issues
+    if (!isLoading && !isAuthenticated && isOAuthCallback) {
+      // Clear the problematic URL from history
+      window.history.replaceState({}, document.title, '/login');
+      // Force navigation to login
+      window.location.href = '/login';
+    }
+  }, [isAuthenticated, isLoading, isOAuthCallback]);
+
+  // If on OAuth callback URL and not authenticated, show loading
+  if (!isLoading && !isAuthenticated && isOAuthCallback) {
+    return <PageLoader />;
+  }
+
+  return <>{children}</>;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
   
@@ -77,6 +107,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) {
     // Clear any OAuth remnants and redirect
     sessionStorage.clear();
+    localStorage.removeItem('auth-storage');
     return <Navigate to="/login" replace />;
   }
   
@@ -87,60 +118,62 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen bg-background relative">
-          <OptimizedBackground />
-          
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <StatsOverview />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/chat" 
-                element={
-                  <ProtectedRoute>
-                    <Chat />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/availability" 
-                element={
-                  <ProtectedRoute>
-                    <Availability />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/history" 
-                element={
-                  <ProtectedRoute>
-                    <History />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <Settings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/terms-of-service" element={<TermsOfService />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
-        </div>
-        <Footer />
+        <OAuthCallbackGuard>
+          <div className="min-h-screen bg-background relative">
+            <OptimizedBackground />
+            
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route 
+                  path="/dashboard" 
+                  element={
+                    <ProtectedRoute>
+                      <StatsOverview />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/chat" 
+                  element={
+                    <ProtectedRoute>
+                      <Chat />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/availability" 
+                  element={
+                    <ProtectedRoute>
+                      <Availability />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/history" 
+                  element={
+                    <ProtectedRoute>
+                      <History />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <Settings />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms-of-service" element={<TermsOfService />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </div>
+          <Footer />
+        </OAuthCallbackGuard>
       </Router>
       <Toaster 
         position="top-right" 

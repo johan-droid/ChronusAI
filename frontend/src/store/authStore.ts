@@ -33,13 +33,32 @@ export const useAuthStore = create<AuthState>()(
         ...state,
         accessToken
       })),
-      logout: () => set({ 
-        user: null, 
-        accessToken: null, 
-        refreshToken: null,
-        isAuthenticated: false, 
-        isLoading: false 
-      }),
+      logout: () => {
+        // Clear auth state
+        set({ 
+          user: null, 
+          accessToken: null, 
+          refreshToken: null,
+          isAuthenticated: false, 
+          isLoading: false 
+        });
+
+        // Clear browser storage
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth-storage');
+          sessionStorage.clear();
+          
+          // Clear browser history to prevent back button navigation issues
+          // Replace current history entry with login page
+          window.history.replaceState({}, document.title, '/login');
+          
+          // Push a new history entry for login to prevent going back to OAuth URLs
+          window.history.pushState({}, document.title, '/login');
+          
+          // Force redirect to login page
+          window.location.href = '/login';
+        }
+      },
       setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
@@ -65,6 +84,10 @@ if (typeof window !== 'undefined') {
   window.addEventListener('storage', (e) => {
     if (e.key === 'logout-all' && e.newValue) {
       useAuthStore.getState().logout();
+      
+      // Additional history clearing for cross-tab logout
+      window.history.replaceState({}, document.title, '/login');
+      window.history.pushState({}, document.title, '/login');
       window.location.href = '/login';
     }
   });
