@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, BarChart3, LogOut, Menu, X, CheckCircle, XCircle, RefreshCw, Sunrise, Sunset } from 'lucide-react';
+import { RefreshCw, XCircle, CheckCircle, Clock, Sunrise, Sunset } from 'lucide-react';
+import NavigationBar from '../components/NavigationBar';
+import LogoutMenu from '../components/LogoutMenu';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-import LogoutMenu from '../components/LogoutMenu';
-import AnimatedLogo from '../components/AnimatedLogo';
 
 interface TimeSlot {
   start_time: string;
@@ -126,69 +126,12 @@ export default function Availability() {
       <div className="page-bg" />
       <div className="page-grid-overlay" />
 
-      {/* Navigation */}
-      <nav className="saas-nav">
-        <div className="saas-nav-inner">
-          <div className="saas-nav-content">
-            <div className="saas-nav-logo" onClick={() => navigate('/dashboard')}>
-              <AnimatedLogo className="saas-nav-logo-img" />
-              <span className="saas-nav-logo-text">ChronosAI</span>
-            </div>
-
-            <div className="saas-nav-pills">
-              <button onClick={() => navigate('/dashboard')} className="saas-nav-pill">
-                <BarChart3 className="h-4 w-4" />
-                <span>Dashboard</span>
-              </button>
-              <button onClick={() => navigate('/chat')} className="saas-nav-pill">
-                <MessageSquare className="h-4 w-4" />
-                <span>Chat</span>
-              </button>
-              <button onClick={() => navigate('/availability')} className="saas-nav-pill saas-nav-pill--active">
-                <Clock className="h-4 w-4" />
-                <span>Availability</span>
-              </button>
-              <button onClick={() => navigate('/history')} className="saas-nav-pill">
-                <Calendar className="h-4 w-4" />
-                <span>History</span>
-              </button>
-            </div>
-
-            <div className="saas-nav-user">
-              <div className="saas-nav-user-info">
-                <p className="saas-nav-user-name">{user?.full_name || 'User'}</p>
-                <p className="saas-nav-user-email">{user?.email}</p>
-              </div>
-              <button onClick={() => setShowLogout(true)} className="saas-nav-logout-btn" title="Sign out">
-                <LogOut className="h-4 w-4" />
-              </button>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="saas-nav-mobile-toggle">
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-
-          {mobileMenuOpen && (
-            <div className="saas-mobile-menu">
-              <button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }} className="saas-mobile-item">
-                <BarChart3 className="h-4 w-4" /> Dashboard
-              </button>
-              <button onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} className="saas-mobile-item">
-                <MessageSquare className="h-4 w-4" /> Chat
-              </button>
-              <button onClick={() => { navigate('/availability'); setMobileMenuOpen(false); }} className="saas-mobile-item saas-mobile-item--active">
-                <Clock className="h-4 w-4" /> Availability
-              </button>
-              <button onClick={() => { navigate('/history'); setMobileMenuOpen(false); }} className="saas-mobile-item">
-                <Calendar className="h-4 w-4" /> History
-              </button>
-              <button onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }} className="saas-mobile-item saas-mobile-item--danger">
-                <LogOut className="h-4 w-4" /> Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
+      <NavigationBar
+        user={user}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        setShowLogout={setShowLogout}
+      />
 
       {/* Main Content */}
       <main className="saas-main">

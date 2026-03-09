@@ -1,4 +1,4 @@
-import { User, Bot, CheckCircle, AlertCircle } from 'lucide-react';
+import { User, Bot, CheckCircle } from 'lucide-react';
 import type { ChatMessage as ChatMessageType } from '../types';
 
 interface ChatMessageProps {
@@ -21,70 +21,64 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
     cleanContent.toLowerCase().includes('created') ||
     cleanContent.toLowerCase().includes('confirmed');
 
-  const isError = cleanContent.toLowerCase().includes('error') ||
-    cleanContent.toLowerCase().includes('failed') ||
-    cleanContent.toLowerCase().includes('conflict');
-
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 sm:gap-3 animate-fade-in w-full`}>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-3 sm:gap-4 animate-fade-in w-full group`}>
       {!isUser && (
-        <div className="flex-shrink-0 mt-1">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[#d0dcea]/20 to-[#8899aa]/20 border border-[#8899aa]/30 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-[#a0b0c0]" />
+        <div className="flex-shrink-0 mt-1 self-end mb-6">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-white/10 rounded-2xl flex items-center justify-center shadow-lg relative overflow-hidden group-hover:border-blue-500/30 transition-colors">
+            <div className="absolute inset-0 bg-blue-500/5 animate-pulse" />
+            <Bot className="h-5 w-5 text-blue-400 relative z-10" />
           </div>
         </div>
       )}
 
-      <div className="max-w-[85%] sm:max-w-[75%] min-w-0">
-        <div className={`px-4 sm:px-5 py-3 sm:py-4 rounded-2xl sm:rounded-[28px] shadow-lg transition-all duration-200 overflow-hidden ${isUser
-          ? 'bg-gradient-to-br from-[#d0dcea] to-[#8899aa] text-slate-900 rounded-tr-sm'
-          : 'bg-slate-800/80 backdrop-blur-xl border border-white/10 text-slate-100 rounded-tl-sm'
-          } ${isTyping ? 'animate-pulse' : ''}`}>
+      <div className="max-w-[85%] sm:max-w-[70%] min-w-0">
+        <div className={`relative px-5 py-4 rounded-3xl transition-all duration-300 border ${isUser
+          ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white border-white/10 rounded-br-sm shadow-[0_8px_30px_rgb(59,130,246,0.1)]'
+          : 'bg-white/5 backdrop-blur-xl border-white/10 text-slate-100 rounded-bl-sm shadow-[0_8px_30px_rgb(0,0,0,0.2)]'
+          } ${isTyping ? 'animate-pulse' : ''} group-hover:shadow-2xl transition-shadow`}>
 
-          <div className="text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words min-w-0">
+          <div className="text-[15px] sm:text-[16px] leading-[1.6] font-medium whitespace-pre-wrap break-words min-w-0">
             {cleanContent}
             {isTyping && (
-              <span className="inline-block w-1 h-4 bg-current animate-pulse ml-1 align-middle" />
+              <div className="inline-flex gap-1 ml-2">
+                <span className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-1 h-1 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
             )}
           </div>
 
           {!isUser && message.meeting?.meeting_url && (
-            <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 animate-slide-up overflow-hidden">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-400 font-bold text-xs">Z</span>
+            <div className="mt-4 p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 animate-slide-up hover:bg-white/10 transition-colors">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/20">
+                  <span className="text-blue-400 font-bold text-sm">Z</span>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">Zoom Meeting</p>
-                  <p className="text-[10px] text-slate-400 truncate">{message.meeting.meeting_url}</p>
+                  <p className="text-sm font-bold text-white truncate">Zoom Meeting</p>
+                  <p className="text-xs text-slate-400 truncate opacity-60 font-medium">{message.meeting.meeting_url}</p>
                 </div>
               </div>
               <a
                 href={message.meeting.meeting_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold rounded-lg transition-colors flex-shrink-0 touch-manipulation whitespace-nowrap"
+                className="px-5 py-2.5 flex items-center justify-center bg-blue-500 hover:bg-blue-400 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 whitespace-nowrap"
               >
-                Join Meeting
+                Join Now
               </a>
             </div>
           )}
 
           {!isUser && isSuccess && (
-            <div className={`mt-2 pt-2 border-t border-white/10 flex items-center gap-2 ${message.meeting?.meeting_url ? 'text-blue-400' : 'text-green-400'}`}>
-              <CheckCircle className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="text-xs font-medium truncate">{message.meeting?.meeting_url ? 'Zoom Meeting Added' : 'Success'}</span>
+            <div className={`mt-3 pt-3 border-t border-white/5 flex items-center gap-2 ${message.meeting?.meeting_url ? 'text-blue-400' : 'text-emerald-400'}`}>
+              <CheckCircle className="h-4 w-4 flex-shrink-0" />
+              <span className="text-xs font-bold uppercase tracking-wider">{message.meeting?.meeting_url ? 'Meeting Synced' : 'Action Complete'}</span>
             </div>
           )}
 
-          {!isUser && isError && (
-            <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2 text-red-400">
-              <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="text-xs font-medium truncate">Action Required</span>
-            </div>
-          )}
-
-          <div className={`text-[10px] mt-2 opacity-60 font-medium ${isUser ? 'text-slate-800' : 'text-slate-400'}`}>
+          <div className={`text-[10px] mt-2.5 opacity-40 font-bold uppercase tracking-widest ${isUser ? 'text-white' : 'text-slate-400'}`}>
             {new Date(message.timestamp).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit'
@@ -94,9 +88,9 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
       </div>
 
       {isUser && (
-        <div className="flex-shrink-0 mt-1">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-slate-700 to-slate-800 border border-white/10 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-            <User className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        <div className="flex-shrink-0 mt-1 self-end mb-6 font-bold text-slate-500">
+          <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center shadow-lg group-hover:border-white/20 transition-colors">
+            <User className="h-5 w-5 text-slate-300" />
           </div>
         </div>
       )}

@@ -126,6 +126,18 @@ class ApiClient {
     return response.data;
   }
 
+  async getPersonalizedGreeting(timezone?: string): Promise<{
+    greeting: string;
+    time_period: string;
+    local_time: string;
+    timezone: string;
+  }> {
+    const params = new URLSearchParams();
+    if (timezone) params.append('timezone', timezone);
+    const response = await this.client.get(`greetings/personalized?${params.toString()}`);
+    return response.data;
+  }
+
   // Chat endpoints
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
     const response = await this.client.post('chat/message', request);

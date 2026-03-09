@@ -25,7 +25,7 @@ export default function Footer() {
                 <Zap className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-foreground">ChronusAI</h3>
+                <h3 className="text-lg font-bold text-foreground">ChronosAI</h3>
                 <p className="text-xs text-muted-foreground">Intelligent Scheduling</p>
               </div>
             </div>
@@ -52,7 +52,7 @@ export default function Footer() {
                 <Github className="w-4 h-4" />
               </a>
               <a
-                href="https://chronusai.onrender.com"
+                href="https://chronosai.onrender.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-lg bg-card/50 border border-border/30 flex items-center justify-center text-muted-foreground hover:text-primary hover:border-primary/30 transition-all duration-200 hover:shadow-md"
@@ -167,7 +167,7 @@ export default function Footer() {
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-center sm:text-left">
               <p className="text-sm text-muted-foreground flex items-center gap-2">
-                © 2026 ChronusAI. All rights reserved.
+                © 2026 ChronosAI. All rights reserved.
                 <Heart className="w-3 h-3 text-red-500" />
               </p>
               <p className="text-xs text-muted-foreground mt-1">

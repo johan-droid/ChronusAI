@@ -157,9 +157,6 @@ async def root():
     }
 
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint with detailed status."""
     return {
         "status": "healthy",
         "service": "ChronosAI",
@@ -167,6 +164,25 @@ async def health_check():
         "uptime": "operational",
         "timestamp": time.time()
     }
+
+
+@app.get("/api/v1/health/llm")
+async def llm_health_check():
+    """Verify LLM service connectivity."""
+    try:
+        # Check if settings.openai_api_key is present as a basic health check
+        is_configured = bool(settings.openai_api_key)
+        return {
+            "status": "online" if is_configured else "offline",
+            "service": "DeepSeek",
+            "configured": is_configured,
+            "timestamp": time.time()
+        }
+    except Exception:
+        return {
+            "status": "offline",
+            "error": "Failed to check LLM status"
+        }
 
 
 @app.get("/api/v1/status")

@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, BarChart3, LogOut, Menu, X, Users, MapPin, Search, ArrowUpDown } from 'lucide-react';
+import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown, ChevronRight } from 'lucide-react';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
-import AnimatedLogo from '../components/AnimatedLogo';
+import NavigationBar from '../components/NavigationBar';
 
 export default function History() {
   const navigate = useNavigate();
@@ -66,71 +66,13 @@ export default function History() {
       <div className="page-bg" />
       <div className="page-grid-overlay" />
 
-      {/* Navigation */}
-      <nav className="saas-nav">
-        <div className="saas-nav-inner">
-          <div className="saas-nav-content">
-            <div className="saas-nav-logo" onClick={() => navigate('/dashboard')}>
-              <AnimatedLogo className="saas-nav-logo-img" />
-              <span className="saas-nav-logo-text">ChronosAI</span>
-            </div>
+      <NavigationBar
+        user={user}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        setShowLogout={setShowLogout}
+      />
 
-            <div className="saas-nav-pills">
-              <button onClick={() => navigate('/dashboard')} className="saas-nav-pill">
-                <BarChart3 className="h-4 w-4" />
-                <span>Dashboard</span>
-              </button>
-              <button onClick={() => navigate('/chat')} className="saas-nav-pill">
-                <MessageSquare className="h-4 w-4" />
-                <span>Chat</span>
-              </button>
-              <button onClick={() => navigate('/availability')} className="saas-nav-pill">
-                <Clock className="h-4 w-4" />
-                <span>Availability</span>
-              </button>
-              <button onClick={() => navigate('/history')} className="saas-nav-pill saas-nav-pill--active">
-                <Calendar className="h-4 w-4" />
-                <span>History</span>
-              </button>
-            </div>
-
-            <div className="saas-nav-user">
-              <div className="saas-nav-user-info">
-                <p className="saas-nav-user-name">{user?.full_name || 'User'}</p>
-                <p className="saas-nav-user-email">{user?.email}</p>
-              </div>
-              <button onClick={() => setShowLogout(true)} className="saas-nav-logout-btn" title="Sign out">
-                <LogOut className="h-4 w-4" />
-              </button>
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="saas-nav-mobile-toggle">
-                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-
-          {mobileMenuOpen && (
-            <div className="saas-mobile-menu">
-              <button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }} className="saas-mobile-item">
-                <BarChart3 className="h-4 w-4" /> Dashboard
-              </button>
-              <button onClick={() => { navigate('/chat'); setMobileMenuOpen(false); }} className="saas-mobile-item">
-                <MessageSquare className="h-4 w-4" /> Chat
-              </button>
-              <button onClick={() => { navigate('/availability'); setMobileMenuOpen(false); }} className="saas-mobile-item">
-                <Clock className="h-4 w-4" /> Availability
-              </button>
-              <button onClick={() => { navigate('/history'); setMobileMenuOpen(false); }} className="saas-mobile-item saas-mobile-item--active">
-                <Calendar className="h-4 w-4" /> History
-              </button>
-              <button onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }} className="saas-mobile-item saas-mobile-item--danger">
-                <LogOut className="h-4 w-4" /> Logout
-              </button>
-            </div>
-          )}
-        </div>
-      </nav>
-
-      {/* Main Content */}
       <main className="saas-main">
         {/* Page Header */}
         <div className="history-header fade-in-up">
@@ -142,7 +84,6 @@ export default function History() {
 
         {/* Toolbar */}
         <div className="history-toolbar fade-in-up" style={{ animationDelay: '0.05s' }}>
-          {/* Search */}
           <div className="history-search">
             <Search className="history-search-icon" />
             <input
@@ -154,7 +95,6 @@ export default function History() {
             />
           </div>
 
-          {/* Sort toggle */}
           <button
             onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
             className="history-sort-btn"
@@ -189,43 +129,56 @@ export default function History() {
           <div className="history-list fade-in-up" style={{ animationDelay: '0.15s' }}>
             {filteredMeetings.map((meeting, index) => {
               const statusConfig = getStatusConfig(meeting.status);
+              const startDate = new Date(meeting.start_time);
               return (
-                <div key={meeting.id} className="history-card" style={{ animationDelay: `${0.05 * index}s` }}>
-                  <div className="history-card-left">
-                    <div className="history-card-date">
-                      <span className="history-card-day">
-                        {new Date(meeting.start_time).getDate()}
+                <div key={meeting.id} className="history-card group hover:scale-[1.01] transition-all duration-300" style={{ animationDelay: `${0.05 * index}s` }}>
+                  <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
+                    {/* Date Column */}
+                    <div className="flex sm:flex-col items-center gap-1 min-w-[60px] p-3 rounded-2xl bg-white/5 border border-white/10 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
+                      <span className="text-2xl font-black text-white group-hover:text-blue-400">
+                        {startDate.getDate()}
                       </span>
-                      <span className="history-card-month">
-                        {new Date(meeting.start_time).toLocaleDateString('en-US', { month: 'short' })}
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-400/80">
+                        {startDate.toLocaleDateString('en-US', { month: 'short' })}
                       </span>
                     </div>
-                  </div>
-                  <div className="history-card-body">
-                    <div className="history-card-main">
-                      <h3 className="history-card-title">{meeting.title}</h3>
-                      {meeting.description && (
-                        <p className="history-card-desc">{meeting.description}</p>
-                      )}
-                      <div className="history-card-meta">
-                        <div className="history-meta-item">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>{new Date(meeting.start_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+
+                    {/* Content Column */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-lg font-bold text-white truncate group-hover:text-blue-400 transition-colors">{meeting.title}</h3>
+                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${statusConfig.class}`}>
+                          {statusConfig.label}
                         </div>
-                        <div className="history-meta-item">
-                          <Users className="h-3.5 w-3.5" />
-                          <span>{meeting.attendees.length} attendee{meeting.attendees.length !== 1 ? 's' : ''}</span>
+                      </div>
+
+                      {meeting.description && (
+                        <p className="text-sm text-slate-400 line-clamp-1 mb-3">{meeting.description}</p>
+                      )}
+
+                      <div className="flex flex-wrap gap-4 text-xs font-medium">
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Clock className="h-3.5 w-3.5 text-blue-400" />
+                          <span>{startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-400">
+                          <Users className="h-3.5 w-3.5 text-purple-400" />
+                          <span>{meeting.attendees.length} people</span>
                         </div>
                         {meeting.provider && (
-                          <div className="history-meta-item">
-                            <MapPin className="h-3.5 w-3.5" />
+                          <div className="flex items-center gap-1.5 text-slate-400">
+                            <MapPin className="h-3.5 w-3.5 text-emerald-400" />
                             <span>{meeting.provider}</span>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className={`history-status ${statusConfig.class}`}>
-                      {statusConfig.label}
+
+                    {/* Action Column */}
+                    <div className="hidden sm:flex items-center">
+                      <button className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
                     </div>
                   </div>
                 </div>

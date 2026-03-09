@@ -20,7 +20,7 @@ export default function TermsOfService() {
         <div className="star" />
         <div className="star" />
       </div>
-      
+
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}
         <div className="mb-8">
@@ -31,7 +31,7 @@ export default function TermsOfService() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Home
           </Link>
-          
+
           <h1 className="text-4xl font-bold text-white mb-4">Terms of Service</h1>
           <p className="text-muted-foreground text-lg">
             Last updated: March 8, 2026
@@ -47,11 +47,10 @@ export default function TermsOfService() {
                 <button
                   key={section.id}
                   onClick={() => setActiveSection(section.id)}
-                  className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${
-                    activeSection === section.id
+                  className={`flex items-center px-4 py-2 rounded-lg transition-all duration-200 ${activeSection === section.id
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4 mr-2" />
                   {section.title}
@@ -70,20 +69,20 @@ export default function TermsOfService() {
                 <FileText className="w-6 h-6 mr-3 text-primary" />
                 Overview
               </h2>
-              
+
               <div className="space-y-4 text-muted-foreground">
                 <p>
-                  Welcome to ChronosAI! These Terms of Service govern your use of our AI-powered meeting scheduler 
+                  Welcome to ChronosAI! These Terms of Service govern your use of our AI-powered meeting scheduler
                   and calendar management platform. By accessing or using ChronosAI, you agree to be bound by these terms.
                 </p>
-                
+
                 <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
                   <p className="text-sm">
-                    <strong className="text-primary">Important Notice:</strong> ChronosAI is an AI-powered scheduling platform 
+                    <strong className="text-primary">Important Notice:</strong> ChronosAI is an AI-powered scheduling platform
                     that integrates with Google Calendar to provide intelligent meeting management. Please read these terms carefully.
                   </p>
                 </div>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">What is ChronosAI?</h3>
                 <ul className="list-disc list-inside space-y-2 ml-4">
                   <li>AI-powered meeting scheduler and calendar management platform</li>
@@ -93,10 +92,10 @@ export default function TermsOfService() {
                   <li>Built with modern web technologies and security best practices</li>
                   <li>Designed to optimize your time and calendar management</li>
                 </ul>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Acceptance of Terms</h3>
                 <p>
-                  By accessing or using ChronosAI, you acknowledge that you have read, understood, and agree 
+                  By accessing or using ChronosAI, you acknowledge that you have read, understood, and agree
                   to be bound by these Terms of Service. If you do not agree to these terms, please do not use the application.
                 </p>
               </div>
@@ -110,14 +109,14 @@ export default function TermsOfService() {
                 <Shield className="w-6 h-6 mr-3 text-primary" />
                 Terms of Use
               </h2>
-              
+
               <div className="space-y-4 text-muted-foreground">
                 <h3 className="text-lg font-medium text-white mb-3">1. Eligibility</h3>
                 <p>
-                  You must be at least 13 years old to use this service. If you are under 18, 
+                  You must be at least 13 years old to use this service. If you are under 18,
                   you should have parental or guardian permission to use this application.
                 </p>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">2. Acceptable Use</h3>
                 <p>You agree to use ChronosAI for lawful purposes only:</p>
                 <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
@@ -127,7 +126,7 @@ export default function TermsOfService() {
                   <li>Do not use the application for illegal activities</li>
                   <li>Do not spam or harass other users</li>
                 </ul>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">3. Account Responsibilities</h3>
                 <p>If you create an account:</p>
                 <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
@@ -136,11 +135,11 @@ export default function TermsOfService() {
                   <li>You are responsible for all activities under your account</li>
                   <li>You must notify us of unauthorized use</li>
                 </ul>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">4. Service Availability</h3>
                 <p>
-                  As a student project, we cannot guarantee 100% uptime or availability. 
-                  The service may be temporarily unavailable for maintenance, testing, 
+                  As a student project, we cannot guarantee 100% uptime or availability.
+                  The service may be temporarily unavailable for maintenance, testing,
                   or due to technical limitations.
                 </p>
               </div>
@@ -154,19 +153,19 @@ export default function TermsOfService() {
                 <AlertCircle className="w-6 h-6 mr-3 text-primary" />
                 Disclaimers & Limitations
               </h2>
-              
+
               <div className="space-y-4 text-muted-foreground">
                 <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
                   <p className="text-sm">
-                    <strong className="text-warning">Educational Project Disclaimer:</strong> 
-                    ChronosAI is a student project and should not be relied upon for critical 
+                    <strong className="text-warning">Educational Project Disclaimer:</strong>
+                    ChronosAI is a student project and should not be relied upon for critical
                     business or personal scheduling needs.
                   </p>
                 </div>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">No Warranty</h3>
                 <p>
-                  ChronosAI is provided "as is" without any warranties, express or implied. 
+                  ChronosAI is provided "as is" without any warranties, express or implied.
                   We make no guarantees about:
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
@@ -175,11 +174,11 @@ export default function TermsOfService() {
                   <li>Data security (though we implement reasonable measures)</li>
                   <li>Compatibility with all devices or browsers</li>
                 </ul>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Limitation of Liability</h3>
                 <p>
-                  To the maximum extent permitted by law, we shall not be liable for any 
-                  indirect, incidental, special, or consequential damages resulting from 
+                  To the maximum extent permitted by law, we shall not be liable for any
+                  indirect, incidental, special, or consequential damages resulting from
                   your use of ChronosAI, including but not limited to:
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
@@ -188,7 +187,7 @@ export default function TermsOfService() {
                   <li>System downtime or unavailability</li>
                   <li>Any other damages arising from service use</li>
                 </ul>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Third-Party Services</h3>
                 <p>
                   ChronosAI integrates with Google Calendar API. We are not responsible for:
@@ -210,18 +209,18 @@ export default function TermsOfService() {
                 <Code className="w-6 h-6 mr-3 text-primary" />
                 Intellectual Property
               </h2>
-              
+
               <div className="space-y-4 text-muted-foreground">
                 <h3 className="text-lg font-medium text-white mb-3">ChronosAI Ownership</h3>
                 <p>
-                  The ChronosAI application, including its code, design, and functionality, 
-                  is the intellectual property of the ChronosAI development team. The platform 
+                  The ChronosAI application, including its code, design, and functionality,
+                  is the intellectual property of the ChronosAI development team. The platform
                   is protected by intellectual property laws and international treaties.
                 </p>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Your Content</h3>
                 <p>
-                  You retain ownership of your calendar data and personal information. 
+                  You retain ownership of your calendar data and personal information.
                   By using ChronosAI, you grant us limited permission to:
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
@@ -230,26 +229,26 @@ export default function TermsOfService() {
                   <li>Store necessary data for service operation</li>
                   <li>Improve our AI algorithms using anonymized usage patterns</li>
                 </ul>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">Third-Party Services</h3>
                 <p>
-                  Google Calendar and related services are owned by Google LLC. 
-                  Our use of these services is subject to Google's terms and conditions. 
+                  Google Calendar and related services are owned by Google LLC.
+                  Our use of these services is subject to Google's terms and conditions.
                   We do not claim any ownership over Google's intellectual property.
                 </p>
-                
+
                 <h3 className="text-lg font-medium text-white mt-6 mb-3">AI Technology</h3>
                 <p>
-                  Our AI scheduling technology is proprietary and protected. 
-                  The AI models and algorithms used for intelligent scheduling are 
+                  Our AI scheduling technology is proprietary and protected.
+                  The AI models and algorithms used for intelligent scheduling are
                   the intellectual property of ChronosAI.
                 </p>
-                
+
                 <div className="bg-muted/30 rounded-lg p-4 mt-6">
                   <h4 className="font-medium text-white mb-2">Attribution</h4>
                   <p className="text-sm">
-                    If you reference or use ChronosAI in academic or professional contexts, 
-                    please provide appropriate attribution to the ChronosAI development team 
+                    If you reference or use ChronosAI in academic or professional contexts,
+                    please provide appropriate attribution to the ChronosAI development team
                     and include a link to our website.
                   </p>
                 </div>
@@ -264,28 +263,28 @@ export default function TermsOfService() {
               <div>
                 <h4 className="font-medium text-white mb-2">Modifications</h4>
                 <p className="text-sm">
-                  We reserve the right to modify these terms at any time. Changes will be 
-                  effective immediately upon posting. Your continued use of the service 
+                  We reserve the right to modify these terms at any time. Changes will be
+                  effective immediately upon posting. Your continued use of the service
                   constitutes acceptance of any modifications.
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-white mb-2">Termination</h4>
                 <p className="text-sm">
-                  We may suspend or terminate your access to ChronosAI at any time, 
+                  We may suspend or terminate your access to ChronosAI at any time,
                   with or without notice, for any reason, including violation of these terms.
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-white mb-2">Governing Law</h4>
                 <p className="text-sm">
-                  These terms are governed by the laws of the educational institution's 
+                  These terms are governed by the laws of the educational institution's
                   jurisdiction and applicable local laws.
                 </p>
               </div>
-              
+
               <div>
                 <h4 className="font-medium text-white mb-2">Contact Information</h4>
                 <div className="bg-muted/30 rounded-lg p-4">
@@ -294,8 +293,8 @@ export default function TermsOfService() {
                     <strong>Project Type:</strong> AI-Powered Scheduling Platform<br />
                     <strong>Purpose:</strong> Intelligent Calendar Management<br />
                     <strong>Email:</strong> hello@chronosai.com<br />
-                    <strong>GitHub:</strong> https://github.com/johan-droid/ChronusAI<br />
-                    <strong>Website:</strong> https://chronusai.onrender.com
+                    <strong>GitHub:</strong> https://github.com/johan-droid/ChronosAI<br />
+                    <strong>Website:</strong> https://chronosai.onrender.com
                   </p>
                 </div>
               </div>

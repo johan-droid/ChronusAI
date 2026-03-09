@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: chronusai-api
+    name: chronosai-api
     runtime: python
     region: oregon
     plan: free
@@ -37,13 +37,13 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: GOOGLE_REDIRECT_URI
-        value: https://chronusai.onrender.com/api/v1/auth/google/callback
+        value: https://chronosai.onrender.com/api/v1/auth/google/callback
       - key: MICROSOFT_CLIENT_ID
         sync: false
       - key: MICROSOFT_CLIENT_SECRET
         sync: false
       - key: MICROSOFT_REDIRECT_URI
-        value: https://chronusai.onrender.com/api/v1/auth/outlook/callback
+        value: https://chronosai.onrender.com/api/v1/auth/outlook/callback
       - key: MICROSOFT_TENANT_ID
         value: common
       - key: FRONTEND_URL

@@ -10,25 +10,27 @@ const QUICK_PROMPTS = [
   { icon: Sparkles, text: "Reschedule my 3pm meeting to 4pm" },
 ];
 
-const StatusBar = memo(() => (
-  <div className="px-3 sm:px-4 py-2.5 sm:py-3 glass border-b border-white/5 animate-slide-down shrink-0">
+const StatusBar = memo(({ isOnline }: { isOnline: boolean | null }) => (
+  <div className="px-6 py-4 bg-black/40 backdrop-blur-2xl border-b border-white/5 shrink-0 relative z-30 shadow-2xl">
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className="w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse" />
-          <div className="absolute inset-0 w-2.5 h-2.5 bg-green-400 rounded-full animate-ping" />
+      <div className="flex items-center gap-4">
+        <div className="relative flex items-center justify-center">
+          <div className={`w-3 h-3 rounded-full transition-colors duration-500 shadow-[0_0_10px_rgba(0,0,0,0.5)] ${isOnline === true ? 'bg-emerald-400 shadow-emerald-400/20' : isOnline === false ? 'bg-rose-400 shadow-rose-400/20' : 'bg-slate-600'}`} />
+          {isOnline === true && <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-40" />}
         </div>
         <div>
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-blue-400 animate-bounce-gentle" />
-            <span className="text-sm font-semibold text-white">ChronusAI</span>
+          <div className="flex items-center gap-2 mb-0.5">
+            <Sparkles className="h-4 w-4 text-blue-400 animate-pulse-slow" />
+            <span className="text-base font-black text-white tracking-tight">ChronosAI</span>
           </div>
-          <p className="text-[10px] text-slate-400">Online • Ready to assist</p>
+          <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase">
+            {isOnline === true ? 'System Online • Neural Link Active' : isOnline === false ? 'System Offline • Reconnecting' : 'Initializing Neural Link...'}
+          </p>
         </div>
       </div>
-      <div className="flex items-center gap-2 text-[10px] text-slate-400">
-        <Activity className="h-3 w-3" />
-        <span>AI-Powered</span>
+      <div className="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-blue-500/5 border border-blue-500/10">
+        <Activity className="h-3.5 w-3.5 text-blue-400" />
+        <span className="text-[10px] font-black text-blue-400 tracking-tighter uppercase">Protocol v2.4</span>
       </div>
     </div>
   </div>
@@ -108,10 +110,27 @@ LoadingIndicator.displayName = 'LoadingIndicator';
 
 export default function ChatWindow() {
   const [message, setMessage] = useState('');
+  const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
   const { messages, isLoading, currentResponse } = useChatStore();
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Poll LLM status
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/health/llm`);
+        const data = await response.json();
+        setIsLlmOnline(data.status === 'online');
+      } catch (err) {
+        setIsLlmOnline(false);
+      }
+    };
+    checkStatus();
+    const interval = setInterval(checkStatus, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -140,8 +159,11 @@ export default function ChatWindow() {
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
+      const isMobile = window.innerWidth < 768;
+      if (!isMobile) {
+        e.preventDefault();
+        handleSubmit(e);
+      }
     }
   }, [handleSubmit]);
 
@@ -152,22 +174,23 @@ export default function ChatWindow() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-full relative">
-      <StatusBar />
+    <div className="flex flex-col h-full min-h-0 w-full relative bg-[#050510] rounded-[2.5rem] overflow-hidden border border-white/5 shadow-3xl">
+      <StatusBar isOnline={isLlmOnline} />
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4 overscroll-contain scroll-smooth saas-scrollbar focus:outline-none" tabIndex={-1}>
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-8 space-y-8 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
         {messages.length === 0 && (
           <EmptyState onQuickPrompt={handleQuickPrompt} />
         )}
 
         {messages.map((msg, index) => (
-          <div key={index} className="animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
+          <div key={index} className="animate-fade-in">
             <ChatMessage message={msg} />
           </div>
         ))}
 
         {isLoading && currentResponse && (
-          <div className="animate-slide-up">
+          <div className="animate-fade-in">
             <ChatMessage
               message={{
                 role: 'assistant',
@@ -181,34 +204,33 @@ export default function ChatWindow() {
 
         {isLoading && !currentResponse && <LoadingIndicator />}
 
-        <div ref={messagesEndRef} className="h-4" />
+        <div ref={messagesEndRef} className="h-4 sm:h-8" />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-white/5 p-4 sm:p-5 bg-slate-900/60 backdrop-blur-md animate-slide-up shrink-0 pb-[max(env(safe-area-inset-bottom),1rem)] relative z-20 shadow-[0_-10px_40px_-5px_rgba(0,0,0,0.3)]">
-        <div className="flex gap-3 items-end max-w-4xl mx-auto">
-          <textarea
-            ref={textareaRef}
-            value={message}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder="Type 'Schedule a meeting with John...'"
-            className="flex-1 min-h-[52px] max-h-[160px] px-4 sm:px-5 py-3.5 bg-slate-800/50 border border-white/10 rounded-2xl text-[15px] text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#8899aa]/50 focus:border-[#8899aa]/50 smooth-transition shadow-inner saas-scrollbar"
-            rows={1}
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={!message.trim() || isLoading}
-            className="w-[52px] h-[52px] shrink-0 bg-gradient-to-br from-[#d0dcea] to-[#8899aa] text-slate-900 rounded-2xl hover:shadow-lg hover:shadow-[#a0b0c0]/30 hover:-translate-y-0.5 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center animate-glow-pulse"
-          >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Send className="h-[22px] w-[22px] translate-x-[-1px] translate-y-[1px]" />
-            )}
-          </button>
-        </div>
-      </form>
+      {/* Input Area */}
+      <div className="shrink-0 p-5 sm:p-8 bg-black/40 backdrop-blur-2xl border-t border-white/5 relative z-40 shadow-[0_-20px_40px_rgba(0,0,0,0.4)]">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex items-end gap-3 sm:gap-4">
+          <div className="flex-1 relative group bg-white/[0.03] rounded-[2rem] border border-white/10 focus-within:border-blue-500/50 focus-within:bg-white/[0.05] transition-all hover:border-white/20">
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={message}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder="Message ChronosAI..."
+              className="w-full bg-transparent border-none focus:ring-0 text-slate-100 placeholder:text-slate-500 text-base py-4 pl-6 pr-14 resize-none min-h-[56px] font-medium"
+            />
+            <div className="absolute right-4 bottom-2.5">
+              <div className={`p-2 rounded-full transition-all ${message.trim() ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20' : 'bg-white/5 text-slate-500 opacity-50'}`}>
+                <Send className={`h-5 w-5 ${message.trim() ? 'scale-100' : 'scale-90 hover:scale-95'}`} />
+              </div>
+            </div>
+          </div>
+        </form>
+        <p className="text-center text-[10px] text-slate-600 mt-4 font-bold uppercase tracking-widest">
+          ChronosAI can assist with scheduling, availability, and more.
+        </p>
+      </div>
     </div>
   );
 }

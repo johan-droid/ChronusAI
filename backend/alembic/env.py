@@ -2,6 +2,11 @@ from logging.config import fileConfig
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(".env")
+load_dotenv(".env.local", override=True)
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -41,9 +46,9 @@ def _get_sqlalchemy_url() -> str:
         raise RuntimeError("No database URL configured for Alembic")
     # Convert async URLs for migrations
     return (
-        url.replace("postgresql+asyncpg://", "postgresql+psycopg://")
-        .replace("postgresql+asyncpg", "postgresql+psycopg")
-        .replace("postgresql+asyncpg", "postgresql+psycopg")
+        url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
+        .replace("postgresql+asyncpg", "postgresql+psycopg2")
+        .replace("postgresql://", "postgresql+psycopg2://")
     )
 
 

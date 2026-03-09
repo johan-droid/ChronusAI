@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
 import {
@@ -21,7 +22,6 @@ import {
 } from 'lucide-react';
 
 export default function LandingPage() {
-  const [isAnimated, setIsAnimated] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
 
@@ -33,8 +33,6 @@ export default function LandingPage() {
   };
 
   useEffect(() => {
-    setTimeout(() => setIsAnimated(true), 100);
-
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
@@ -52,7 +50,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-primary/5 rounded-full animate-pulse-slow" />
           <div className="relative z-10 flex items-center justify-center">
             <div className="h-20 w-20 rounded-2xl glass-card flex items-center justify-center border-primary/20 bg-primary/10">
-              <span className="text-primary font-bold text-sm">ChronusAI</span>
+              <span className="text-primary font-bold text-sm">ChronosAI</span>
             </div>
             <div className="absolute -top-4 -right-4 h-12 w-12 rounded-xl glass-card flex items-center justify-center border-white/10 animate-float" style={{ animationDelay: '0s' }}>
               <Calendar className="h-6 w-6 text-orange-400" />
@@ -127,38 +125,38 @@ export default function LandingPage() {
     {
       name: "Ant Wilson",
       handle: "@AntWilson",
-      content: "(finally) made the move to @chronusai after I couldn't find how to edit events in the calendly dashboard and I must say - dash is 10/10. Bravo @peer_rich and team (I should have moved over years ago!) OSS fam",
+      content: "(finally) made the move to @chronosai after I couldn't find how to edit events in the calendly dashboard and I must say - dash is 10/10. Bravo @peer_rich and team (I should have moved over years ago!) OSS fam",
       avatar: "AW"
     },
     {
       name: "David Guyon",
       handle: "@DavidGuyon",
-      content: "Testing out as an alternative to Calendly and loving it so far. Configurable, good onboarding, simple to use 👍.",
+      content: "Testing out ChronosAI as an alternative to Calendly and loving it so far. Configurable, good onboarding, simple to use 👍.",
       avatar: "DG"
     },
     {
       name: "David Asabina",
       handle: "@vid",
-      content: "Was logged out of my account and Peer (CEO, co-founder) tended to the matter within an hour. It doesn't get much better than this. For a OSS product to be this focus on customer service is next level.",
+      content: "Was logged out of my ChronosAI account and Peer (CEO, co-founder) tended to the matter within an hour. It doesn't get much better than this. For a OSS product to be this focus on customer service is next level.",
       avatar: "DA"
     },
     {
-      name: "Aarón García",
-      handle: "@aarongarciah",
-      content: "Such an amazing product @chronusai is. And such a vibe. Great alternative to legacy tools.",
-      avatar: "AG"
+      name: "Jack Forge",
+      username: "@jackforge",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack",
+      content: "Such an amazing product ChronosAI is. And such a vibe. Great alternative to legacy tools.",
     },
     {
-      name: "Andrew S. Rosen",
-      handle: "@Andrew_S_Rosen",
-      content: "Regarding productivity software that I've been binging lately, I just tried out @chronusai, and it is an amazing (better) alternative to Calendly in my opinion. This is particularly true for the free tier.",
-      avatar: "AR"
+      name: "Dax",
+      username: "@thdxr",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dax",
+      content: "Regarding productivity software that I've been binging lately, I just tried out ChronosAI, and it is an amazing (better) alternative to Calendly in my opinion. This is particularly true for the free tier.",
     },
     {
-      name: "Tosin 🔔",
-      handle: "@heisguyy",
-      content: "@chronusai is the best thing I discovered this year.",
-      avatar: "T"
+      name: "Tobi Lutke",
+      username: "@tobi",
+      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tobi",
+      content: "ChronosAI is the best thing I discovered this year.",
     }
   ];
 
@@ -183,21 +181,21 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#030303] text-foreground relative overflow-hidden font-sans">
       {/* Dynamic ColorBends Background - Full Page Coverage */}
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <ColorBends
-          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-          rotation={0}
-          speed={0.15}
-          scale={1.2}
-          frequency={0.4}
-          warpStrength={1.2}
-          mouseInfluence={1.5}
-          parallax={0.8}
-          noise={0.05}
+          colors={["#4F46E5", "#7C3AED", "#EC4899"]}
+          rotation={15}
+          speed={0.1}
+          scale={1.5}
+          frequency={0.3}
+          warpStrength={1.5}
+          mouseInfluence={2}
+          parallax={0.5}
+          noise={0.03}
           transparent
-          autoRotate={0.05}
+          autoRotate={0.02}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030303]/50 to-[#030303]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/0 via-[#030303]/40 to-[#030303]" />
       </div>
 
       {/* Legacy Galaxy Elements (Subtle) */}
@@ -212,7 +210,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
               <AnimatedLogo className={isScrolled ? "h-8 w-8" : "h-10 w-10"} />
-              <span className="text-xl font-bold gradient-text">ChronusAI</span>
+              <span className="text-xl font-bold gradient-text">ChronosAI</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-muted-foreground">
@@ -235,88 +233,120 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative z-10 pt-20 pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className={`text-center space-y-8 transition-all duration-1000 ${isAnimated ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'} `}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="text-center space-y-8"
+          >
             <div className="space-y-6">
-              <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="inline-flex items-center space-x-2 premium-glass px-4 py-2 rounded-full text-sm"
+              >
                 <div className="h-4 w-4 text-primary rounded-full bg-primary/20 flex items-center justify-center">
                   <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
                 </div>
-                <span className="text-foreground">Powered by Advanced AI</span>
-              </div>
+                <span className="text-foreground/80 font-medium">Powered by Advanced AI</span>
+              </motion.div>
 
-              <h1 className="text-5xl lg:text-7xl font-bold text-foreground leading-tight font-heading">
+              <h1 className="text-5xl lg:text-8xl font-bold text-foreground tracking-tight leading-[1.12] font-heading">
                 Schedule meetings with
-                <span className="gradient-text block">natural language</span>
+                <span className="gradient-text pb-1 block">natural language</span>
               </h1>
 
-              <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                Transform your calendar management with AI-powered scheduling. Simply tell ChronusAI what you need in plain English, and watch it handle complex scheduling automatically.
-              </p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 1 }}
+                className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+              >
+                Transform your calendar management with ChronosAI's AI-powered scheduling. Simply tell ChronosAI what you need in plain English, and watch it handle complex scheduling automatically.
+              </motion.p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.5 }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            >
               <button
                 onClick={() => navigate('/login')}
-                className="group relative overflow-hidden glass-card px-8 py-4 rounded-xl border border-primary/30 hover:border-primary/50 transition-all duration-300"
+                className="group relative overflow-hidden premium-glass px-8 py-4 rounded-xl border border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg shadow-primary/5"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative flex items-center space-x-2 text-foreground font-medium">
-                  <span>Sign In Now</span>
+                <span className="relative flex items-center space-x-2 text-foreground font-semibold">
+                  <span>Get Started for Free</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
-            </div>
+            </motion.div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-16">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.8, duration: 1 }}
+              className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-16"
+            >
               {stats.map((stat, index) => (
                 <div key={index} className="text-center space-y-2">
                   <div className="text-3xl lg:text-4xl font-bold gradient-text">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                  <div className="text-sm text-muted-foreground/60 font-medium uppercase tracking-wider">{stat.label}</div>
                 </div>
               ))}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* How It Works Section */}
       <section id="features" className="relative z-10 py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="text-center space-y-6 mb-20">
-            <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-xs font-medium">
-              <MousePointer2 className="h-3.5 w-3.5 text-primary" />
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="text-center space-y-6 mb-20"
+          >
+            <div className="inline-flex items-center space-x-2 premium-glass px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest text-primary/80">
+              <MousePointer2 className="h-3.5 w-3.5" />
               <span>How it works</span>
             </div>
             <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading max-w-4xl mx-auto leading-[1.1]">
               With us, appointment scheduling is
-              <span className="gradient-text block">easy</span>
+              <span className="gradient-text block">actually easy</span>
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Effortless scheduling for business and individuals, powerful solutions for fast-growing modern companies.
-            </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {howItWorks.map((item, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="glass-card rounded-2xl flex flex-col overflow-hidden group hover:border-primary/20 transition-all duration-500"
-                style={{ animationDelay: `${index * 0.15}s` }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.15, duration: 0.5 }}
+                whileHover={{ y: -8 }}
+                className="premium-glass rounded-3xl flex flex-col overflow-hidden group border border-white/5 hover:border-primary/30 transition-all duration-500 shadow-2xl shadow-black/40"
               >
                 <div className="p-8 space-y-4">
-                  <div className="text-xs font-bold text-muted-foreground/50 bg-white/5 w-fit px-2 py-1 rounded">
-                    {item.step}
+                  <div className="text-xs font-bold text-primary/60 bg-primary/5 w-fit px-3 py-1.5 rounded-full border border-primary/10 tracking-widest uppercase">
+                    Step {item.step}
                   </div>
                   <h3 className="text-2xl font-bold text-foreground font-heading">{item.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed text-sm">
+                  <p className="text-muted-foreground/80 leading-relaxed text-sm font-medium">
                     {item.description}
                   </p>
                 </div>
-                <div className="mt-auto bg-white/[0.02] border-t border-white/5 overflow-hidden transition-colors group-hover:bg-white/[0.04]">
+                <div className="mt-auto bg-white/[0.02] border-t border-white/5 overflow-hidden transition-colors group-hover:bg-white/[0.04] p-4">
                   {item.illustration}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -336,7 +366,7 @@ export default function LandingPage() {
                 <span className="block text-muted-foreground/40">with your meetings</span>
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed font-sans max-w-xl">
-                ChronusAI works with all apps already in your flow ensuring everything works perfectly together.
+                ChronosAI works with all apps already in your flow ensuring everything works perfectly together.
               </p>
               <div className="flex flex-wrap gap-4 pt-4">
                 <button
@@ -359,15 +389,19 @@ export default function LandingPage() {
 
               <div className="grid grid-cols-4 gap-6 relative">
                 {integrations.map((app, i) => (
-                  <div
+                  <motion.div
                     key={i}
-                    className="aspect-square glass-card rounded-2xl flex items-center justify-center border-white/5 bg-white/[0.02] group hover:border-primary/20 transition-all duration-500"
-                    style={{ animationDelay: `${i * 0.1}s` }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: i * 0.05, duration: 0.4 }}
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    className="aspect-square premium-glass rounded-2xl flex items-center justify-center border-white/5 bg-white/[0.02] group hover:border-primary/40 transition-all duration-500 shadow-xl shadow-black/50"
                   >
-                    <div className="transform group-hover:scale-110 transition-transform duration-500 shadow-2xl shadow-black/40">
+                    <div className="transform group-hover:scale-110 transition-transform duration-500 shadow-2xl">
                       {app.icon}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
 
                 {/* Visual connectors (plus signs) */}
@@ -392,7 +426,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading">
               See why our users love
-              <span className="gradient-text"> ChronusAI</span>
+              <span className="gradient-text"> ChronosAI</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Read the impact we've had from those who matter most - our customers.
@@ -401,34 +435,39 @@ export default function LandingPage() {
 
           <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
             {wallOfLove.map((testimonial, index) => (
-              <div
+              <motion.div
                 key={index}
-                className="break-inside-avoid glass-card p-6 rounded-2xl space-y-4 hover:border-primary/20 transition-all duration-300 group"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="break-inside-avoid premium-glass p-8 rounded-[2rem] space-y-6 hover:border-primary/30 transition-all duration-300 group shadow-xl shadow-black/20"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center font-bold text-xs ring-1 ring-white/10 group-hover:ring-primary/30 transition-all">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center font-bold text-sm ring-1 ring-white/20 group-hover:ring-primary/40 transition-all shadow-inner">
                       {testimonial.avatar}
                     </div>
                     <div>
-                      <div className="font-semibold text-foreground text-sm">{testimonial.name}</div>
-                      <div className="text-xs text-muted-foreground">{testimonial.handle}</div>
+                      <div className="font-bold text-foreground text-sm uppercase tracking-wide">{testimonial.name}</div>
+                      <div className="text-xs text-primary/60 font-medium">{testimonial.handle}</div>
                     </div>
                   </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-colors" />
                 </div>
 
-                <p className="text-sm text-foreground/80 leading-relaxed font-sans">
-                  {testimonial.content.split('@').map((part, i) =>
+                <p className="text-sm text-foreground/90 leading-relaxed font-medium italic">
+                  "{testimonial.content.split('@').map((part, i) =>
                     i === 0 ? part : (
                       <span key={i}>
-                        <span className="text-primary hover:underline cursor-pointer">@{part.split(' ')[0]}</span>
+                        <span className="text-primary font-bold hover:underline cursor-pointer">@{part.split(' ')[0]}</span>
                         {part.substring(part.split(' ')[0].length)}
                       </span>
                     )
-                  )}
+                  )}"
                 </p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -437,45 +476,50 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="relative z-10 py-32">
         <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
-          <div className="glass-card p-12 rounded-3xl space-y-8">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="premium-glass p-16 rounded-[3rem] space-y-10 border border-white/5 shadow-3xl shadow-primary/5"
+          >
             <div className="space-y-6">
-              <h2 className="text-4xl lg:text-5xl font-bold text-foreground font-heading">
+              <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading tracking-tight">
                 Ready to transform your
-                <span className="gradient-text block">scheduling workflow?</span>
+                <span className="gradient-text-vibrant block">scheduling workflow?</span>
               </h2>
-              <p className="text-xl text-muted-foreground">
-                Join thousands of teams already using ChronusAI to save time and eliminate scheduling conflicts.
+              <p className="text-xl text-muted-foreground/80 font-medium max-w-2xl mx-auto lead-relaxed">
+                Join thousands of teams already using ChronosAI to save time and eliminate scheduling conflicts.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <button
                 onClick={() => navigate('/login')}
-                className="group relative overflow-hidden glass-card px-8 py-4 rounded-xl border border-primary/30 hover:border-primary/50 transition-all duration-300"
+                className="group relative overflow-hidden bg-primary text-white px-10 py-5 rounded-2xl font-bold hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] transition-all duration-300"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative flex items-center space-x-2 text-foreground font-medium">
-                  <span>Get Started Now</span>
+                <span className="relative z-10 flex items-center space-x-2">
+                  <span>Start for Free Now</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
             </div>
 
-            <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground pt-4">
+            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground/60 font-semibold pt-6 border-t border-white/5">
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-primary/60" />
                 <span>No credit card required</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-primary/60" />
                 <span>14-day free trial</span>
               </div>
               <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-primary/60" />
                 <span>Cancel anytime</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -576,7 +620,7 @@ export default function LandingPage() {
             <div className="col-span-2 space-y-6 mb-4 md:mb-0">
               <div className="flex items-center space-x-3">
                 <AnimatedLogo className="h-9 w-9" />
-                <span className="text-xl font-bold gradient-text">ChronusAI</span>
+                <span className="text-xl font-bold gradient-text">ChronosAI</span>
               </div>
               <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-xs">
                 The next generation of AI-powered scheduling. Plan, sync, and meet without the friction.
@@ -589,7 +633,7 @@ export default function LandingPage() {
                 <a href="https://github.com/johan-droid" target="_blank" rel="noopener noreferrer" className="group h-10 w-10 rounded-xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 flex items-center justify-center hover:border-primary/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300" title="GitHub">
                   <Github className="h-[18px] w-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
                 </a>
-                <a href="https://chronusai.onrender.com" target="_blank" rel="noopener noreferrer" className="group h-10 w-10 rounded-xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 flex items-center justify-center hover:border-primary/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300" title="Live Demo">
+                <a href="https://chronosai.onrender.com" target="_blank" rel="noopener noreferrer" className="group h-10 w-10 rounded-xl bg-gradient-to-br from-white/[0.06] to-white/[0.02] border border-white/10 flex items-center justify-center hover:border-primary/40 hover:shadow-[0_0_15px_rgba(59,130,246,0.15)] transition-all duration-300" title="Live Demo">
                   <ExternalLink className="h-[18px] w-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
                 </a>
               </div>
@@ -642,7 +686,7 @@ export default function LandingPage() {
             {/* Copyright + Status */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-1">
               <p className="text-[13px] font-semibold text-foreground/70 text-center sm:text-left">
-                © 2026 <span className="font-bold gradient-text">ChronusAI</span> · Made with <span className="text-red-500">❤️</span> for world-class teams
+                © 2026 <span className="font-bold gradient-text">ChronosAI</span> · Made with <span className="text-red-500">❤️</span> for world-class teams
               </p>
               <div className="flex items-center gap-2 shrink-0">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]" />

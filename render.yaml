@@ -1,7 +1,7 @@
 services:
   # Backend API
   - type: web
-    name: chronusai-backend
+    name: chronosai-backend
     env: python
     region: oregon
     plan: starter
@@ -22,7 +22,7 @@ services:
         value: sqlite+aiosqlite:///./scheduler.db
       - key: REDIS_URL
         fromService:
-          name: chronusai-redis
+          name: chronosai-redis
           type: redis
           property: connectionString
       - key: OPENAI_API_KEY

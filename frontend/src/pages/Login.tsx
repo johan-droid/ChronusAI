@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
 import AuthDebug from '../components/AuthDebug';
@@ -155,79 +156,129 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-foreground relative overflow-hidden font-sans">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-60">
+    <div className="min-h-screen bg-[#030303] text-foreground relative overflow-hidden font-sans">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
         <ColorBends
-          colors={["#ff5c7a", "#8a5cff", "#00ffd1"]}
-          rotation={0}
-          speed={0.15}
-          scale={1.2}
-          frequency={0.4}
-          warpStrength={1.2}
-          mouseInfluence={1.5}
-          parallax={0.8}
-          noise={0.05}
+          colors={["#4F46E5", "#7C3AED", "#EC4899"]}
+          rotation={15}
+          speed={0.1}
+          scale={1.5}
+          frequency={0.3}
+          warpStrength={1.5}
+          mouseInfluence={2}
+          parallax={0.5}
+          noise={0.03}
           transparent
-          autoRotate={0.05}
+          autoRotate={0.02}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#030303]/50 to-[#030303]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/0 via-[#030303]/40 to-[#030303]" />
       </div>
 
       <div className="stars opacity-20" />
       <div className="space-particles opacity-20" />
 
-      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6 lg:p-8 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-6 sm:gap-8 items-center">
+      <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
 
           {/* Left Side - Visual Content */}
-          <div className="hidden lg:flex flex-col space-y-8 animate-slide-in-left">
+          <motion.div
+            initial={{ opacity: 0, x: -40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            className="hidden lg:flex flex-col space-y-10"
+          >
             <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-2xl">
-                  <AnimatedLogo className="h-8 w-8" />
+              <div className="flex items-center gap-4 mb-8">
+                <div className="w-16 h-16 premium-glass rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 border-primary/20">
+                  <AnimatedLogo className="h-10 w-10" />
                 </div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">ChronosAI</h1>
+                <h1 className="text-4xl font-black gradient-text tracking-tighter uppercase">ChronosAI</h1>
               </div>
-              <h2 className="text-4xl font-bold text-white mb-4 leading-tight">
+              <h2 className="text-6xl font-black text-white mb-6 leading-[1.05] tracking-tight">
                 Schedule Smarter,
-                <span className="block bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                <span className="block gradient-text-vibrant">
                   Not Harder
                 </span>
               </h2>
-              <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
+              <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-lg">
                 The most advanced AI scheduling assistant that understands your time like you do.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="glass-card p-4 space-y-2">
-                <Sparkles className="h-5 w-5 text-blue-400" />
-                <h3 className="font-semibold text-white">Smart NLP</h3>
-                <p className="text-xs text-slate-400">Natural language processing for human-like interactions.</p>
-              </div>
-              <div className="glass-card p-4 space-y-2">
-                <Zap className="h-5 w-5 text-purple-400" />
-                <h3 className="font-semibold text-white">Auto-Sync</h3>
-                <p className="text-xs text-slate-400">Real-time calendar synchronization across all platforms.</p>
-              </div>
+            <div className="grid grid-cols-2 gap-6">
+              <motion.div
+                whileHover={{ y: -5 }}
+                className="premium-glass p-6 space-y-4 rounded-3xl"
+              >
+                <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg">Smart NLP</h3>
+                  <p className="text-sm text-slate-500 font-medium">Natural language processing for human-like interactions.</p>
+                </div>
+              </motion.div>
+              <motion.div
+                whileHover={{ y: -5 }}
+                className="premium-glass p-6 space-y-4 rounded-3xl"
+              >
+                <div className="h-10 w-10 bg-accent/10 rounded-xl flex items-center justify-center">
+                  <Zap className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg">Auto-Sync</h3>
+                  <p className="text-sm text-slate-500 font-medium">Real-time calendar synchronization across all platforms.</p>
+                </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Side - Auth Forms */}
-          <div className="w-full max-w-md mx-auto animate-slide-in-right">
-            <div className="glass-card rounded-3xl p-8 shadow-2xl border-white/5 bg-white/[0.02] backdrop-blur-2xl">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="w-full max-w-md mx-auto"
+          >
+            <div className="premium-glass rounded-[2.5rem] p-10 shadow-3xl shadow-black/60 border border-white/5 bg-white/[0.01]">
 
-              {/* Header */}
-              <div className="text-center mb-8">
-                <div className="lg:hidden flex justify-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-2xl">
-                    <AnimatedLogo className="h-6 w-6" />
+              {/* Mobile Header (Previously hidden content synced for mobile) */}
+              <div className="lg:hidden text-center mb-10">
+                <div className="flex flex-col items-center gap-4 mb-6">
+                  {/* Transparent Logo Container */}
+                  <div className="flex items-center justify-center">
+                    <AnimatedLogo className="h-14 w-14" />
                   </div>
+                  <h1 className="text-3xl font-black gradient-text tracking-tighter uppercase">ChronosAI</h1>
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">
+
+                <h2 className="text-3xl font-black text-white mb-2 leading-tight tracking-tight px-4">
+                  Schedule Smarter,
+                  <span className="block gradient-text-vibrant">
+                    Not Harder
+                  </span>
+                </h2>
+
+                <p className="text-slate-400 font-medium text-sm px-6 mb-8">
+                  The most advanced AI scheduling assistant that understands your time.
+                </p>
+
+                <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto mb-8" />
+
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                  {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                </h3>
+                <p className="text-slate-500 font-semibold text-xs uppercase tracking-wider">
+                  {mode === 'oauth' ? 'Choose your login method' : 'Enter your details'}
+                </p>
+              </div>
+
+              {/* Desktop Header (Kept for consistency, shown on lg+) */}
+              <div className="hidden lg:block text-center mb-10">
+                <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
                   {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
                 </h2>
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-500 font-semibold text-sm">
                   {mode === 'oauth' ? 'Choose your preferred login method' : 'Enter your details to continue'}
                 </p>
               </div>
@@ -280,7 +331,7 @@ export default function Login() {
 
                   <button
                     onClick={() => setMode('login')}
-                    className="w-full py-3 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-3 text-primary hover:text-primary/80 text-sm font-bold transition-colors flex items-center justify-center gap-2"
                   >
                     Continue with Email & Password
                     <ArrowRight className="h-4 w-4" />
@@ -297,7 +348,7 @@ export default function Login() {
                           type="text"
                           required
                           placeholder="John Doe"
-                          className="w-full bg-white/[0.03] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600"
+                          className="w-full bg-white/[0.03] border border-white/10 focus:border-primary/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600 font-medium"
                           value={formData.name}
                           onChange={e => setFormData({ ...formData, name: e.target.value })}
                         />
@@ -313,7 +364,7 @@ export default function Login() {
                         type="email"
                         required
                         placeholder="hello@example.com"
-                        className="w-full bg-white/[0.03] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600"
+                        className="w-full bg-white/[0.03] border border-white/10 focus:border-primary/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600 font-medium"
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                       />
@@ -329,7 +380,7 @@ export default function Login() {
                         required
                         minLength={8}
                         placeholder="••••••••"
-                        className="w-full bg-white/[0.03] border border-white/10 focus:border-blue-500/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600"
+                        className="w-full bg-white/[0.03] border border-white/10 focus:border-primary/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600 font-medium"
                         value={formData.password}
                         onChange={e => setFormData({ ...formData, password: e.target.value })}
                       />
@@ -339,7 +390,7 @@ export default function Login() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-[52px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-2xl font-bold shadow-xl transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 mt-6"
+                    className="w-full h-[52px] bg-primary hover:opacity-90 text-white rounded-2xl font-bold shadow-xl transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 mt-6"
                   >
                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : mode === 'login' ? 'Sign In' : 'Create Account'}
                   </button>
@@ -348,14 +399,14 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
-                      className="text-sm text-slate-400 hover:text-white transition-colors"
+                      className="text-sm text-slate-500 hover:text-white transition-colors font-semibold"
                     >
                       {mode === 'login' ? "Don't have an account? Create one" : "Already have an account? Sign in"}
                     </button>
                     <button
                       type="button"
                       onClick={() => setMode('oauth')}
-                      className="text-sm text-blue-400 hover:text-blue-300 transition-colors flex items-center justify-center gap-1"
+                      className="text-sm text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1 font-bold"
                     >
                       Wait, use Social Login instead
                     </button>
@@ -365,7 +416,7 @@ export default function Login() {
             </div>
 
             {/* Verification Badges */}
-            <div className="mt-8 flex items-center justify-center gap-6 text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+            <div className="mt-8 flex items-center justify-center gap-6 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
               <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
                 <Shield className="h-3 w-3" />
                 SOC 2 TYPE II
@@ -379,7 +430,7 @@ export default function Login() {
                 ISO 27001
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -387,8 +438,8 @@ export default function Login() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] animate-fade-in">
           <div className="text-center space-y-4">
             <div className="relative inline-block">
-              <div className="absolute inset-0 animate-ping opacity-20 bg-blue-500 rounded-full" />
-              <div className="relative w-16 h-16 border-4 border-blue-500 border-t-transparent animate-spin rounded-full shadow-2xl" />
+              <div className="absolute inset-0 animate-ping opacity-20 bg-primary rounded-full" />
+              <div className="relative w-16 h-16 border-4 border-primary border-t-transparent animate-spin rounded-full shadow-2xl" />
             </div>
             <div className="space-y-1">
               <p className="text-white font-bold text-lg">Authenticating...</p>
