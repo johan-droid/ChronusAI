@@ -21,6 +21,12 @@ export default function Login() {
   });
   const navigate = useNavigate();
 
+  // Clear errors when switching modes
+  useEffect(() => {
+    setError('');
+  }, [mode]);
+
+
   useEffect(() => {
     clearAllCache();
 
@@ -107,11 +113,15 @@ export default function Login() {
       window.location.href = response.auth_url;
     } catch (error: unknown) {
       console.error('OAuth login error:', error);
-      const errorMsg = (error as any)?.response?.data?.detail || (error as Error)?.message || 'Failed to initiate login';
+      const errorMsg = (error as any)?.response?.data?.detail ||
+        (error as any)?.response?.data?.message ||
+        (error as Error)?.message ||
+        'Failed to initiate login';
       setError(errorMsg);
       setIsLoading(false);
       sessionStorage.clear();
     }
+
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -135,7 +145,10 @@ export default function Login() {
       navigate('/dashboard', { replace: true });
     } catch (error: unknown) {
       console.error('Email auth error:', error);
-      const errorMsg = (error as any)?.response?.data?.detail || (error as Error)?.message || 'Authentication failed';
+      const errorMsg = (error as any)?.response?.data?.detail ||
+        (error as any)?.response?.data?.message ||
+        (error as Error)?.message ||
+        'Authentication failed';
       setError(errorMsg);
       setIsLoading(false);
     }

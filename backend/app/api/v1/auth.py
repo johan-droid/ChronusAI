@@ -49,10 +49,12 @@ async def signup(user_in: UserSignup, db: AsyncSession = Depends(get_db)):
     # Check if user already exists
     result = await db.execute(select(User).where(User.email == user_in.email))
     if result.scalar_one_or_none():
+        logger.warning("signup_failed_user_exists", email=user_in.email)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="User with this email already exists"
         )
+
     
     # Create new user
     new_user = User(
@@ -97,10 +99,12 @@ async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
     user = result.scalar_one_or_none()
     
     if not user or not user.hashed_password or not verify_password(user_in.password, user.hashed_password):
+        logger.warning("login_failed_invalid_credentials", email=user_in.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"
         )
+
     
     # Create tokens
     access_token = create_access_token(subject=str(user.id))
@@ -187,8 +191,12 @@ async def oauth_callback(
     """Handle OAuth callback from provider with enhanced security and error handling."""
     try:
         # Debug logging
-        state_str = str(state)
-        logger.info("OAuth callback received", provider=provider, state=state_str[:10] + "...", code_length=len(code))
+        # NOTE: If you see import errors here in your IDE, ensure your virtual environment is activated in your IDE settings.
+        safe_state = str(state or "")
+        display_state = safe_state[:10] if len(safe_state) > 10 else safe_state
+        logger.info("OAuth callback received", provider=provider, state=f"{display_state}...", code_length=len(code))
+
+
         
         # Validate provider
         if provider not in ["google", "outlook"]:
@@ -250,10 +258,8 @@ async def oauth_callback(
         access_token = create_access_token(subject=str(user.id))
         refresh_token = create_refresh_token(subject=str(user.id))
         
-        # Store refresh token
-        await token_encryptor.store_refresh_token(user.id, refresh_token)
-        
         # Redirect to frontend with tokens
+
         frontend_url = str(settings.frontend_url)
         redirect_url = f"{frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
         
