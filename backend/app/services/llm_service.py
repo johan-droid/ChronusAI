@@ -1,7 +1,7 @@
 # pyre-unsafe
 import json
 from datetime import datetime, timezone
-from typing import Any, List, Dict, Optional, cast
+from typing import Any, List, Dict
 
 from openai import AsyncOpenAI
 

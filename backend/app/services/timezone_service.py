@@ -190,7 +190,7 @@ class TimezoneDetectionService:
         year = datetime.now().year
         
         festivals = {}
-        for festival, dates in cls.INDIAN_FESTIVALS.items():
+        for festival, dates in TimezoneDetectionService.INDIAN_FESTIVALS.items():
             for date_str in dates:
                 if str(year) in date_str:
                     festivals[festival] = date_str
