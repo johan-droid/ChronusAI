@@ -196,21 +196,40 @@ export default function Login() {
             className="hidden lg:flex flex-col space-y-10"
           >
             <div>
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-16 h-16 premium-glass rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 border-primary/20">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="flex items-center gap-4 mb-8"
+              >
+                <motion.div 
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                  className="w-16 h-16 premium-glass rounded-2xl flex items-center justify-center shadow-2xl shadow-primary/20 border-primary/20"
+                >
                   <AnimatedLogo className="h-10 w-10" />
-                </div>
-                <h1 className="text-4xl font-black gradient-text tracking-tighter uppercase">ChronosAI</h1>
-              </div>
-              <h2 className="text-6xl font-black text-white mb-6 leading-[1.05] tracking-tight">
+                </motion.div>
+                <h1 className="text-4xl font-black gradient-text tracking-tight">ChronosAI</h1>
+              </motion.div>
+              <motion.h2 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-5xl sm:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight"
+              >
                 Schedule Smarter,
-                <span className="block gradient-text-vibrant">
+                <span className="block gradient-text-vibrant mt-2">
                   Not Harder
                 </span>
-              </h2>
-              <p className="text-xl text-slate-400 font-medium leading-relaxed max-w-lg">
+              </motion.h2>
+              <motion.p 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-lg sm:text-xl text-slate-400 font-medium leading-relaxed max-w-lg"
+              >
                 The most advanced AI scheduling assistant that understands your time like you do.
-              </p>
+              </motion.p>
             </div>
 
             <div className="grid grid-cols-2 gap-6">
