@@ -20,11 +20,12 @@ class CalendarProvider(Enum):
 class CalendarIntegrationService:
     """Unified calendar integration service"""
     
-    def __init__(self, user_id: str, provider: str, db_session, access_token: str = None):
+    def __init__(self, user_id: str, provider: str, db_session, access_token: str = None, user_timezone: str = "UTC"):
         self.user_id = user_id
         self.provider = CalendarProvider(provider.lower())
         self.db = db_session
         self.access_token = access_token
+        self.user_timezone = user_timezone
         self._service = None
     
     @property
@@ -32,7 +33,7 @@ class CalendarIntegrationService:
         """Get the appropriate calendar service"""
         if self._service is None:
             if self.provider == CalendarProvider.GOOGLE:
-                self._service = GoogleCalendarService(self.user_id, self.db)
+                self._service = GoogleCalendarService(self.user_id, self.db, self.user_timezone)
             elif self.provider == CalendarProvider.OUTLOOK:
                 self._service = OutlookCalendarAdapter(self.access_token)
             else:

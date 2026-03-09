@@ -47,12 +47,13 @@ class CalendarInfo:
 class GoogleCalendarService:
     """Enhanced Google Calendar API service"""
     
-    def __init__(self, user_id: str, db_session):
+    def __init__(self, user_id: str, db_session, user_timezone: str = "UTC"):
         self.user_id = user_id
         self.db = db_session
         self.base_url = "https://www.googleapis.com/calendar/v3"
         self._access_token = None
         self._token_expires_at = None
+        self.user_timezone = user_timezone
     
     async def _get_access_token(self) -> str:
         """Get valid access token, refreshing if necessary"""
@@ -265,35 +266,35 @@ class GoogleCalendarService:
     
     async def create_event(self, meeting: MeetingCreate, calendar_id: str = "primary") -> CalendarEvent:
         """Create a new event"""
-        event_body = {
+        event_data = {
             "summary": meeting.title,
             "description": meeting.description or "",
             "start": {
                 "dateTime": meeting.start_time.isoformat(),
-                "timeZone": "UTC"
+                "timeZone": self.user_timezone
             },
             "end": {
                 "dateTime": meeting.end_time.isoformat(),
-                "timeZone": "UTC"
+                "timeZone": self.user_timezone
             },
             "attendees": [{"email": a.email} for a in (meeting.attendees or [])],
             "reminders": {
                 "useDefault": True,
                 "overrides": [
-                    {"method": "email", "minutes": 24 * 60},  # 24 hours before
+                    {"method": "email", "minutes": 24 * 60},  # 1 day before
                     {"method": "popup", "minutes": 30}  # 30 minutes before
                 ]
             }
         }
         
         if meeting.location:
-            event_body["location"] = meeting.location
+            event_data["location"] = meeting.location
         
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.base_url}/calendars/{calendar_id}/events",
                 headers=self._headers,
-                json=event_body
+                json=event_data
             )
             
             if response.status_code != 200:
@@ -321,11 +322,11 @@ class GoogleCalendarService:
             "description": meeting.description or "",
             "start": {
                 "dateTime": meeting.start_time.isoformat(),
-                "timeZone": "UTC"
+                "timeZone": self.user_timezone
             },
             "end": {
                 "dateTime": meeting.end_time.isoformat(),
-                "timeZone": "UTC"
+                "timeZone": self.user_timezone
             },
             "attendees": [{"email": a.email} for a in (meeting.attendees or [])]
         }

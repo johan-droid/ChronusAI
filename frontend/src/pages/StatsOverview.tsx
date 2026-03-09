@@ -391,8 +391,8 @@ export default function StatsOverview() {
               <StatsGrid stats={stats} />
             </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-              <section className="lg:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+              <section className="xl:col-span-2">
                 <UpcomingMeetings meetings={meetings || []} navigate={navigate} />
               </section>
               <section className="space-y-3 sm:space-y-4">

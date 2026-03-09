@@ -337,20 +337,20 @@ export default function ChatWindow() {
             type="button"
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowActions(!showActions)}
-            className={`p-3 rounded-full transition-all flex-shrink-0 ${showActions ? 'bg-blue-500 text-white rotate-45' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+            className={`p-2.5 sm:p-3 rounded-full transition-all flex-shrink-0 ${showActions ? 'bg-blue-500 text-white rotate-45' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
           >
-            <Plus className="h-5 w-5" />
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
           </motion.button>
 
           {/* Input Container */}
-          <div className="flex-1 relative bg-white/[0.05] rounded-3xl border border-white/10 focus-within:border-blue-500/50 focus-within:bg-white/[0.08] transition-all">
+          <div className="flex-1 relative bg-white/[0.05] rounded-2xl sm:rounded-3xl border border-white/10 focus-within:border-blue-500/50 focus-within:bg-white/[0.08] transition-all">
             <div className="flex items-end">
               {/* Emoji Button */}
               <button
                 type="button"
-                className="p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                className="p-2 sm:p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
               >
-                <Smile className="h-5 w-5" />
+                <Smile className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
               
               {/* Text Input */}
@@ -361,7 +361,7 @@ export default function ChatWindow() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Message ChronosAI..."
-                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2.5 px-1 resize-none min-h-[44px] max-h-[120px] font-medium outline-none"
+                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2 sm:py-2.5 px-1 resize-none min-h-[40px] sm:min-h-[44px] max-h-[120px] font-medium outline-none"
                 style={{ scrollbarWidth: 'none' }}
               />
               

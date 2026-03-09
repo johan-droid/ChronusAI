@@ -11,7 +11,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
-from app.dependencies import get_calendar_provider, get_current_user
+from app.dependencies import get_calendar_provider, get_current_user, get_calendar_integration_provider
 from app.models.meeting import Meeting
 from app.models.user import User
 from app.schemas.meeting import Attendee, MeetingCreate, MeetingRead, MeetingUpdate
@@ -135,13 +135,13 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
 
 async def get_meetings(
     current_user: User = Depends(get_current_user),
-    calendar_provider = Depends(get_calendar_provider),
+    calendar_integration = Depends(get_calendar_integration_provider),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get all meetings for the current user with Google Calendar sync."""
+    """Get all meetings for the current user with timezone-aware Calendar sync."""
     try:
-        # First, sync meetings from Google Calendar
-        await sync_google_calendar_meetings(current_user, calendar_provider, db)
+        # First, sync meetings from Calendar with timezone awareness
+        await sync_google_calendar_meetings(current_user, calendar_integration, db)
         
         # Then get meetings from database
         result = await db.execute(

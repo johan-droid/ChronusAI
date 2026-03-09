@@ -96,6 +96,58 @@ async def get_calendar_provider(
         )
 
 
+async def get_calendar_integration_provider(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get calendar integration service with user timezone support."""
+    try:
+        result = await db.execute(
+            select(OAuthCredential).where(
+                and_(
+                    OAuthCredential.user_id == current_user.id,
+                    OAuthCredential.provider == current_user.provider
+                )
+            )
+        )
+        oauth_credential = result.scalar_one_or_none()
+        if oauth_credential is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No OAuth credentials found for user. Please authenticate again."
+            )
+        
+        access_token = getattr(request.state, "oauth_access_token", None)
+        if not access_token:
+            try:
+                access_token = token_encryptor.decrypt(oauth_credential.access_token)  # type: ignore[arg-type]
+            except Exception:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="OAuth token decryption failed. Please authenticate again."
+                )
+        
+        # Get user timezone
+        user_timezone = current_user.timezone or "UTC"
+        
+        from app.services.calendar_integration_service import CalendarIntegrationService
+        return CalendarIntegrationService(
+            user_id=str(current_user.id),
+            provider=current_user.provider,
+            db_session=db,
+            access_token=access_token,
+            user_timezone=user_timezone
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Calendar integration provider initialization failed: {str(e)}"
+        )
+
+
 async def get_conversation_context(user_id: str) -> list:
     """Get conversation context (in-memory fallback)."""
     return []
