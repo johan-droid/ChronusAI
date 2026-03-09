@@ -48,12 +48,6 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up ChronosAI API")
     
-    # Create database tables
-    from app.db.session import engine, Base
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables created")
-    
     # Start aggressive self-ping for Render free tier (always run to prevent sleep)
     import os
     render_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("BACKEND_URL") or "https://chronusai.onrender.com"
