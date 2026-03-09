@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { lazy, Suspense, memo, useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import Footer from './components/Footer';
+import Toast from './components/Toast';
 import './index.css';
 
 // Hide footer on authenticated app pages
@@ -243,6 +244,7 @@ function App() {
           </main>
 
           <ConditionalFooter />
+          <Toast />
         </div>
       </Router>
       <Toaster

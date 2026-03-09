@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, AlertTriangle, Loader2, Shield } from 'lucide-react';
+import { Trash2, AlertTriangle, Loader2, Shield, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-import { clearAuthCache } from '../lib/cache';
+import { clearAllCache } from '../lib/cache';
 import Layout from '../components/Layout';
 
 export default function Settings() {
@@ -12,22 +12,42 @@ export default function Settings() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showDeleteSuccess, setShowDeleteSuccess] = useState(false);
 
   const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      setDeleteError('Please type DELETE to confirm');
+      return;
+    }
+
     try {
       setDeleteLoading(true);
       setDeleteError('');
 
       await apiClient.deleteAccount();
 
-      clearAuthCache();
-      logout();
-      navigate('/login');
+      // Show success message briefly before redirecting
+      setShowDeleteSuccess(true);
+      
+      // Clear all cache and storage
+      clearAllCache();
+      
+      // Small delay to show success message
+      setTimeout(() => {
+        logout();
+        navigate('/login');
+      }, 2000);
     } catch (error: unknown) {
       setDeleteError((error as any)?.response?.data?.detail || (error as Error)?.message || 'Failed to delete account');
-    } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirm(false);
+    setDeleteError('');
+    setDeleteConfirmText('');
   };
 
   return (
@@ -128,6 +148,11 @@ export default function Settings() {
                 <Trash2 className="h-4 w-4" />
                 Delete Account
               </button>
+            ) : showDeleteSuccess ? (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 text-center">
+                <p className="text-green-400 font-medium">Account deleted successfully!</p>
+                <p className="text-sm text-slate-400 mt-1">Redirecting to login...</p>
+              </div>
             ) : (
               <div className="space-y-4 animate-fade-in">
                 <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
@@ -146,8 +171,23 @@ export default function Settings() {
                         <li>Revoke access from {user?.provider === 'google' ? 'Google' : 'Microsoft'}</li>
                         <li>Log you out from all devices</li>
                       </ul>
+                      
+                      <div className="mb-3">
+                        <label className="text-xs text-slate-400 mb-1.5 block">
+                          Type <span className="text-red-400 font-bold">DELETE</span> to confirm:
+                        </label>
+                        <input
+                          type="text"
+                          value={deleteConfirmText}
+                          onChange={(e) => setDeleteConfirmText(e.target.value)}
+                          placeholder="Type DELETE here"
+                          className="w-full px-3 py-2 bg-black/30 border border-red-500/30 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:border-red-500/50"
+                          autoFocus
+                        />
+                      </div>
+                      
                       {deleteError && (
-                        <p className="text-xs text-red-400 mb-3">{deleteError}</p>
+                        <p className="text-xs text-red-400">{deleteError}</p>
                       )}
                     </div>
                   </div>
@@ -155,19 +195,17 @@ export default function Settings() {
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => {
-                      setShowDeleteConfirm(false);
-                      setDeleteError('');
-                    }}
+                    onClick={handleCancelDelete}
                     disabled={deleteLoading}
-                    className="flex-1 px-4 py-2.5 bg-slate-800/50 hover:bg-slate-800 border border-white/10 text-white rounded-xl transition-all duration-200 disabled:opacity-50"
+                    className="flex-1 px-4 py-2.5 bg-slate-800/50 hover:bg-slate-800 border border-white/10 text-white rounded-xl transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
+                    <X className="h-4 w-4" />
                     Cancel
                   </button>
                   <button
                     onClick={handleDeleteAccount}
-                    disabled={deleteLoading}
-                    className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+                    disabled={deleteLoading || deleteConfirmText !== 'DELETE'}
+                    className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 disabled:bg-red-500/50 text-white rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium disabled:opacity-50"
                   >
                     {deleteLoading ? (
                       <>
@@ -177,7 +215,7 @@ export default function Settings() {
                     ) : (
                       <>
                         <Trash2 className="h-4 w-4" />
-                        Yes, Delete My Account
+                        Delete Account
                       </>
                     )}
                   </button>
