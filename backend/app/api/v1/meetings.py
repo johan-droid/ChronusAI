@@ -76,7 +76,8 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
         # Don't raise exception - continue with cached data
 
 
-@router.get("/", response_model=List[MeetingRead])
+@router.get("", response_model=List[MeetingRead])
+
 async def get_meetings(
     current_user: User = Depends(get_current_user),
     calendar_provider = Depends(get_calendar_provider),

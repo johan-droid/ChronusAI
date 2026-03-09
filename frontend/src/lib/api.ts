@@ -9,14 +9,13 @@ const getBaseUrl = () => {
   // Ensure it always ends with /api/v1 (avoid double versioning or missing versioning)
   let url = envUrl.replace(/\/$/, '');
   if (!url.endsWith('/api/v1') && !url.endsWith('/api')) {
-    url = `${url}/api/v1/`;
+    url = `${url}/api/v1`;
   } else if (url.endsWith('/api')) {
-    url = `${url}/v1/`;
-  } else {
-    url = `${url}/`;
+    url = `${url}/v1`;
   }
-  return url;
+  return url; // Return without trailing slash
 };
+
 
 const API_BASE_URL = getBaseUrl();
 
@@ -61,6 +60,7 @@ class ApiClient {
               const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
                 headers: { Authorization: `Bearer ${refreshToken}` }
               });
+
 
               const { access_token } = response.data;
               updateAccessToken(access_token);
@@ -137,6 +137,7 @@ class ApiClient {
     cacheManager.set('meetings:list', response.data, 2 * 60 * 1000);
     return response.data;
   }
+
 
   async getMeeting(meetingId: string): Promise<Meeting> {
     const response = await this.client.get(`meetings/${meetingId}`);
