@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { Send, Loader2, Sparkles, Calendar, Clock, Zap, Mic, Paperclip, Smile, Check, CheckCheck } from 'lucide-react';
+import { Send, Loader2, Sparkles, Calendar, Clock, Zap, Mic, Paperclip, Plus, Smile, Check, CheckCheck, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';
 import ChatMessage from './ChatMessage';
@@ -12,14 +13,25 @@ const QUICK_PROMPTS = [
   { icon: Sparkles, text: "Show all my meetings for today", category: "View" },
 ];
 
-// AI Smart Suggestions based on context
-const AI_SUGGESTIONS = [
-  "Yes, that works for me",
-  "Can we reschedule?",
-  "Add 15 min buffer",
-  "Send invite to team",
-  "Book a Zoom room",
-];
+// Context-aware AI Smart Suggestions
+const getContextualSuggestions = (lastMessage: string): string[] => {
+  const msg = lastMessage.toLowerCase();
+  
+  if (msg.includes('schedule') || msg.includes('book') || msg.includes('create')) {
+    return ["Yes, confirm it", "Add 15 min buffer", "Make it 30 min instead", "Add Zoom link"];
+  }
+  if (msg.includes('reschedule') || msg.includes('move') || msg.includes('change')) {
+    return ["Yes, that works", "Find another slot", "Keep the same duration", "Notify attendees"];
+  }
+  if (msg.includes('cancel') || msg.includes('delete')) {
+    return ["Yes, cancel it", "Just this occurrence", "Reschedule instead", "Notify everyone"];
+  }
+  if (msg.includes('availability') || msg.includes('free') || msg.includes('when')) {
+    return ["Show next week too", "Morning slots only", "Afternoon works", "Any time today"];
+  }
+  
+  return ["Schedule a meeting", "Check availability", "Show my calendar", "Help me plan"];
+};
 
 const StatusBar = memo(({ isOnline }: { isOnline: boolean | null }) => (
   <div className="px-4 py-3 bg-[#0a0a14]/90 backdrop-blur-xl border-b border-white/5 shrink-0 sticky top-0 z-20">
@@ -49,91 +61,142 @@ const StatusBar = memo(({ isOnline }: { isOnline: boolean | null }) => (
 
 StatusBar.displayName = 'StatusBar';
 
-// Smart Suggestion Chips
-const SmartSuggestions = memo(({ onSuggestionClick, isVisible }: { 
+// Smart Suggestion Chips with horizontal scroll
+const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: { 
   onSuggestionClick: (text: string) => void;
-  isVisible: boolean;
+  suggestions: string[];
 }) => {
-  if (!isVisible) return null;
+  if (!suggestions.length) return null;
   
   return (
-    <div className="px-4 py-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-t border-white/5">
-      <p className="text-[10px] text-slate-500 mb-2 font-medium">Quick replies</p>
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-        {AI_SUGGESTIONS.map((suggestion, i) => (
-          <button
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="px-3 py-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-t border-white/5"
+    >
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x">
+        {suggestions.map((suggestion, i) => (
+          <motion.button
             key={i}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.05 }}
             onClick={() => onSuggestionClick(suggestion)}
-            className="flex-shrink-0 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 rounded-full text-xs text-slate-300 transition-all active:scale-95 whitespace-nowrap"
+            className="flex-shrink-0 snap-start px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 rounded-full text-xs text-slate-300 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
           >
-            {suggestion}
-          </button>
+            <span>{suggestion}</span>
+            <ArrowRight className="h-3 w-3 opacity-50" />
+          </motion.button>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 });
 
 SmartSuggestions.displayName = 'SmartSuggestions';
 
 // Enhanced Quick Prompt Component
-const QuickPrompt = memo(({ prompt, onClick }: {
+const QuickPrompt = memo(({ prompt, onClick, index }: {
   prompt: typeof QUICK_PROMPTS[0];
   onClick: (text: string) => void;
+  index: number;
 }) => (
-  <button
+  <motion.button
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.1 }}
     onClick={() => onClick(prompt.text)}
-    className="group flex items-center gap-3 p-3 bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 hover:border-blue-500/30 rounded-xl transition-all active:scale-[0.98] touch-manipulation"
+    className="group flex items-center gap-3 p-3.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-blue-500/30 rounded-2xl transition-all active:scale-[0.98] touch-manipulation text-left w-full"
   >
-    <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+    <div className="w-11 h-11 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
       <prompt.icon className="h-5 w-5 text-blue-400" />
     </div>
-    <div className="flex-1 text-left">
-      <p className="text-xs text-slate-500 mb-0.5">{prompt.category}</p>
-      <p className="text-sm text-slate-200 group-hover:text-white transition-colors">{prompt.text}</p>
+    <div className="flex-1 min-w-0">
+      <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">{prompt.category}</p>
+      <p className="text-sm text-slate-200 group-hover:text-white transition-colors truncate">{prompt.text}</p>
     </div>
-  </button>
+  </motion.button>
 ));
 
 QuickPrompt.displayName = 'QuickPrompt';
 
-// Enhanced Empty State
+// Enhanced Empty State with animated icon
 const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => void }) => (
-  <div className="flex flex-col items-center justify-center h-full px-6 py-8 space-y-6">
-    <div className="relative">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-2xl opacity-20" />
-      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl relative">
-        <Sparkles className="h-8 w-8 text-white" />
-      </div>
-    </div>
+  <div className="flex flex-col items-center justify-center h-full px-4 py-6 space-y-6">
+    <motion.div 
+      className="relative"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-3xl opacity-30" />
+      <motion.div 
+        className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl relative"
+        animate={{ 
+          boxShadow: ['0 0 20px rgba(59,130,246,0.3)', '0 0 40px rgba(59,130,246,0.5)', '0 0 20px rgba(59,130,246,0.3)']
+        }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        <Sparkles className="h-10 w-10 text-white" />
+      </motion.div>
+    </motion.div>
     
-    <div className="text-center space-y-1">
-      <h3 className="text-lg font-semibold text-white">AI Meeting Assistant</h3>
-      <p className="text-xs text-slate-400 max-w-[200px]">
+    <div className="text-center space-y-2">
+      <motion.h3 
+        className="text-xl font-bold text-white"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+      >
+        AI Meeting Assistant
+      </motion.h3>
+      <motion.p 
+        className="text-sm text-slate-400 max-w-[220px] leading-relaxed"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
         Schedule, reschedule, or check availability using natural language
-      </p>
+      </motion.p>
     </div>
     
-    <div className="w-full space-y-2">
+    <motion.div 
+      className="w-full max-w-sm space-y-2.5"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+    >
       {QUICK_PROMPTS.map((prompt, i) => (
-        <QuickPrompt key={i} prompt={prompt} onClick={onQuickPrompt} />
+        <QuickPrompt key={i} prompt={prompt} onClick={onQuickPrompt} index={i} />
       ))}
-    </div>
+    </motion.div>
   </div>
 ));
 
 EmptyState.displayName = 'EmptyState';
 
-// Typing Indicator
+// Typing Indicator with animated dots
 const TypingIndicator = memo(() => (
   <div className="flex items-center gap-2 px-4 py-2">
-    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
       <Sparkles className="h-4 w-4 text-white" />
     </div>
-    <div className="bg-white/5 rounded-2xl px-4 py-3 flex items-center gap-1">
-      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+    <div className="bg-white/5 rounded-2xl px-4 py-3 flex items-center gap-1.5 min-w-[60px]">
+      <motion.span 
+        className="w-2 h-2 bg-blue-400 rounded-full"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
+      />
+      <motion.span 
+        className="w-2 h-2 bg-blue-400 rounded-full"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
+      />
+      <motion.span 
+        className="w-2 h-2 bg-blue-400 rounded-full"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
+      />
     </div>
   </div>
 ));
@@ -143,6 +206,7 @@ TypingIndicator.displayName = 'TypingIndicator';
 export default function ChatWindow() {
   const [message, setMessage] = useState('');
   const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
+  const [showActions, setShowActions] = useState(false);
   const { messages, isLoading, currentResponse } = useChatStore();
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -177,6 +241,7 @@ export default function ChatWindow() {
     if (message.trim() && !isLoading) {
       sendMessage.mutate({ message: message.trim() });
       setMessage('');
+      setShowActions(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -205,58 +270,87 @@ export default function ChatWindow() {
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
   }, []);
 
+  // Get contextual suggestions based on last AI message
+  const suggestions = messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
+    ? getContextualSuggestions(messages[messages.length - 1].content)
+    : [];
+
   return (
     <div className="flex flex-col h-full min-h-0 w-full relative bg-[#050510] sm:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-3xl">
       <StatusBar isOnline={isLlmOnline} />
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
-        {messages.length === 0 && (
-          <EmptyState onQuickPrompt={handleQuickPrompt} />
-        )}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-5 py-4 sm:py-6 space-y-3 sm:space-y-5 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
+        <AnimatePresence>
+          {messages.length === 0 && (
+            <EmptyState onQuickPrompt={handleQuickPrompt} />
+          )}
 
-        {messages.map((msg, index) => (
-          <div key={index} className="animate-fade-in">
-            <ChatMessage message={msg} />
-          </div>
-        ))}
+          {messages.map((msg, index) => (
+            <motion.div 
+              key={index} 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChatMessage message={msg} />
+            </motion.div>
+          ))}
 
-        {isLoading && currentResponse && (
-          <div className="animate-fade-in">
-            <ChatMessage
-              message={{
-                role: 'assistant',
-                content: currentResponse,
-                timestamp: new Date().toISOString()
-              }}
-              isTyping={true}
-            />
-          </div>
-        )}
+          {isLoading && currentResponse && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <ChatMessage
+                message={{
+                  role: 'assistant',
+                  content: currentResponse,
+                  timestamp: new Date().toISOString()
+                }}
+                isTyping={true}
+              />
+            </motion.div>
+          )}
 
-        {isLoading && !currentResponse && <TypingIndicator />}
+          {isLoading && !currentResponse && <TypingIndicator />}
+        </AnimatePresence>
 
-        <div ref={messagesEndRef} className="h-2 sm:h-4" />
+        <div ref={messagesEndRef} className="h-2" />
       </div>
 
-      {/* Smart Suggestions - shown after AI response */}
-      <SmartSuggestions 
-        onSuggestionClick={handleQuickPrompt} 
-        isVisible={!isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'} 
-      />
+      {/* Smart Suggestions - Context-aware */}
+      <AnimatePresence>
+        {!isLoading && suggestions.length > 0 && (
+          <SmartSuggestions 
+            onSuggestionClick={handleQuickPrompt} 
+            suggestions={suggestions}
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Input Area - WhatsApp Style */}
-      <div className="shrink-0 p-3 sm:p-4 bg-[#0a0a14]/90 backdrop-blur-xl border-t border-white/5 relative z-40">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex items-end gap-2 sm:gap-3">
+      {/* Input Area - Enhanced WhatsApp Style */}
+      <div className="shrink-0 p-2.5 sm:p-4 bg-[#0a0a14]/95 backdrop-blur-xl border-t border-white/5 relative z-40">
+        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex items-end gap-2">
+          {/* Plus Button for Actions */}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => setShowActions(!showActions)}
+            className={`p-3 rounded-full transition-all flex-shrink-0 ${showActions ? 'bg-blue-500 text-white rotate-45' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+          >
+            <Plus className="h-5 w-5" />
+          </motion.button>
+
           {/* Input Container */}
           <div className="flex-1 relative bg-white/[0.05] rounded-3xl border border-white/10 focus-within:border-blue-500/50 focus-within:bg-white/[0.08] transition-all">
             <div className="flex items-end">
-              {/* Left Actions */}
+              {/* Emoji Button */}
               <button
                 type="button"
-                className="p-2 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
+                className="p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
               >
-                <Paperclip className="h-5 w-5" />
+                <Smile className="h-5 w-5" />
               </button>
               
               {/* Text Input */}
@@ -267,44 +361,56 @@ export default function ChatWindow() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Message ChronosAI..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-3 px-2 resize-none min-h-[48px] max-h-[120px] font-medium"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2.5 px-1 resize-none min-h-[44px] max-h-[120px] font-medium"
                 style={{ scrollbarWidth: 'none' }}
               />
               
-              {/* Right Actions */}
-              <div className="flex items-center gap-1 pr-2 flex-shrink-0">
-                <button
-                  type="button"
-                  className="p-2 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors"
-                >
-                  <Smile className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  className="p-2 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors"
-                >
-                  <Mic className="h-5 w-5" />
-                </button>
-              </div>
+              {/* Attachment & Voice - Hidden when typing */}
+              <AnimatePresence>
+                {!message.trim() && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="flex items-center gap-1 pr-2 flex-shrink-0"
+                  >
+                    <button
+                      type="button"
+                      className="p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors"
+                    >
+                      <Paperclip className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      className="p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors"
+                    >
+                      <Mic className="h-5 w-5" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
           
-          {/* Send Button */}
-          <button
+          {/* Send/Voice Button */}
+          <motion.button
             type="submit"
+            whileTap={{ scale: 0.9 }}
             disabled={!message.trim() || isLoading}
-            className={`p-3 sm:p-4 rounded-full transition-all duration-200 flex-shrink-0 ${
+            className={`p-3 sm:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 ${
               message.trim() && !isLoading
-                ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/20'
+                ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/25'
                 : 'bg-white/5 text-slate-500 cursor-not-allowed'
             }`}
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
-            ) : (
+            ) : message.trim() ? (
               <Send className="h-5 w-5 sm:h-6 sm:w-6" />
+            ) : (
+              <Mic className="h-5 w-5 sm:h-6 sm:w-6" />
             )}
-          </button>
+          </motion.button>
         </form>
         
         {/* Helper Text */}

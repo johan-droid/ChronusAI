@@ -1,4 +1,5 @@
 import { User, Bot, Check, CheckCheck, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
 interface ChatMessageProps {
@@ -28,7 +29,12 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
   });
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 sm:gap-3 animate-fade-in w-full group px-2 sm:px-0`}>
+    <motion.div 
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 sm:gap-3 w-full group px-2 sm:px-0`}
+    >
       {/* Avatar - AI only */}
       {!isUser && (
         <div className="flex-shrink-0 self-end mb-1">
@@ -112,6 +118,6 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
