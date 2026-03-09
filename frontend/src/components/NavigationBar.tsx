@@ -99,43 +99,58 @@ const NavigationBar = memo(({
                     <>
                         {/* Heavy Blur Backdrop */}
                         <div
-                            className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[55] md:hidden animate-fade-in"
+                            className="fixed inset-0 bg-black/80 backdrop-blur-xl z-[55] md:hidden"
                             onClick={() => setMobileMenuOpen(false)}
                             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
                         />
-                        {/* Mobile Menu Content */}
-                        <div className="absolute top-full left-0 right-0 bg-[#050515]/98 backdrop-blur-3xl border-b border-white/10 p-6 space-y-3 animate-slide-down md:hidden z-[60] shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-b-[2.5rem]">
-                            {[
-                                { path: '/dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-blue-400' },
-                                { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'text-cyan-400' },
-                                { path: '/availability', label: 'Availability', icon: Clock, color: 'text-purple-400' },
-                                { path: '/history', label: 'History', icon: Calendar, color: 'text-emerald-400' },
-                            ].map(({ path, label, icon: Icon, color }) => (
-                                <button
-                                    key={path}
-                                    type="button"
-                                    onClick={() => handleNav(path)}
-                                    className={`w-full px-6 py-4 rounded-2xl text-base font-semibold flex items-center gap-4 smooth-transition active:scale-[0.98] border transition-all ${currentPath === path
-                                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white border-transparent shadow-lg shadow-blue-500/20'
-                                        : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'
-                                        }`}
-                                >
-                                    <Icon className={`h-5 w-5 ${currentPath === path ? 'text-white' : color}`} />
-                                    {label}
-                                </button>
-                            ))}
+                        {/* Mobile Menu Sidebar - Slides from right */}
+                        <motion.div 
+                            initial={{ x: '100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed top-0 right-0 bottom-0 w-[280px] bg-[#0a0a14]/95 backdrop-blur-2xl border-l border-white/10 p-6 pt-20 space-y-3 md:hidden z-[60] shadow-2xl"
+                        >
+                            <button
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="absolute top-4 right-4 p-2 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                            
+                            <div className="space-y-2">
+                                {[
+                                    { path: '/dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-blue-400' },
+                                    { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'text-cyan-400' },
+                                    { path: '/availability', label: 'Availability', icon: Clock, color: 'text-purple-400' },
+                                    { path: '/history', label: 'History', icon: Calendar, color: 'text-emerald-400' },
+                                ].map(({ path, label, icon: Icon, color }) => (
+                                    <button
+                                        key={path}
+                                        type="button"
+                                        onClick={() => handleNav(path)}
+                                        className={`w-full px-4 py-3.5 rounded-xl text-base font-semibold flex items-center gap-3 smooth-transition active:scale-[0.98] border transition-all ${currentPath === path
+                                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white border-transparent shadow-lg shadow-blue-500/20'
+                                            : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        <Icon className={`h-5 w-5 ${currentPath === path ? 'text-white' : color}`} />
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
 
-                            <div className="pt-4 mt-2 border-t border-white/10">
+                            <div className="pt-4 mt-4 border-t border-white/10">
                                 <button
                                     type="button"
                                     onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }}
-                                    className="w-full px-6 py-4 rounded-2xl bg-red-500/10 text-red-400 text-base font-semibold flex items-center gap-4 hover:bg-red-500/20 border border-red-500/20 smooth-transition active:scale-[0.98]"
+                                    className="w-full px-4 py-3.5 rounded-xl bg-red-500/10 text-red-400 text-base font-semibold flex items-center gap-3 hover:bg-red-500/20 border border-red-500/20 smooth-transition active:scale-[0.98]"
                                 >
                                     <LogOut className="h-5 w-5" />
                                     Logout
                                 </button>
                             </div>
-                        </div>
+                        </motion.div>
                     </>
                 )}
             </div>
