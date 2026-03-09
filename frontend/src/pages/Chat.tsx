@@ -42,22 +42,25 @@ export default function Chat() {
       />
 
 
-      <main className="flex-1 relative z-10 w-full max-w-5xl mx-auto flex flex-col min-h-0 overflow-hidden sm:px-4 sm:py-4">
-        <div className="flex-1 flex flex-col min-h-0 bg-slate-900/40 backdrop-blur-2xl sm:rounded-3xl sm:border sm:border-white/10 shadow-3xl overflow-hidden relative -mt-[1px]">
-          {/* Header Area - Desktop only */}
-          <div className="hidden sm:block px-4 py-2 sm:py-3 border-b border-white/5 bg-slate-900/60 shrink-0">
+      <main className="flex-1 relative z-10 w-full flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-900/10 backdrop-blur-2xl border-x border-white/5 shadow-3xl overflow-hidden relative">
+          {/* Header Area - Slimmer & Immersive */}
+          <div className="hidden sm:block px-6 py-2 border-b border-white/5 bg-slate-900/40 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 flex items-center justify-center">
                 <Sparkles className="h-4 w-4 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-white">AI Meeting Assistant</h2>
-                <p className="text-[10px] text-slate-400 hidden sm:block">Schedule meetings with natural language</p>
+                <h2 className="text-[11px] font-bold text-white uppercase tracking-wider opacity-60">Immersive Mode</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold text-white">ChronosAI Assistant</h2>
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Chat Window Container - flex-1 ensures it fills the space */}
+          {/* Chat Window Container - Fully expanded */}
           <div className="flex-1 flex flex-col min-h-0 relative">
             <ChatWindow />
           </div>

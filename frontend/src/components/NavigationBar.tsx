@@ -1,6 +1,6 @@
-import { memo, useCallback } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     BarChart3,
     MessageSquare,
@@ -57,6 +57,7 @@ const NavigationBar = memo(({
     const navigate = useNavigate();
     const location = useLocation();
     const currentPath = location.pathname;
+    const [isProfileOpen, setIsProfileOpen] = useState(false);
 
     const handleNav = useCallback((path: string) => {
         navigate(path);
@@ -65,9 +66,9 @@ const NavigationBar = memo(({
 
     return (
         <nav className="relative z-50 border-b border-white/5 bg-[rgba(5,5,20,0.85)] backdrop-blur-xl safe-area-top">
-            <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
+            <div className="max-w-[100vw] mx-auto px-4 sm:px-6 py-3 sm:py-4">
                 <div className="flex items-center justify-between">
-                    <button type="button" onClick={() => handleNav('/dashboard')} className="flex items-center gap-2 sm:gap-3 smooth-transition hover:opacity-90 min-h-[44px] -ml-1">
+                    <button type="button" onClick={() => handleNav('/dashboard')} className="flex items-center gap-2 sm:gap-3 smooth-transition hover:opacity-90 min-h-[44px]">
                         <AnimatedLogo className="h-8 w-8 sm:h-10 sm:w-10" />
                         <span className="text-lg sm:text-xl font-bold gradient-text">ChronosAI</span>
                     </button>
@@ -81,9 +82,64 @@ const NavigationBar = memo(({
 
                     <div className="flex items-center gap-3">
                         {user && (
-                            <div className="hidden sm:flex flex-col items-end mr-1">
-                                <p className="text-xs font-bold text-white leading-tight">{user.full_name || 'User'}</p>
-                                <p className="text-[10px] text-slate-500 font-medium">{user.email}</p>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsProfileOpen(!isProfileOpen)}
+                                    className="hidden sm:flex items-center gap-3 p-1.5 pl-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] hover:border-white/20 smooth-transition active:scale-[0.98]"
+                                >
+                                    <div className="flex flex-col items-end">
+                                        <p className="text-[11px] font-bold text-white leading-tight">{user.full_name || 'User'}</p>
+                                        <p className="text-[9px] text-slate-500 font-medium truncate max-w-[120px]">{user.email}</p>
+                                    </div>
+                                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-white/10 flex items-center justify-center">
+                                        <span className="text-xs font-bold text-blue-400">{(user.full_name || 'U')[0]}</span>
+                                    </div>
+                                </button>
+
+                                {/* Profile Dropdown Menu */}
+                                <AnimatePresence>
+                                    {isProfileOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                                exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="absolute right-0 mt-3 w-64 bg-[#0d0d1a]/95 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] shadow-3xl z-50 overflow-hidden"
+                                            >
+                                                <div className="p-4 border-b border-white/5 bg-white/[0.02]">
+                                                    <p className="text-sm font-bold text-white">{user.full_name}</p>
+                                                    <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                                                </div>
+                                                <div className="p-2">
+                                                    <button
+                                                        onClick={() => { handleNav('/settings'); setIsProfileOpen(false); }}
+                                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-white/5 smooth-transition"
+                                                    >
+                                                        <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400">
+                                                            <Calendar className="h-4 w-4" />
+                                                        </div>
+                                                        <span className="text-xs font-medium">Account Settings</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setShowLogout(true); setIsProfileOpen(false); }}
+                                                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-rose-400 hover:bg-rose-500/10 smooth-transition"
+                                                    >
+                                                        <div className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400">
+                                                            <LogOut className="h-4 w-4" />
+                                                        </div>
+                                                        <span className="text-xs font-medium">Sign Out</span>
+                                                    </button>
+                                                </div>
+                                                <div className="px-4 py-2 bg-black/20 text-[10px] text-slate-600 flex justify-between">
+                                                    <span>API v1.0</span>
+                                                    <span>ChronosAI Premium</span>
+                                                </div>
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
                             </div>
                         )}
                         <button
@@ -105,7 +161,7 @@ const NavigationBar = memo(({
                             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
                         />
                         {/* Mobile Menu Sidebar - Slides from right */}
-                        <motion.div 
+                        <motion.div
                             initial={{ x: '100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
@@ -118,7 +174,7 @@ const NavigationBar = memo(({
                             >
                                 <X className="h-5 w-5" />
                             </button>
-                            
+
                             <div className="space-y-2">
                                 {[
                                     { path: '/dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-blue-400' },

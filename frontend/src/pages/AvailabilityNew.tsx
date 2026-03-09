@@ -18,8 +18,16 @@ export default function Availability() {
   const { user } = useAuthStore();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Get local date string in YYYY-MM-DD format
+  const getLocalDateString = (date = new Date()) => {
+    // This handles the local timezone offset correctly for the input field
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+    return localDate.toISOString().split('T')[0];
+  };
+
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [availableCount, setAvailableCount] = useState(0);
   const [busyCount, setBusyCount] = useState(0);
@@ -33,9 +41,17 @@ export default function Availability() {
         return;
       }
       try {
-        await apiClient.getCurrentUser();
+        const currentUser = await apiClient.getCurrentUser();
+        // If user doesn't have a timezone set, detect it
+        if (!currentUser.timezone || currentUser.timezone === 'UTC') {
+          console.log('Detecting timezone...');
+          await apiClient.detectTimezone();
+          // Re-fetch user to get updated timezone
+          await apiClient.getCurrentUser();
+        }
         await fetchAvailability();
-      } catch {
+      } catch (err) {
+        console.error('Auth/Timezone error:', err);
         navigate('/login');
       }
     };
@@ -86,15 +102,15 @@ export default function Availability() {
   const goToPrevDay = () => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() - 1);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    setSelectedDate(getLocalDateString(d));
   };
   const goToNextDay = () => {
     const d = new Date(selectedDate);
     d.setDate(d.getDate() + 1);
-    setSelectedDate(d.toISOString().split('T')[0]);
+    setSelectedDate(getLocalDateString(d));
   };
   const goToToday = () => {
-    setSelectedDate(new Date().toISOString().split('T')[0]);
+    setSelectedDate(getLocalDateString());
   };
 
   const TimeSlotSection = ({ title, icon, slots, gradient }: { title: string; icon: React.ReactNode; slots: TimeSlot[]; gradient: string }) => (
@@ -144,43 +160,43 @@ export default function Availability() {
                 {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
               </p>
             </div>
-            
+
             {/* Mobile-Optimized Date Controls */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <button 
-                onClick={goToPrevDay} 
+              <button
+                onClick={goToPrevDay}
                 className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
                 title="Previous day"
               >
                 <span className="sm:hidden">←</span>
                 <span className="hidden sm:inline text-sm">← Prev</span>
               </button>
-              
+
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-blue-500/50"
               />
-              
-              <button 
-                onClick={goToNextDay} 
+
+              <button
+                onClick={goToNextDay}
                 className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
                 title="Next day"
               >
                 <span className="sm:hidden">→</span>
                 <span className="hidden sm:inline text-sm">Next →</span>
               </button>
-              
-              <button 
-                onClick={goToToday} 
+
+              <button
+                onClick={goToToday}
                 className="px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium hover:bg-blue-500/30 active:scale-95 transition-all touch-manipulation"
               >
                 Today
               </button>
-              
-              <button 
-                onClick={fetchAvailability} 
+
+              <button
+                onClick={fetchAvailability}
                 className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
                 title="Refresh"
               >

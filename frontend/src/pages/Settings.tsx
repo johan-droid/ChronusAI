@@ -4,11 +4,14 @@ import { Trash2, AlertTriangle, Loader2, Shield, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
-import Layout from '../components/Layout';
+import NavigationBar from '../components/NavigationBar';
+import LogoutMenu from '../components/LogoutMenu';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
+  const [showLogout, setShowLogout] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -29,10 +32,10 @@ export default function Settings() {
 
       // Show success message briefly before redirecting
       setShowDeleteSuccess(true);
-      
+
       // Clear all cache and storage
       clearAllCache();
-      
+
       // Small delay to show success message
       setTimeout(() => {
         logout();
@@ -51,16 +54,26 @@ export default function Settings() {
   };
 
   return (
-    <Layout>
-      <div className="min-h-screen p-4 sm:p-6">
+    <div className="flex flex-col min-h-screen bg-[#050510] relative overflow-x-hidden">
+      <div className="page-bg" />
+      <div className="page-grid-overlay" />
+
+      <NavigationBar
+        user={user}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+        setShowLogout={setShowLogout}
+      />
+
+      <main className="flex-1 relative z-10 p-4 sm:p-6 mb-20 lg:mb-0">
         <div className="max-w-2xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold text-white mb-2">Settings</h1>
+          <header className="fade-in-up">
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Settings</h1>
             <p className="text-slate-400 text-sm">Manage your account and preferences</p>
-          </div>
+          </header>
 
           {/* Account Info */}
-          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+          <section className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 fade-in-up" style={{ animationDelay: '0.05s' }}>
             <h2 className="text-lg font-semibold text-white mb-4">Account Information</h2>
             <div className="space-y-3">
               <div>
@@ -80,10 +93,10 @@ export default function Settings() {
                 <p className="text-white">{user?.timezone || 'UTC'}</p>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Connected Services */}
-          <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6">
+          <section className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-6 fade-in-up" style={{ animationDelay: '0.1s' }}>
             <h2 className="text-lg font-semibold text-white mb-4">Connected Services</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/5">
@@ -126,10 +139,10 @@ export default function Settings() {
                 </div>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Danger Zone */}
-          <div className="bg-red-500/5 backdrop-blur-xl border border-red-500/20 rounded-2xl p-6">
+          <section className="bg-red-500/5 backdrop-blur-xl border border-red-500/20 rounded-2xl p-6 fade-in-up" style={{ animationDelay: '0.15s' }}>
             <div className="flex items-start gap-3 mb-4">
               <AlertTriangle className="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div>
@@ -171,7 +184,7 @@ export default function Settings() {
                         <li>Revoke access from {user?.provider === 'google' ? 'Google' : 'Microsoft'}</li>
                         <li>Log you out from all devices</li>
                       </ul>
-                      
+
                       <div className="mb-3">
                         <label className="text-xs text-slate-400 mb-1.5 block">
                           Type <span className="text-red-400 font-bold">DELETE</span> to confirm:
@@ -185,7 +198,7 @@ export default function Settings() {
                           autoFocus
                         />
                       </div>
-                      
+
                       {deleteError && (
                         <p className="text-xs text-red-400">{deleteError}</p>
                       )}
@@ -222,9 +235,11 @@ export default function Settings() {
                 </div>
               </div>
             )}
-          </div>
+          </section>
         </div>
-      </div>
-    </Layout>
+      </main>
+
+      <LogoutMenu isOpen={showLogout} onClose={() => setShowLogout(false)} />
+    </div>
   );
 }

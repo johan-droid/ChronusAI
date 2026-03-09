@@ -18,6 +18,7 @@ from app.core.security import (
     token_encryptor, 
     create_refresh_token, 
     decode_refresh_token, 
+    revoke_session,
     revoke_all_user_sessions, 
     get_password_hash,
     verify_password
@@ -389,13 +390,22 @@ async def refresh_token(
 
 @router.post("/logout")
 async def logout(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Logout user and revoke tokens."""
+    """Logout user and revoke current session."""
     try:
-        # Revoke all user sessions
-        await revoke_all_user_sessions(current_user.id)
+        # Try to get refresh token from header X-Refresh-Token (as sent by apiClient)
+        refresh_token = request.headers.get("X-Refresh-Token") or request.headers.get("x-refresh-token")
+        
+        if refresh_token:
+            await revoke_session(refresh_token)
+            logger.info("specific_session_revoked", user_id=current_user.id)
+        else:
+            # Fallback to revoking all if none provided (safer)
+            await revoke_all_user_sessions(current_user.id)
+            logger.info("all_sessions_revoked_at_logout", user_id=current_user.id)
         
         return {"message": "Logged out successfully"}
         
@@ -404,6 +414,24 @@ async def logout(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to logout"
+        )
+
+
+@router.post("/logout-all")
+async def logout_all(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Logout user and revoke all active sessions."""
+    try:
+        await revoke_all_user_sessions(current_user.id)
+        logger.info("logout_all_sessions", user_id=current_user.id)
+        return {"message": "All sessions logged out successfully"}
+    except Exception as e:
+        logger.error("Logout all failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to logout all sessions"
         )
 
 

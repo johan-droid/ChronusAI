@@ -47,6 +47,9 @@ async def check_availability(
         current_slot = start_of_day
         slot_duration = timedelta(minutes=30)
         
+        # Current time in the target timezone for filtering past slots
+        now = datetime.now(tz)
+        
         while current_slot < end_of_day:
             slot_end = current_slot + slot_duration
             
@@ -56,10 +59,13 @@ async def check_availability(
                 for busy in busy_slots
             )
             
+            # Additional check: mark past slots as unavailable
+            is_past = slot_end <= now
+            
             all_slots.append(TimeSlotResponse(
                 start_time=current_slot.isoformat(),
                 end_time=slot_end.isoformat(),
-                is_available=not is_busy,
+                is_available=not is_busy and not is_past,
                 timezone=tz_str
             ))
             

@@ -55,15 +55,71 @@ async def send_message(
         # Get conversation context
         context = await get_conversation_context(str(current_user.id))
         
-        # Parse user intent with enhanced AI
-        parsed_intent = await llm_service.parse_intent(
-            str(payload.message),
-            str(current_user.timezone),
-            str(current_user.email),
-            str(current_user.full_name or "User"),
-            context,
+        # 1. Fetch upcoming meetings for Context Injection
+        meetings_result = await db.execute(
+            select(Meeting).where(
+                and_(
+                    Meeting.user_id == current_user.id,
+                    Meeting.start_time >= datetime.now(timezone.utc),
+                    Meeting.status == "scheduled"
+                )
+            ).order_by(Meeting.start_time.asc()).limit(5)
         )
+        upcoming_meetings = meetings_result.scalars().all()
         
+        # Format meetings for prompt injection
+        meetings_context = "No upcoming meetings scheduled."
+        if upcoming_meetings:
+            context_lines: list[str] = []
+            for m in upcoming_meetings:
+                context_lines.append(f'- Title: "{m.title}", Start: {m.start_time.isoformat()}')
+            meetings_context = "\n".join(context_lines)
+        
+        # 2. Implement Self-Correction Retry Loop
+        max_retries = 2
+        parsed_intent = None
+        last_error = None
+        
+        for attempt in range(max_retries):
+            try:
+                # Add error feedback to context if this is a redo
+                if last_error:
+                    context.append({
+                        "role": "system", 
+                        "content": f"Safety Warning: Your last tool call failed with error: {last_error}. Please correct the formatting (especially datetimes) and try again."
+                    })
+
+                # Parse intent with enhanced context
+                parsed_intent = await llm_service.parse_intent(
+                    str(payload.message),
+                    str(current_user.timezone),
+                    str(current_user.email),
+                    str(current_user.full_name or "User"),
+                    context,
+                    upcoming_meetings_context=meetings_context
+                )
+                
+                # Basic validation: ensure dates are parsable if provided
+                if parsed_intent.start_time:
+                    datetime.fromisoformat(parsed_intent.start_time.replace('Z', '+00:00'))
+                
+                # If we got here, parsing is successful
+                break
+            except Exception as e:
+                last_error = str(e)
+                if attempt == max_retries - 1:
+                    logger.error("ai_intent_parsing_exhausted", error=last_error)
+                    return ChatResponse(
+                        response="I'm having trouble understanding the specific date or details. Could you please rephrase your request?",
+                        intent="ERROR"
+                    )
+
+        if parsed_intent is None:
+             return ChatResponse(response="I couldn't process that request.", intent="ERROR")
+
+        # Assertion for Pyre to track non-nullness
+        assert parsed_intent is not None
+
         logger.info(
             "ai_intent_parsed",
             user_id_hash=hash_user_id(str(current_user.id)),
@@ -183,8 +239,13 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
         # Parse datetime from ISO string
         try:
             start_time = datetime.fromisoformat(intent.start_time.replace('Z', '+00:00'))
+            if start_time.tzinfo is None:
+                start_time = start_time.replace(tzinfo=timezone.utc)
+                
             if intent.end_time:
                 end_time = datetime.fromisoformat(intent.end_time.replace('Z', '+00:00'))
+                if end_time.tzinfo is None:
+                    end_time = end_time.replace(tzinfo=timezone.utc)
             else:
                 end_time = start_time + timedelta(minutes=30)  # Default 30 minutes
         except Exception:
@@ -195,7 +256,7 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
             )
         
         # Build attendee list
-        attendees_emails = list({str(user.email), *intent.attendees})
+        attendees_emails = list({str(user.email), *(intent.attendees or [])})
         
         # Check for conflicts
         busy_slots = await calendar_provider.get_free_busy(
@@ -433,8 +494,13 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
         # Parse datetime from ISO string
         try:
             new_start_time = datetime.fromisoformat(intent.start_time.replace('Z', '+00:00'))
+            if new_start_time.tzinfo is None:
+                new_start_time = new_start_time.replace(tzinfo=timezone.utc)
+                
             if intent.end_time:
                 new_end_time = datetime.fromisoformat(intent.end_time.replace('Z', '+00:00'))
+                if new_end_time.tzinfo is None:
+                    new_end_time = new_end_time.replace(tzinfo=timezone.utc)
             else:
                 # Default 30 minutes or calculate from existing meeting
                 new_end_time = new_start_time + timedelta(minutes=30)
@@ -484,6 +550,10 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
         # Check for conflicts at new time
         attendees_emails = [attendee.get("email") for attendee in meeting.attendees if attendee.get("email")]
         attendees_emails.append(user.email)
+        
+        # Add any new attendees from intent
+        if intent.attendees:
+            attendees_emails = list(set(attendees_emails + intent.attendees))
         
         busy_slots = await calendar_provider.get_free_busy(
             new_start_time, new_end_time, attendees_emails

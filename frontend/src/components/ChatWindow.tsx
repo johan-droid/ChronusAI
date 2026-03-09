@@ -16,7 +16,7 @@ const QUICK_PROMPTS = [
 // Context-aware AI Smart Suggestions
 const getContextualSuggestions = (lastMessage: string): string[] => {
   const msg = lastMessage.toLowerCase();
-  
+
   if (msg.includes('schedule') || msg.includes('book') || msg.includes('create')) {
     return ["Yes, confirm it", "Add 15 min buffer", "Make it 30 min instead", "Add Zoom link"];
   }
@@ -29,7 +29,7 @@ const getContextualSuggestions = (lastMessage: string): string[] => {
   if (msg.includes('availability') || msg.includes('free') || msg.includes('when')) {
     return ["Show next week too", "Morning slots only", "Afternoon works", "Any time today"];
   }
-  
+
   return ["Schedule a meeting", "Check availability", "Show my calendar", "Help me plan"];
 };
 
@@ -62,14 +62,14 @@ const StatusBar = memo(({ isOnline }: { isOnline: boolean | null }) => (
 StatusBar.displayName = 'StatusBar';
 
 // Smart Suggestion Chips with horizontal scroll
-const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: { 
+const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: {
   onSuggestionClick: (text: string) => void;
   suggestions: string[];
 }) => {
   if (!suggestions.length) return null;
-  
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="px-3 py-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-t border-white/5"
@@ -123,16 +123,16 @@ QuickPrompt.displayName = 'QuickPrompt';
 // Enhanced Empty State with animated icon
 const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => void }) => (
   <div className="flex flex-col items-center justify-center h-full px-4 py-6 space-y-6">
-    <motion.div 
+    <motion.div
       className="relative"
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-3xl opacity-30" />
-      <motion.div 
+      <motion.div
         className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl relative"
-        animate={{ 
+        animate={{
           boxShadow: ['0 0 20px rgba(59,130,246,0.3)', '0 0 40px rgba(59,130,246,0.5)', '0 0 20px rgba(59,130,246,0.3)']
         }}
         transition={{ duration: 2, repeat: Infinity }}
@@ -140,9 +140,9 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
         <Sparkles className="h-10 w-10 text-white" />
       </motion.div>
     </motion.div>
-    
+
     <div className="text-center space-y-2">
-      <motion.h3 
+      <motion.h3
         className="text-xl font-bold text-white"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -150,7 +150,7 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
       >
         AI Meeting Assistant
       </motion.h3>
-      <motion.p 
+      <motion.p
         className="text-sm text-slate-400 max-w-[220px] leading-relaxed"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -159,8 +159,8 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
         Schedule, reschedule, or check availability using natural language
       </motion.p>
     </div>
-    
-    <motion.div 
+
+    <motion.div
       className="w-full max-w-sm space-y-2.5"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -182,17 +182,17 @@ const TypingIndicator = memo(() => (
       <Sparkles className="h-4 w-4 text-white" />
     </div>
     <div className="bg-white/5 rounded-2xl px-4 py-3 flex items-center gap-1.5 min-w-[60px]">
-      <motion.span 
+      <motion.span
         className="w-2 h-2 bg-blue-400 rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
       />
-      <motion.span 
+      <motion.span
         className="w-2 h-2 bg-blue-400 rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
       />
-      <motion.span 
+      <motion.span
         className="w-2 h-2 bg-blue-400 rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
@@ -276,7 +276,7 @@ export default function ChatWindow() {
     : [];
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-full relative bg-[#050510] sm:rounded-[2.5rem] overflow-hidden border border-white/5 shadow-3xl">
+    <div className="flex flex-col h-full min-h-0 w-full relative overflow-hidden">
       <StatusBar isOnline={isLlmOnline} />
 
       {/* Messages Area */}
@@ -287,8 +287,8 @@ export default function ChatWindow() {
           )}
 
           {messages.map((msg, index) => (
-            <motion.div 
-              key={index} 
+            <motion.div
+              key={index}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
@@ -298,7 +298,7 @@ export default function ChatWindow() {
           ))}
 
           {isLoading && currentResponse && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -322,8 +322,8 @@ export default function ChatWindow() {
       {/* Smart Suggestions - Context-aware */}
       <AnimatePresence>
         {!isLoading && suggestions.length > 0 && (
-          <SmartSuggestions 
-            onSuggestionClick={handleQuickPrompt} 
+          <SmartSuggestions
+            onSuggestionClick={handleQuickPrompt}
             suggestions={suggestions}
           />
         )}
@@ -352,7 +352,7 @@ export default function ChatWindow() {
               >
                 <Smile className="h-4 w-4 sm:h-5 sm:w-5" />
               </button>
-              
+
               {/* Text Input */}
               <textarea
                 ref={textareaRef}
@@ -364,7 +364,7 @@ export default function ChatWindow() {
                 className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2 sm:py-2.5 px-1 resize-none min-h-[40px] sm:min-h-[44px] max-h-[120px] font-medium outline-none"
                 style={{ scrollbarWidth: 'none' }}
               />
-              
+
               {/* Attachment & Voice - Hidden when typing */}
               <AnimatePresence>
                 {!message.trim() && (
@@ -385,17 +385,16 @@ export default function ChatWindow() {
               </AnimatePresence>
             </div>
           </div>
-          
+
           {/* Send/Voice Button */}
           <motion.button
             type="submit"
             whileTap={{ scale: 0.9 }}
             disabled={!message.trim() || isLoading}
-            className={`p-3 sm:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 ${
-              message.trim() && !isLoading
+            className={`p-3 sm:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 ${message.trim() && !isLoading
                 ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/25'
                 : 'bg-white/5 text-slate-500 cursor-not-allowed'
-            }`}
+              }`}
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
@@ -406,7 +405,7 @@ export default function ChatWindow() {
             )}
           </motion.button>
         </form>
-        
+
         {/* Helper Text */}
         <p className="text-center text-[9px] sm:text-[10px] text-slate-600 mt-2 font-medium uppercase tracking-wider">
           Press Enter to send • Shift + Enter for new line

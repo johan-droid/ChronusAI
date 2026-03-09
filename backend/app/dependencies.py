@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Any
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -145,11 +146,11 @@ async def get_calendar_integration_provider(
         )
 
 
-async def get_conversation_context(user_id: str) -> list:
+async def get_conversation_context(user_id: str) -> list[dict[str, Any]]:
     """Get conversation context (in-memory fallback)."""
     return []
 
 
-async def save_conversation_context(user_id: str, messages: list):
+async def save_conversation_context(user_id: str, messages: list[dict[str, Any]]):
     """Save conversation context (no-op without Redis)."""
     pass

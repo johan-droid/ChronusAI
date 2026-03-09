@@ -18,31 +18,30 @@ class LLMService:
 
     @staticmethod
     def _system_prompt(user_timezone: str, user_email: str, user_name: str) -> str:
-        current_utc_iso = datetime.now(timezone.utc).isoformat()
+        now_utc = datetime.now(timezone.utc)
+        current_utc_iso = now_utc.isoformat()
+        current_day = now_utc.strftime("%A, %B %d, %Y")
+        
         return (
-            f"You are ChronosAI, an expert AI meeting scheduler. Output ONLY valid JSON, no markdown or explanation.\n"
-            f"Current UTC: {current_utc_iso}\n"
+            f"You are ChronosAI, an expert AI meeting scheduler. Output ONLY valid JSON, no markdown formatting.\n"
+            f"Current UTC Date & Time: {current_utc_iso}\n"
+            f"Current Day of Week: {current_day}\n"
             f"User timezone: {user_timezone}\n"
             f"User email: {user_email}\n"
             f"User name: {user_name}\n\n"
-            "PLATFORM POLICIES (follow strictly):\n"
-            "• Google Calendar: Events in UTC or user timezone; max 24h single event; use meeting_platform 'meet' to add Google Meet link.\n"
-            "• Google Meet: Attached via Calendar API conferenceData; no duration limit; one Meet per event.\n"
-            "• Zoom: meeting_platform 'zoom' = create Zoom meeting; duration 15-720 min; type 2 = scheduled; always include topic and agenda.\n"
-            "• Microsoft Teams: meeting_platform 'teams' = create Teams online meeting; isOnlineMeeting true; one per event.\n"
-            "• Reschedule: Use intent 'reschedule'; provide new start_time and end_time in ISO UTC; ALWAYS identify meeting by its 'title' field based on user's query.\n"
-            "• Cancel/Delete: Use intent 'cancel'; ALWAYS identify meeting by its 'title' field based on user's query.\n\n"
+            "CRITICAL RULES:\n"
+            "1. If no specific attendees are mentioned, return an empty array: [] for attendees.\n"
+            "2. ALL datetimes MUST be in exact ISO 8601 UTC format ending with 'Z' (e.g., 2024-03-09T14:00:00Z).\n"
+            "3. If the user says 'tomorrow' or 'next week', calculate the exact date based on the Current Day of Week provided above.\n"
+            "4. Reschedule: Use intent 'reschedule'; provide new start_time and end_time in ISO UTC; ALWAYS identify meeting by its 'title'.\n"
+            "5. Cancel: Use intent 'cancel'; ALWAYS identify meeting by its 'title'.\n\n"
             "INTENTS: schedule | reschedule | cancel | check_availability | find_time | list_meetings | suggest_times | unknown\n"
-            "MEETING_PLATFORM: zoom | meet | teams | none (use 'meet' for Google Meet, 'teams' for Teams, 'zoom' for Zoom, 'none' for no video).\n"
-            "DURATIONS: standup=15, sync=30, review/call=60, presentation=45-90; infer from context.\n"
-            "DATES: Resolve 'tomorrow', 'next Monday', 'in 2 hours' to ISO 8601 UTC (e.g. 2024-03-09T14:00:00Z).\n\n"
-            "OUTPUT JSON ONLY (no backticks):\n"
-            '{"intent":"...","title":"...","description":"...","start_time":"ISO","end_time":"ISO","attendees":["email"],"duration_minutes":30,"meeting_type":"standup|review|sync|presentation|call|other","meeting_platform":"zoom|meet|teams|none","response":"User-facing message","suggestions":[{"time":"ISO","reason":"..."}],"conflicts":[]}\n\n'
-            "Examples:\n"
-            "'Schedule Zoom with John tomorrow 10am' -> intent=schedule, meeting_platform=zoom, start_time/end_time in UTC, title inferred.\n"
-            "'Reschedule standup to 11am' -> intent=reschedule, start_time/end_time for same day 11:00.\n"
-            "'Add a Google Meet for client call Friday 2pm' -> intent=schedule, meeting_platform=meet.\n"
-            "If info missing, set intent and ask ONE question in 'response'; still output valid JSON."
+            "MEETING_PLATFORM: zoom | meet | teams | none\n\n"
+            "EXAMPLES:\n"
+            "'Schedule a meeting for tomorrow at 2pm' -> \n"
+            '{"intent":"schedule", "title":"Meeting", "start_time":"2026-03-10T14:00:00Z", "end_time":"2026-03-10T14:30:00Z", "attendees":[], "response":"I\'ll schedule that for you. Do you want to add anyone else?"}\n\n'
+            "'Cancel my sync with John' -> \n"
+            '{"intent":"cancel", "title":"sync", "attendees":["john@example.com"], "response":"I\'ll cancel your sync with John."}\n'
         )
 
     @staticmethod

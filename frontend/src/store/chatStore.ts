@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { ChatMessage, ChatResponse } from '../types';
 
 interface ChatState {
@@ -13,41 +14,49 @@ interface ChatState {
   clearMessages: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  messages: [],
-  isLoading: false,
-  currentResponse: '',
-
-  addMessage: (message) => set((state) => ({
-    messages: [...state.messages, message]
-  })),
-
-  setLoading: (loading) => set({ isLoading: loading }),
-
-  setCurrentResponse: (response) => set({ currentResponse: response }),
-
-  appendToCurrentResponse: (text) => set((state) => ({
-    currentResponse: state.currentResponse + text
-  })),
-
-  finalizeResponse: (response) => set((state) => {
-    const assistantMessage: ChatMessage = {
-      role: 'assistant',
-      content: response.response,
-      timestamp: new Date().toISOString(),
-      meeting: response.meeting
-    };
-
-    return {
-      messages: [...state.messages, assistantMessage],
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set) => ({
+      messages: [],
       isLoading: false,
-      currentResponse: ''
-    };
-  }),
+      currentResponse: '',
 
-  clearMessages: () => set({
-    messages: [],
-    currentResponse: '',
-    isLoading: false
-  })
-}));
+      addMessage: (message) => set((state) => ({
+        messages: [...state.messages, message]
+      })),
+
+      setLoading: (loading) => set({ isLoading: loading }),
+
+      setCurrentResponse: (response) => set({ currentResponse: response }),
+
+      appendToCurrentResponse: (text) => set((state) => ({
+        currentResponse: state.currentResponse + text
+      })),
+
+      finalizeResponse: (response) => set((state) => {
+        const assistantMessage: ChatMessage = {
+          role: 'assistant',
+          content: response.response,
+          timestamp: new Date().toISOString(),
+          meeting: response.meeting
+        };
+
+        return {
+          messages: [...state.messages, assistantMessage],
+          isLoading: false,
+          currentResponse: ''
+        };
+      }),
+
+      clearMessages: () => set({
+        messages: [],
+        currentResponse: '',
+        isLoading: false
+      })
+    }),
+    {
+      name: 'chat-history',
+      partialize: (state) => ({ messages: state.messages }),
+    }
+  )
+);

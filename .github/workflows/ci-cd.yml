@@ -61,20 +61,40 @@ jobs:
         working-directory: backend
         run: PYTHONPATH=. pytest -q --cov=app --cov-report=term-missing --cov-fail-under=25
 
+  frontend-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+          
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run type-check
+
   docker-build:
-    needs: backend-ci
+    needs: [backend-ci, frontend-ci]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build backend image
-        run: docker build -t meeting-scheduler-backend:ci ./backend
+        run: docker build -t chronos-backend:latest ./backend
 
       - name: Build frontend image
-        run: docker build -t meeting-scheduler-frontend:ci ./frontend
-
-      # ECR push + ECS deploy are intentionally left as a template:
-      # - add AWS creds + ECR repo names as GitHub Secrets
-      # - log in to ECR, tag, push
-      # - update ECS task definition and force new deployment
+        run: docker build -t chronos-frontend:latest ./frontend
 

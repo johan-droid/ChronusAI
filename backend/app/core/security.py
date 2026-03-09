@@ -105,7 +105,7 @@ def decode_refresh_token(token: str) -> Dict[str, Any]:
         raise
 
 
-def revoke_session(refresh_token: str) -> bool:
+async def revoke_session(refresh_token: str) -> bool:
     """Revoke a refresh token session."""
     try:
         payload = jwt.decode(refresh_token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
@@ -118,13 +118,13 @@ def revoke_session(refresh_token: str) -> bool:
     return False
 
 
-def revoke_all_user_sessions(user_id: str) -> int:
+async def revoke_all_user_sessions(user_id: str) -> int:
     """Revoke all sessions for a user."""
     revoked = 0
     to_remove = []
     
-    for jti, session in _active_sessions.items():
-        if session["user_id"] == user_id:
+    for jti, session in list(_active_sessions.items()):
+        if str(session.get("user_id")) == str(user_id):
             to_remove.append(jti)
     
     for jti in to_remove:
