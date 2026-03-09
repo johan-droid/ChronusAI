@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown } from 'lucide-react';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
@@ -105,18 +105,20 @@ export default function History() {
           </button>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="history-filters fade-in-up" style={{ animationDelay: '0.1s' }}>
-          {(['all', 'scheduled', 'canceled', 'rescheduled'] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`history-filter-tab ${filter === status ? 'history-filter-tab--active' : ''}`}
-            >
-              <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-              <span className="history-filter-count">{statusCounts[status]}</span>
-            </button>
-          ))}
+        {/* Filter Tabs - Horizontal scroll on mobile */}
+        <div className="history-filters fade-in-up overflow-x-auto scrollbar-hide" style={{ animationDelay: '0.1s' }}>
+          <div className="flex gap-2 min-w-max">
+            {(['all', 'scheduled', 'canceled', 'rescheduled'] as const).map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`history-filter-tab ${filter === status ? 'history-filter-tab--active' : ''}`}
+              >
+                <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                <span className="history-filter-count">{statusCounts[status]}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Meetings List */}
@@ -131,54 +133,54 @@ export default function History() {
               const statusConfig = getStatusConfig(meeting.status);
               const startDate = new Date(meeting.start_time);
               return (
-                <div key={meeting.id} className="history-card group hover:scale-[1.01] transition-all duration-300" style={{ animationDelay: `${0.05 * index}s` }}>
-                  <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center">
-                    {/* Date Column */}
-                    <div className="flex sm:flex-col items-center gap-1 min-w-[60px] p-3 rounded-2xl bg-white/5 border border-white/10 group-hover:bg-blue-500/10 group-hover:border-blue-500/20 transition-colors">
-                      <span className="text-2xl font-black text-white group-hover:text-blue-400">
-                        {startDate.getDate()}
-                      </span>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-blue-400/80">
-                        {startDate.toLocaleDateString('en-US', { month: 'short' })}
-                      </span>
+                <div key={meeting.id} className="history-card group" style={{ animationDelay: `${0.05 * index}s` }}>
+                  {/* Mobile-Optimized Card Layout */}
+                  <div className="flex flex-col gap-3">
+                    {/* Header Row: Date Badge + Status */}
+                    <div className="flex items-center justify-between gap-3">
+                      {/* Date Badge - Compact for mobile */}
+                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
+                        <span className="text-base font-bold text-white">
+                          {startDate.getDate()}
+                        </span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          {startDate.toLocaleDateString('en-US', { month: 'short' })}
+                        </span>
+                        <span className="text-[10px] text-slate-500">
+                          {startDate.toLocaleDateString('en-US', { weekday: 'short' })}
+                        </span>
+                      </div>
+                      
+                      {/* Status Badge */}
+                      <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter border ${statusConfig.class}`}>
+                        {statusConfig.label}
+                      </div>
                     </div>
 
-                    {/* Content Column */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-bold text-white truncate group-hover:text-blue-400 transition-colors">{meeting.title}</h3>
-                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-tighter border ${statusConfig.class}`}>
-                          {statusConfig.label}
-                        </div>
-                      </div>
+                    {/* Title */}
+                    <h3 className="text-base sm:text-lg font-bold text-white leading-tight group-hover:text-blue-400 transition-colors">{meeting.title}</h3>
 
-                      {meeting.description && (
-                        <p className="text-sm text-slate-400 line-clamp-1 mb-3">{meeting.description}</p>
+                    {/* Description - if present */}
+                    {meeting.description && (
+                      <p className="text-sm text-slate-400 line-clamp-2">{meeting.description}</p>
+                    )}
+
+                    {/* Info Row: Time, Attendees, Provider */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-300 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                        <Clock className="h-3.5 w-3.5 text-blue-400" />
+                        <span className="font-medium">{startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-300 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                        <Users className="h-3.5 w-3.5 text-purple-400" />
+                        <span className="font-medium">{meeting.attendees.length} people</span>
+                      </div>
+                      {meeting.provider && (
+                        <div className="flex items-center gap-1.5 text-slate-300 bg-white/5 px-2.5 py-1.5 rounded-lg">
+                          <MapPin className="h-3.5 w-3.5 text-emerald-400" />
+                          <span className="font-medium capitalize">{meeting.provider}</span>
+                        </div>
                       )}
-
-                      <div className="flex flex-wrap gap-4 text-xs font-medium">
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Clock className="h-3.5 w-3.5 text-blue-400" />
-                          <span>{startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-slate-400">
-                          <Users className="h-3.5 w-3.5 text-purple-400" />
-                          <span>{meeting.attendees.length} people</span>
-                        </div>
-                        {meeting.provider && (
-                          <div className="flex items-center gap-1.5 text-slate-400">
-                            <MapPin className="h-3.5 w-3.5 text-emerald-400" />
-                            <span>{meeting.provider}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Action Column */}
-                    <div className="hidden sm:flex items-center">
-                      <button className="p-3 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:bg-white/10 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
                     </div>
                   </div>
                 </div>
