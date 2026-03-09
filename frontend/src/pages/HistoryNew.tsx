@@ -84,40 +84,43 @@ export default function History() {
           </div>
         </div>
 
-        {/* Toolbar */}
-        <div className="history-toolbar fade-in-up" style={{ animationDelay: '0.05s' }}>
-          <div className="history-search">
-            <Search className="history-search-icon" />
+        {/* Toolbar - Mobile Optimized */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 fade-in-up" style={{ animationDelay: '0.05s' }}>
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search meetings, attendees..."
+              placeholder="Search meetings..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="history-search-input"
+              className="w-full pl-9 pr-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50"
             />
           </div>
 
           <button
             onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
-            className="history-sort-btn"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-slate-300 hover:bg-white/[0.05] active:scale-[0.98] transition-all"
             title={sortOrder === 'desc' ? 'Newest first' : 'Oldest first'}
           >
             <ArrowUpDown className="h-4 w-4" />
-            <span>{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
+            <span className="sm:hidden">{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
           </button>
         </div>
 
         {/* Filter Tabs - Horizontal scroll on mobile */}
-        <div className="history-filters fade-in-up overflow-x-auto scrollbar-hide" style={{ animationDelay: '0.1s' }}>
-          <div className="flex gap-2 min-w-max">
+        <div className="mb-4 fade-in-up overflow-x-auto scrollbar-hide" style={{ animationDelay: '0.1s' }}>
+          <div className="flex gap-2 min-w-max pb-1">
             {(['all', 'scheduled', 'canceled', 'rescheduled'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => setFilter(status)}
-                className={`history-filter-tab ${filter === status ? 'history-filter-tab--active' : ''}`}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${filter === status 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-white/[0.03] text-slate-400 border border-white/10 hover:bg-white/[0.05]'
+                }`}
               >
                 <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
-                <span className="history-filter-count">{statusCounts[status]}</span>
+                <span className="ml-1.5 px-1.5 py-0.5 text-[10px] bg-white/10 rounded-full">{statusCounts[status]}</span>
               </button>
             ))}
           </div>

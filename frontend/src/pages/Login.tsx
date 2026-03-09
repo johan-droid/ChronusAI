@@ -178,7 +178,15 @@ export default function Login() {
       <div className="space-particles opacity-20" />
 
       <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center">
+        {/* Mobile Header - Visible only on mobile */}
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-50 p-4 flex items-center justify-between bg-[#030303]/80 backdrop-blur-xl border-b border-white/5">
+          <div className="flex items-center gap-2">
+            <AnimatedLogo className="h-8 w-8" />
+            <span className="text-lg font-bold gradient-text">ChronosAI</span>
+          </div>
+        </div>
+
+        <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center pt-16 lg:pt-0">
 
           {/* Left Side - Visual Content */}
           <motion.div
@@ -234,7 +242,17 @@ export default function Login() {
           </motion.div>
 
           {/* Right Side - Auth Form */}
-          <div className="w-full">
+          <div className="w-full max-w-md mx-auto">
+            {/* Mobile Welcome Text */}
+            <div className="lg:hidden text-center mb-8">
+              <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-tight">
+                {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
+              </h2>
+              <p className="text-slate-400 text-sm">
+                {mode === 'oauth' ? 'Sign in to continue to ChronosAI' : 'Enter your details to continue'}
+              </p>
+            </div>
+
             {/* Desktop Header */}
             <div className="hidden lg:block text-center mb-10">
               <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
