@@ -480,10 +480,34 @@ export default function LandingPage() {
       </section>
 
       {/* Premium Multi-Column Footer */}
-      <footer className="relative z-10 border-t border-white/5 bg-[#030303]/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-24 pb-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-20">
-            <div className="col-span-2 space-y-8">
+      <footer className="relative z-10 border-t border-white/5 bg-[#030303]/80 backdrop-blur-xl overflow-hidden">
+        {/* Space Decorations */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden h-full w-full">
+          {/* Astronaut */}
+          <div className="absolute top-1/4 left-10 md:left-20 opacity-20 astronaut-float">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+              <path d="M12 2a5 5 0 0 1 5 5v2a1 1 0 0 0 1 1h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1a1 1 0 0 0-1 1v2a5 5 0 0 1-5 5H12a5 5 0 0 1-5-5v-2a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a1 1 0 0 0 1-1V7a5 5 0 0 1 5-5z" />
+              <path d="M9 13a3 3 0 0 1 6 0" />
+            </svg>
+          </div>
+
+          {/* Planets */}
+          <div className="absolute top-1/2 right-1/4">
+            <div className="planet-footer planet-footer-mercury"></div>
+            <div className="planet-footer planet-footer-venus"></div>
+            <div className="planet-footer planet-footer-earth"></div>
+            <div className="planet-footer planet-footer-mars"></div>
+            <div className="planet-footer planet-footer-jupiter"></div>
+          </div>
+
+          {/* Random floating dots/stars for extra depth */}
+          <div className="absolute top-10 right-20 w-1 h-1 bg-white/20 rounded-full animate-pulse"></div>
+          <div className="absolute bottom-20 left-1/3 w-1.5 h-1.5 bg-primary/20 rounded-full animate-pulse delay-700"></div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 md:pt-24 pb-8 md:pb-12 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 md:gap-12 mb-12 md:mb-20">
+            <div className="sm:col-span-2 space-y-8">
               <div className="flex items-center space-x-3">
                 <AnimatedLogo className="h-10 w-10" />
                 <span className="text-xl font-bold gradient-text">ChronusAI</span>
@@ -526,10 +550,10 @@ export default function LandingPage() {
 
             <div className="space-y-6">
               <h4 className="font-bold text-foreground uppercase tracking-widest text-xs">Legal</h4>
-              <ul className="space-y-4 text-sm text-muted-foreground">
-                <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors text-left">Privacy Policy</button></li>
-                <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors text-left">Terms of Service</button></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Cookie Policy</a></li>
+              <ul className="space-y-3 md:space-y-4 text-sm text-muted-foreground flex flex-col">
+                <li className="flex"><button onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors text-left py-0.5">Privacy Policy</button></li>
+                <li className="flex"><button onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors text-left py-0.5">Terms of Service</button></li>
+                <li><a href="#" className="hover:text-primary transition-colors py-0.5">Cookie Policy</a></li>
               </ul>
             </div>
           </div>
