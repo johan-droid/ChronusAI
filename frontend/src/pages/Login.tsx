@@ -228,45 +228,29 @@ export default function Login() {
                 <div>
                   <h3 className="font-bold text-white text-lg">Auto-Sync</h3>
                   <p className="text-sm text-slate-500 font-medium">Real-time calendar synchronization across all platforms.</p>
-                  </div>
-
-                  <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight tracking-tight px-2">
-                    Schedule Smarter,
-                    <span className="block gradient-text-vibrant">
-                      Not Harder
-                    </span>
-                  </h2>
-
-                  <p className="text-slate-400 font-medium text-xs sm:text-sm px-4 sm:px-6 mb-6 sm:mb-8">
-                    The most advanced AI scheduling assistant.
-                  </p>
-
-                  <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto mb-6 sm:mb-8" />
-
-                  <h3 className="text-lg sm:text-xl font-bold text-white mb-2 tracking-tight">
-                    {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                  </h3>
-                  <p className="text-slate-500 font-semibold text-[10px] sm:text-xs uppercase tracking-wider">
-                    {mode === 'oauth' ? 'Choose your login method' : 'Enter your details'}
-                  </p>
                 </div>
+              </motion.div>
+            </div>
+          </motion.div>
 
-                {/* Desktop Header */}
-                <div className="hidden lg:block text-center mb-10">
-                  <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
-                    {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                  </h2>
-                  <p className="text-slate-500 font-semibold text-sm">
-                    {mode === 'oauth' ? 'Choose your preferred login method' : 'Enter your details to continue'}
-                  </p>
-                </div>
+          {/* Right Side - Auth Form */}
+          <div className="w-full">
+            {/* Desktop Header */}
+            <div className="hidden lg:block text-center mb-10">
+              <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+                {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
+              </h2>
+              <p className="text-slate-500 font-semibold text-sm">
+                {mode === 'oauth' ? 'Choose your preferred login method' : 'Enter your details to continue'}
+              </p>
+            </div>
 
-              {error && (
-                <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl animate-fade-in flex items-center gap-3">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
-                  <p className="text-sm text-red-400">{error}</p>
-                </div>
-              )}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl animate-fade-in flex items-center gap-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                <p className="text-sm text-red-400">{error}</p>
+              </div>
+            )}
 
               {/* Auth Selection */}
               {mode === 'oauth' ? (
@@ -408,7 +392,7 @@ export default function Login() {
                     ISO 27001
                   </div>
                 </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
