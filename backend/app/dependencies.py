@@ -128,9 +128,6 @@ async def get_calendar_integration_provider(
                     detail="OAuth token decryption failed. Please authenticate again."
                 )
         
-        # Get user timezone
-        user_timezone = current_user.timezone or "UTC"
-        
         from app.services.calendar_integration_service import CalendarIntegrationService
         return CalendarIntegrationService(
             user_id=str(current_user.id),
