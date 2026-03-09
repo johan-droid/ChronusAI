@@ -298,10 +298,30 @@ export default function StatsOverview() {
             <div className="relative z-10 space-y-4">
               <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
                 {(() => {
+                  // Get user's timezone or default to system timezone
                   const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-                  const hour = new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: tz }).replace(/\D/g, '');
-                  const h = parseInt(hour, 10);
-                  const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+                  
+                  // Create date in user's timezone
+                  const now = new Date();
+                  const timeString = now.toLocaleTimeString('en-US', { 
+                    timeZone: tz, 
+                    hour: 'numeric', 
+                    hour12: false 
+                  });
+                  const hour = parseInt(timeString, 10);
+                  
+                  // Determine greeting based on local hour
+                  let greeting: string;
+                  if (hour >= 5 && hour < 12) {
+                    greeting = 'Good Morning';
+                  } else if (hour >= 12 && hour < 17) {
+                    greeting = 'Good Afternoon';
+                  } else if (hour >= 17 && hour < 21) {
+                    greeting = 'Good Evening';
+                  } else {
+                    greeting = 'Good Night';
+                  }
+                  
                   const firstName = user?.full_name?.split(' ')[0] || 'User';
                   return <>{greeting}, <span className="gradient-text">{firstName}</span> 👋 <span className="text-[0px]">v3</span></>;
                 })()}

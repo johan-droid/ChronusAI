@@ -126,37 +126,46 @@ export default function LandingPage() {
       name: "Ant Wilson",
       handle: "@AntWilson",
       content: "(finally) made the move to @chronosai after I couldn't find how to edit events in the calendly dashboard and I must say - dash is 10/10. Bravo @peer_rich and team (I should have moved over years ago!) OSS fam",
-      avatar: "AW"
+      avatar: "AW",
+      height: "tall"
     },
     {
       name: "David Guyon",
       handle: "@DavidGuyon",
       content: "Testing out ChronosAI as an alternative to Calendly and loving it so far. Configurable, good onboarding, simple to use 👍.",
-      avatar: "DG"
+      avatar: "DG",
+      height: "short"
     },
     {
       name: "David Asabina",
       handle: "@vid",
       content: "Was logged out of my ChronosAI account and Peer (CEO, co-founder) tended to the matter within an hour. It doesn't get much better than this. For a OSS product to be this focus on customer service is next level.",
-      avatar: "DA"
+      avatar: "DA",
+      height: "medium"
     },
     {
       name: "Jack Forge",
+      handle: "@jackforge",
       username: "@jackforge",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jack",
       content: "Such an amazing product ChronosAI is. And such a vibe. Great alternative to legacy tools.",
+      height: "short"
     },
     {
       name: "Dax",
+      handle: "@thdxr",
       username: "@thdxr",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Dax",
       content: "Regarding productivity software that I've been binging lately, I just tried out ChronosAI, and it is an amazing (better) alternative to Calendly in my opinion. This is particularly true for the free tier.",
+      height: "tall"
     },
     {
       name: "Tobi Lutke",
+      handle: "@tobi",
       username: "@tobi",
       avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Tobi",
       content: "ChronosAI is the best thing I discovered this year.",
+      height: "short"
     }
   ];
 
@@ -433,35 +442,43 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {wallOfLove.map((testimonial, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-                className="break-inside-avoid premium-glass p-8 rounded-[2rem] space-y-6 hover:border-primary/30 transition-all duration-300 group shadow-xl shadow-black/20"
+                whileHover={{ y: -5 }}
+                className={`premium-glass p-5 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] space-y-4 sm:space-y-6 hover:border-primary/30 transition-all duration-300 shadow-xl shadow-black/20 ${
+                  testimonial.height === 'tall' ? 'md:row-span-2' : ''
+                }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center font-bold text-sm ring-1 ring-white/20 group-hover:ring-primary/40 transition-all shadow-inner">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  {testimonial.avatar?.startsWith('http') ? (
+                    <img 
+                      src={testimonial.avatar} 
+                      alt={testimonial.name}
+                      className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl object-cover ring-1 ring-white/20"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 flex items-center justify-center font-bold text-xs sm:text-sm ring-1 ring-white/20">
                       {testimonial.avatar}
                     </div>
-                    <div>
-                      <div className="font-bold text-foreground text-sm uppercase tracking-wide">{testimonial.name}</div>
-                      <div className="text-xs text-primary/60 font-medium">{testimonial.handle}</div>
-                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-foreground text-sm sm:text-base truncate">{testimonial.name}</div>
+                    <div className="text-xs sm:text-sm text-primary/60 font-medium">{testimonial.handle || testimonial.username}</div>
                   </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground/20 group-hover:text-primary transition-colors" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground/20 flex-shrink-0" />
                 </div>
 
-                <p className="text-sm text-foreground/90 leading-relaxed font-medium italic">
+                <p className="text-sm sm:text-base text-foreground/90 leading-relaxed">
                   "{testimonial.content.split('@').map((part, i) =>
                     i === 0 ? part : (
                       <span key={i}>
-                        <span className="text-primary font-bold hover:underline cursor-pointer">@{part.split(' ')[0]}</span>
+                        <span className="text-primary font-semibold">@{part.split(' ')[0]}</span>
                         {part.substring(part.split(' ')[0].length)}
                       </span>
                     )

@@ -228,60 +228,38 @@ export default function Login() {
                 <div>
                   <h3 className="font-bold text-white text-lg">Auto-Sync</h3>
                   <p className="text-sm text-slate-500 font-medium">Real-time calendar synchronization across all platforms.</p>
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-
-          {/* Right Side - Auth Forms */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="w-full max-w-md mx-auto"
-          >
-            <div className="premium-glass rounded-[2.5rem] p-10 shadow-3xl shadow-black/60 border border-white/5 bg-white/[0.01]">
-
-              {/* Mobile Header (Previously hidden content synced for mobile) */}
-              <div className="lg:hidden text-center mb-10">
-                <div className="flex flex-col items-center gap-4 mb-6">
-                  {/* Transparent Logo Container */}
-                  <div className="flex items-center justify-center">
-                    <AnimatedLogo className="h-14 w-14" />
                   </div>
-                  <h1 className="text-3xl font-black gradient-text tracking-tighter uppercase">ChronosAI</h1>
+
+                  <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 leading-tight tracking-tight px-2">
+                    Schedule Smarter,
+                    <span className="block gradient-text-vibrant">
+                      Not Harder
+                    </span>
+                  </h2>
+
+                  <p className="text-slate-400 font-medium text-xs sm:text-sm px-4 sm:px-6 mb-6 sm:mb-8">
+                    The most advanced AI scheduling assistant.
+                  </p>
+
+                  <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto mb-6 sm:mb-8" />
+
+                  <h3 className="text-lg sm:text-xl font-bold text-white mb-2 tracking-tight">
+                    {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                  </h3>
+                  <p className="text-slate-500 font-semibold text-[10px] sm:text-xs uppercase tracking-wider">
+                    {mode === 'oauth' ? 'Choose your login method' : 'Enter your details'}
+                  </p>
                 </div>
 
-                <h2 className="text-3xl font-black text-white mb-2 leading-tight tracking-tight px-4">
-                  Schedule Smarter,
-                  <span className="block gradient-text-vibrant">
-                    Not Harder
-                  </span>
-                </h2>
-
-                <p className="text-slate-400 font-medium text-sm px-6 mb-8">
-                  The most advanced AI scheduling assistant that understands your time.
-                </p>
-
-                <div className="h-px w-24 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-auto mb-8" />
-
-                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
-                  {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                </h3>
-                <p className="text-slate-500 font-semibold text-xs uppercase tracking-wider">
-                  {mode === 'oauth' ? 'Choose your login method' : 'Enter your details'}
-                </p>
-              </div>
-
-              {/* Desktop Header (Kept for consistency, shown on lg+) */}
-              <div className="hidden lg:block text-center mb-10">
-                <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
-                  {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
-                </h2>
-                <p className="text-slate-500 font-semibold text-sm">
-                  {mode === 'oauth' ? 'Choose your preferred login method' : 'Enter your details to continue'}
-                </p>
-              </div>
+                {/* Desktop Header */}
+                <div className="hidden lg:block text-center mb-10">
+                  <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
+                    {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
+                  </h2>
+                  <p className="text-slate-500 font-semibold text-sm">
+                    {mode === 'oauth' ? 'Choose your preferred login method' : 'Enter your details to continue'}
+                  </p>
+                </div>
 
               {error && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl animate-fade-in flex items-center gap-3">
@@ -415,21 +393,21 @@ export default function Login() {
               )}
             </div>
 
-            {/* Verification Badges */}
-            <div className="mt-8 flex items-center justify-center gap-6 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
-              <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                <Shield className="h-3 w-3" />
-                SOC 2 TYPE II
-              </div>
-              <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                <Lock className="h-3 w-3" />
-                GDPR COMPLIANT
-              </div>
-              <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                <Sparkles className="h-3 w-3" />
-                ISO 27001
-              </div>
-            </div>
+                {/* Verification Badges */}
+                <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+                  <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                    <Shield className="h-3 w-3" />
+                    SOC 2
+                  </div>
+                  <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                    <Lock className="h-3 w-3" />
+                    GDPR
+                  </div>
+                  <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                    <Sparkles className="h-3 w-3" />
+                    ISO 27001
+                  </div>
+                </div>
           </motion.div>
         </div>
       </div>
