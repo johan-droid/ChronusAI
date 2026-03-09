@@ -17,7 +17,11 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("meetings", sa.Column("zoom_meeting_id", sa.String(length=64), nullable=True))
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    columns = [c['name'] for c in inspector.get_columns('meetings')]
+    if 'zoom_meeting_id' not in columns:
+        op.add_column("meetings", sa.Column("zoom_meeting_id", sa.String(length=64), nullable=True))
 
 
 def downgrade() -> None:
