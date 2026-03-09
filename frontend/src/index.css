@@ -28,7 +28,7 @@
 
 @layer utilities {
   .premium-glass {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0, 0, 0, 0.3)];
+    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.3)];
   }
 
   .hazy-overlay {
