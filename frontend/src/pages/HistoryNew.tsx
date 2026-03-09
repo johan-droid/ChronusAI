@@ -128,59 +128,71 @@ export default function History() {
             <p>Loading meetings...</p>
           </div>
         ) : filteredMeetings && filteredMeetings.length > 0 ? (
-          <div className="history-list fade-in-up" style={{ animationDelay: '0.15s' }}>
+          <div className="history-list fade-in-up space-y-3" style={{ animationDelay: '0.15s' }}>
             {filteredMeetings.map((meeting, index) => {
               const statusConfig = getStatusConfig(meeting.status);
               const startDate = new Date(meeting.start_time);
+              const isToday = new Date().toDateString() === startDate.toDateString();
+              
               return (
-                <div key={meeting.id} className="history-card group" style={{ animationDelay: `${0.05 * index}s` }}>
-                  {/* Mobile-Optimized Card Layout */}
-                  <div className="flex flex-col gap-3">
-                    {/* Header Row: Date Badge + Status */}
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Date Badge - Compact for mobile */}
-                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-                        <span className="text-base font-bold text-white">
-                          {startDate.getDate()}
-                        </span>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                          {startDate.toLocaleDateString('en-US', { month: 'short' })}
-                        </span>
-                        <span className="text-[10px] text-slate-500">
-                          {startDate.toLocaleDateString('en-US', { weekday: 'short' })}
-                        </span>
-                      </div>
-                      
-                      {/* Status Badge */}
-                      <div className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tighter border ${statusConfig.class}`}>
-                        {statusConfig.label}
-                      </div>
+                <div 
+                  key={meeting.id} 
+                  className="bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-2xl p-4 transition-all active:scale-[0.98] touch-manipulation"
+                  style={{ animationDelay: `${0.05 * index}s` }}
+                >
+                  {/* Modern Mobile Card Layout */}
+                  <div className="flex gap-3">
+                    {/* Left: Date Column - Compact */}
+                    <div className="flex flex-col items-center min-w-[52px]">
+                      <span className={`text-xs font-bold uppercase tracking-wider ${isToday ? 'text-blue-400' : 'text-slate-500'}`}>
+                        {isToday ? 'TODAY' : startDate.toLocaleDateString('en-US', { month: 'short' })}
+                      </span>
+                      <span className="text-2xl font-black text-white leading-none mt-0.5">
+                        {startDate.getDate()}
+                      </span>
+                      <span className="text-[10px] text-slate-600 mt-0.5">
+                        {startDate.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </span>
                     </div>
 
-                    {/* Title */}
-                    <h3 className="text-base sm:text-lg font-bold text-white leading-tight group-hover:text-blue-400 transition-colors">{meeting.title}</h3>
-
-                    {/* Description - if present */}
-                    {meeting.description && (
-                      <p className="text-sm text-slate-400 line-clamp-2">{meeting.description}</p>
-                    )}
-
-                    {/* Info Row: Time, Attendees, Provider */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs">
-                      <div className="flex items-center gap-1.5 text-slate-300 bg-white/5 px-2.5 py-1.5 rounded-lg">
-                        <Clock className="h-3.5 w-3.5 text-blue-400" />
-                        <span className="font-medium">{startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                    {/* Right: Content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Title & Status Row */}
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2">
+                          {meeting.title}
+                        </h3>
+                        <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${statusConfig.class}`}>
+                          {statusConfig.label}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-slate-300 bg-white/5 px-2.5 py-1.5 rounded-lg">
-                        <Users className="h-3.5 w-3.5 text-purple-400" />
-                        <span className="font-medium">{meeting.attendees.length} people</span>
-                      </div>
-                      {meeting.provider && (
-                        <div className="flex items-center gap-1.5 text-slate-300 bg-white/5 px-2.5 py-1.5 rounded-lg">
-                          <MapPin className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="font-medium capitalize">{meeting.provider}</span>
-                        </div>
+
+                      {/* Description */}
+                      {meeting.description && (
+                        <p className="text-xs text-slate-400 line-clamp-1 mb-2">{meeting.description}</p>
                       )}
+
+                      {/* Info Pills Row */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex items-center gap-1 text-[11px] text-slate-300">
+                          <Clock className="h-3 w-3 text-blue-400" />
+                          <span>{startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}</span>
+                        </div>
+                        <span className="text-slate-600">•</span>
+                        <div className="flex items-center gap-1 text-[11px] text-slate-300">
+                          <Users className="h-3 w-3 text-purple-400" />
+                          <span>{meeting.attendees.length}</span>
+                        </div>
+                        {meeting.provider && (
+                          <>
+                            <span className="text-slate-600">•</span>
+                            <div className="flex items-center gap-1 text-[11px] text-slate-300">
+                              <MapPin className="h-3 w-3 text-emerald-400" />
+                              <span className="capitalize">{meeting.provider}</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
