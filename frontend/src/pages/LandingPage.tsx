@@ -617,10 +617,10 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Legal — on mobile this sits on column 1 */}
+            {/* Legal */}
             <div className="space-y-4 col-span-2 sm:col-span-1">
               <h4 className="font-bold text-foreground uppercase tracking-widest text-[11px]">Legal</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
+              <ul className="space-y-2.5 text-sm text-muted-foreground">
                 <li><button onClick={() => navigate('/privacy-policy')} className="hover:text-primary transition-colors duration-200 text-left">Privacy Policy</button></li>
                 <li><button onClick={() => navigate('/terms-of-service')} className="hover:text-primary transition-colors duration-200 text-left">Terms of Service</button></li>
                 <li><a href="#" className="hover:text-primary transition-colors duration-200">Cookie Policy</a></li>
@@ -628,21 +628,25 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Bottom bar */}
-          <div className="pt-8 border-t border-white/[0.06] flex flex-col items-center gap-5 text-center">
-            {/* Major Project Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-primary">🎓 Major Project</span>
-              <span className="text-[10px] text-muted-foreground">— B.Tech Final Year</span>
+          {/* Bottom Section */}
+          <div className="pt-6 mt-2 border-t border-white/[0.06] space-y-4">
+            {/* Major Project Badge — centered */}
+            <div className="flex justify-center">
+              <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-gradient-to-r from-primary/15 via-primary/10 to-primary/15 border border-primary/25 shadow-[0_0_20px_rgba(59,130,246,0.08)]">
+                <span className="text-[11px] uppercase font-extrabold tracking-[0.15em] text-primary">🎓 Major Project</span>
+                <span className="w-px h-3 bg-white/10"></span>
+                <span className="text-[11px] font-medium text-muted-foreground tracking-wide">B.Tech Final Year</span>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3">
-              <span className="text-sm font-semibold text-foreground/80 flex items-center gap-1.5">
-                © 2026 <span className="font-bold gradient-text">ChronusAI</span>. Made with <span className="text-red-500">❤️</span> for world-class teams.
-              </span>
-              <div className="flex items-center gap-2">
+            {/* Copyright + Status */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pb-1">
+              <p className="text-[13px] font-semibold text-foreground/70 text-center sm:text-left">
+                © 2026 <span className="font-bold gradient-text">ChronusAI</span> · Made with <span className="text-red-500">❤️</span> for world-class teams
+              </p>
+              <div className="flex items-center gap-2 shrink-0">
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-                <span className="uppercase font-semibold tracking-wider text-[10px] text-muted-foreground">System Status: All systems go</span>
+                <span className="uppercase font-bold tracking-[0.12em] text-[9px] text-muted-foreground">All Systems Operational</span>
               </div>
             </div>
           </div>
