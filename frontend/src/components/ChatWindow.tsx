@@ -378,12 +378,6 @@ export default function ChatWindow() {
                       type="button"
                       className="p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors"
                     >
-                      <Paperclip className="h-5 w-5" />
-                    </button>
-                    <button
-                      type="button"
-                      className="p-2.5 sm:p-3 text-slate-400 hover:text-slate-200 transition-colors"
-                    >
                       <Mic className="h-5 w-5" />
                     </button>
                   </motion.div>
