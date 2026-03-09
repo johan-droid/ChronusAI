@@ -13,7 +13,7 @@ from app.schemas.availability import AvailabilityResponse, TimeSlotResponse
 router = APIRouter(prefix="/availability", tags=["availability"])
 
 
-@router.get("/", response_model=AvailabilityResponse)
+@router.get("", response_model=AvailabilityResponse)
 async def check_availability(
     date: str = Query(..., description="Date in YYYY-MM-DD format"),
     timezone: str | None = Query(None, description="Timezone (e.g., America/New_York)"),

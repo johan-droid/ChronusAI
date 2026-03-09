@@ -23,6 +23,11 @@ router = APIRouter(prefix="/meetings", tags=["meetings"])
 async def sync_google_calendar_meetings(current_user: User, calendar_provider, db: AsyncSession):
     """Sync meetings from Google Calendar to local database."""
     try:
+        # Extract primitive values upfront to avoid SQLAlchemy ORM expiry issues
+        # across async session boundaries
+        user_id = current_user.id
+        user_provider = str(current_user.provider)
+
         # Get meetings from Google Calendar for the next 30 days
         end_time = datetime.now(timezone.utc) + timedelta(days=30)
         start_time = datetime.now(timezone.utc) - timedelta(days=7)  # Include past 7 days
@@ -32,12 +37,34 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
         
         # Sync each event to database
         for event in events:
+            # events are always plain dicts from list_events
+            event_id = event.get("id")
+            event_summary = event.get("summary", "No Title")
+            event_description = event.get("description", "")
+            event_start = event.get("start")
+            event_end = event.get("end")
+            # attendees are now stored as plain dicts by list_events
+            raw_attendees = event.get("attendees") or []
+            
+            # Ensure attendees are pure dicts (defensive)
+            attendees_list = []
+            for a in raw_attendees:
+                if isinstance(a, dict):
+                    attendees_list.append(a)
+                elif hasattr(a, "model_dump"):
+                    attendees_list.append(a.model_dump())
+                elif hasattr(a, "email"):
+                    attendees_list.append({"email": str(a.email)})
+
+            if not event_id or not event_start or not event_end:
+                continue
+
             # Check if meeting already exists
             result = await db.execute(
                 select(Meeting).where(
                     and_(
-                        Meeting.user_id == current_user.id,
-                        Meeting.external_event_id == event.id
+                        Meeting.user_id == user_id,
+                        Meeting.external_event_id == event_id
                     )
                 )
             )
@@ -45,34 +72,34 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
             
             if existing_meeting:
                 # Update existing meeting
-                existing_meeting.title = event.summary
-                existing_meeting.description = event.description
-                existing_meeting.start_time = event.start
-                existing_meeting.end_time = event.end
-                existing_meeting.attendees = [attendee.model_dump() for attendee in event.attendees] if event.attendees else []
+                existing_meeting.title = event_summary
+                existing_meeting.description = event_description
+                existing_meeting.start_time = event_start
+                existing_meeting.end_time = event_end
+                existing_meeting.attendees = attendees_list
                 existing_meeting.status = "scheduled"
                 existing_meeting.updated_at = datetime.now(timezone.utc)
             else:
                 # Create new meeting
                 meeting = Meeting(
-                    user_id=current_user.id,
-                    external_event_id=event.id,
-                    title=event.summary,
-                    description=event.description,
-                    start_time=event.start,
-                    end_time=event.end,
-                    attendees=[attendee.model_dump() for attendee in event.attendees] if event.attendees else [],
+                    user_id=user_id,
+                    external_event_id=event_id,
+                    title=event_summary,
+                    description=event_description,
+                    start_time=event_start,
+                    end_time=event_end,
+                    attendees=attendees_list,
                     status="scheduled",
-                    provider=current_user.provider,
+                    provider=user_provider,
                     raw_user_input="Synced from Google Calendar"
                 )
                 db.add(meeting)
         
         await db.commit()
-        logger.info("google_calendar_synced", user_id=current_user.id, events_count=len(events))
+        logger.info("google_calendar_synced", user_id=user_id, events_count=len(events))
         
     except Exception as e:
-        logger.error("google_calendar_sync_failed", error=str(e), user_id=current_user.id)
+        logger.error("google_calendar_sync_failed", error=str(e), user_id=str(current_user.id) if hasattr(current_user, 'id') else "unknown", exc_info=True)
         # Don't raise exception - continue with cached data
 
 

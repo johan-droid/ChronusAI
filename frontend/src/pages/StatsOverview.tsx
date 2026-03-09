@@ -90,9 +90,7 @@ const NavigationBar = memo(({
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           <button type="button" onClick={() => handleNav('/dashboard')} className="flex items-center gap-2 sm:gap-3 smooth-transition hover:opacity-90 min-h-[44px] -ml-1">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
-              <AnimatedLogo className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
+            <AnimatedLogo className="h-8 w-8 sm:h-10 sm:w-10" />
             <span className="text-lg sm:text-xl font-bold gradient-text">ChronosAI</span>
           </button>
 

@@ -93,8 +93,9 @@ class GoogleCalendarAdapter(CalendarProvider):
                             "start": self._parse_datetime(item.get("start")),
                             "end": self._parse_datetime(item.get("end")),
                             "attendees": [
-                                Attendee(email=attendee.get("email")) 
+                                {"email": attendee.get("email"), "name": attendee.get("displayName"), "response_status": attendee.get("responseStatus")}
                                 for attendee in item.get("attendees", [])
+                                if attendee.get("email")
                             ] if item.get("attendees") else []
                         }
                         events.append(event)
@@ -127,7 +128,9 @@ class GoogleCalendarAdapter(CalendarProvider):
             elif "date" in datetime_obj:
                 # All-day event, set to midnight UTC
                 date_str = datetime_obj["date"]
-                return datetime.fromisoformat(date_str).replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0)
+                from datetime import date as _date
+                d = _date.fromisoformat(date_str)
+                return datetime(d.year, d.month, d.day, 0, 0, 0, tzinfo=timezone.utc)
             else:
                 logger.warning("Unknown datetime format, using current time")
                 return datetime.now(timezone.utc)

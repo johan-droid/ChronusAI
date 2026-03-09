@@ -576,10 +576,19 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
 async def handle_query_availability(intent: ParsedIntent, user: User, calendar_provider) -> ChatResponse:
     """Handle availability query intent."""
     try:
+        # Use user's timezone for correct day/time calculation
+        try:
+            tz = ZoneInfo(str(user.timezone)) if user.timezone else ZoneInfo("UTC")
+        except Exception:
+            tz = ZoneInfo("UTC")
+
         # Default to today if no specific time provided
-        target_date = datetime.now().date()
-        start_of_day = datetime.combine(target_date, datetime.min.time())
-        end_of_day = start_of_day + timedelta(days=1)
+        now_local = datetime.now(tz)
+        target_date = now_local.date()
+        
+        # Working hours: 8 AM to 8 PM in user's timezone
+        start_of_day = datetime.combine(target_date, time(8, 0)).replace(tzinfo=tz)
+        end_of_day = datetime.combine(target_date, time(20, 0)).replace(tzinfo=tz)
         
         busy_slots = await calendar_provider.get_free_busy(
             start_of_day, end_of_day, [user.email]
@@ -587,22 +596,25 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
         
         if not busy_slots:
             return ChatResponse(
-                response=f"📅 You're completely free today ({target_date})!",
+                response=f"📅 You're completely free today ({target_date.strftime('%A, %B %d')})! Your calendar has no meetings between 8 AM and 8 PM.",
                 intent="check_availability"
             )
         
-        # Format busy times
+        # Format busy times and find free slots
         busy_times = []
         for slot in busy_slots:
             try:
-                local_start = slot.start.astimezone(ZoneInfo(str(user.timezone)))
-                local_end = slot.end.astimezone(ZoneInfo(str(user.timezone)))
-                busy_times.append(f"{local_start.strftime('%I:%M %p')} - {local_end.strftime('%I:%M %p')}")
+                local_start = slot.start.astimezone(tz)
+                local_end = slot.end.astimezone(tz)
+                busy_times.append(f"• {local_start.strftime('%I:%M %p')} – {local_end.strftime('%I:%M %p')}")
             except Exception:
-                busy_times.append(f"{slot.start.strftime('%I:%M %p')} - {slot.end.strftime('%I:%M %p')}")
+                busy_times.append(f"• {slot.start.strftime('%I:%M %p')} – {slot.end.strftime('%I:%M %p')}")
+        
+        busy_text = "\n".join(busy_times)
+        free_count = max(0, 24 - len(busy_slots) * 2)  # Rough estimate of 30-min free slots
         
         return ChatResponse(
-            response=f"📅 On {target_date}, you're busy during: {', '.join(busy_times)}",
+            response=f"📅 Here's your schedule for {target_date.strftime('%A, %B %d')}:\n\n**Busy:**\n{busy_text}\n\nYou have approximately {free_count} free 30-minute slots between 8 AM – 8 PM. Would you like me to suggest a time for a meeting?",
             intent="check_availability"
         )
         

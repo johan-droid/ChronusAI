@@ -100,9 +100,22 @@ class LLMService:
                     if not line.strip().startswith("```")
                 )
             content = content.strip()
-            # Parse JSON response
+            # Parse JSON response robustly
             try:
-                parsed_data = json.loads(content)
+                # Use regex to find the JSON object, handling markdown and think blocks
+                import re
+                match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+                
+                if match:
+                    json_str = match.group(1)
+                elif "{" in content and "}" in content:
+                    idx_start = content.find("{")
+                    idx_end = content.rfind("}") + 1
+                    json_str = content[idx_start:idx_end]
+                else:
+                    json_str = content
+
+                parsed_data = json.loads(json_str)
                 return ParsedIntent(**parsed_data)
             except json.JSONDecodeError:
                 # Fallback if not valid JSON

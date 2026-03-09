@@ -257,8 +257,7 @@ function App() {
         <div className="min-h-screen bg-background relative flex flex-col">
           <OptimizedBackground />
 
-          {/* Mobile Navigation */}
-          <MobileNavigation />
+          {/* Mobile Navigation handled by individual pages */}
 
           <main className="flex-1 relative z-5">
             <OAuthCallbackGuard>
