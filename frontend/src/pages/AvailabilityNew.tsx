@@ -134,28 +134,59 @@ export default function Availability() {
       />
 
       {/* Main Content */}
-      <main className="saas-main">
-        {/* Page Header */}
-        <div className="avail-header fade-in-up">
-          <div>
-            <h1 className="avail-title">Check Availability</h1>
-            <p className="avail-subtitle">
-              View your free time slots for {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-            </p>
-          </div>
-          <div className="avail-date-controls">
-            <button onClick={goToPrevDay} className="avail-date-btn" title="Previous day">←</button>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="avail-date-input"
-            />
-            <button onClick={goToNextDay} className="avail-date-btn" title="Next day">→</button>
-            <button onClick={goToToday} className="avail-date-btn avail-date-btn--today" title="Go to today">Today</button>
-            <button onClick={fetchAvailability} className="avail-date-btn" title="Refresh">
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+      <main className="saas-main px-3 sm:px-4 lg:px-6">
+        {/* Page Header - Mobile Optimized */}
+        <div className="mb-4 sm:mb-6 fade-in-up">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">Check Availability</h1>
+              <p className="text-xs sm:text-sm text-slate-400 truncate">
+                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </p>
+            </div>
+            
+            {/* Mobile-Optimized Date Controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button 
+                onClick={goToPrevDay} 
+                className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+                title="Previous day"
+              >
+                <span className="sm:hidden">←</span>
+                <span className="hidden sm:inline text-sm">← Prev</span>
+              </button>
+              
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-blue-500/50"
+              />
+              
+              <button 
+                onClick={goToNextDay} 
+                className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+                title="Next day"
+              >
+                <span className="sm:hidden">→</span>
+                <span className="hidden sm:inline text-sm">Next →</span>
+              </button>
+              
+              <button 
+                onClick={goToToday} 
+                className="px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium hover:bg-blue-500/30 active:scale-95 transition-all touch-manipulation"
+              >
+                Today
+              </button>
+              
+              <button 
+                onClick={fetchAvailability} 
+                className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+                title="Refresh"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
         </div>
 
