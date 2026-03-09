@@ -191,10 +191,9 @@ async def oauth_callback(
     """Handle OAuth callback from provider with enhanced security and error handling."""
     try:
         # Debug logging
-        # NOTE: If you see import errors here in your IDE, ensure your virtual environment is activated in your IDE settings.
-        safe_state = str(state or "")
-        display_state = safe_state[:10] if len(safe_state) > 10 else safe_state
-        logger.info("OAuth callback received", provider=provider, state=f"{display_state}...", code_length=len(code))
+        safe_state = str(state) if state else ""
+        logger.info("OAuth callback received", provider=provider, state=safe_state[0:10] + "...", code_length=len(code))
+
 
 
         
@@ -294,17 +293,17 @@ async def update_user_oauth_credentials(db: AsyncSession, user: User, provider: 
     oauth_credential = result.scalar_one_or_none()
     
     if oauth_credential:
-        # Update existing credential
-        oauth_credential.access_token = token_data["access_token"]
-        oauth_credential.refresh_token = token_data.get("refresh_token")
+        # Update existing credential (encrypt tokens for secure storage)
+        oauth_credential.access_token = token_encryptor.encrypt(token_data["access_token"])
+        oauth_credential.refresh_token = token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None
         oauth_credential.expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
     else:
         # Create new credential
         oauth_credential = OAuthCredential(
             user_id=user.id,
             provider=provider,
-            access_token=token_data["access_token"],
-            refresh_token=token_data.get("refresh_token"),
+            access_token=token_encryptor.encrypt(token_data["access_token"]),
+            refresh_token=token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None,
             expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
         )
         db.add(oauth_credential)
@@ -332,8 +331,8 @@ async def create_new_user(db: AsyncSession, user_info: dict, provider: str, toke
     oauth_credential = OAuthCredential(
         user_id=user.id,
         provider=provider,
-        access_token=token_data["access_token"],
-        refresh_token=token_data.get("refresh_token"),
+        access_token=token_encryptor.encrypt(token_data["access_token"]),
+        refresh_token=token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None,
         expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
     )
     db.add(oauth_credential)

@@ -85,18 +85,20 @@ def decode_access_token(token: str) -> Dict[str, Any]:
 
 
 def decode_refresh_token(token: str) -> Dict[str, Any]:
-    """Decode and validate refresh token."""
+    """Decode and validate refresh token.
+    
+    Note: We rely on JWT expiry for validation instead of in-memory sessions,
+    because in-memory sessions don't survive across multiple workers (e.g. on Render).
+    """
     try:
         payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
         if payload.get("type") != "refresh":
             raise JWTError("Invalid token type")
         
+        # Optionally update in-memory session if it exists (best-effort)
         jti = payload.get("jti")
-        if not jti or jti not in _active_sessions:
-            raise JWTError("Session not found or expired")
-        
-        # Update last used
-        _active_sessions[jti]["last_used"] = datetime.now(timezone.utc)
+        if jti and jti in _active_sessions:
+            _active_sessions[jti]["last_used"] = datetime.now(timezone.utc)
         
         return payload
     except JWTError:

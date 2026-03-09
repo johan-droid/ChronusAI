@@ -46,12 +46,15 @@ class ApiClient {
     );
 
     // Response interceptor for token refresh
+    // Guards against infinite 401 → refresh → 401 loops
     this.client.interceptors.response.use(
       (response: AxiosResponse) => response,
       async (error) => {
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Only attempt refresh once per request, and skip refresh endpoint itself
+        const isRefreshRequest = originalRequest?.url?.includes('auth/refresh');
+        if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
           originalRequest._retry = true;
 
           try {
@@ -61,25 +64,26 @@ class ApiClient {
                 headers: { Authorization: `Bearer ${refreshToken}` }
               });
 
-
               const { access_token } = response.data;
               updateAccessToken(access_token);
 
-              // Retry original request
+              // Retry original request with new token
               originalRequest.headers.Authorization = `Bearer ${access_token}`;
               return this.client(originalRequest);
             }
           } catch (refreshError) {
             // Refresh failed, logout user
             clearAuthCache();
-            window.location.href = '/login';
+            useAuthStore.getState().logout();
             return Promise.reject(refreshError);
           }
         }
 
-        if (error.response?.status === 401) {
+        // If this is a retried request that still got 401, or a refresh request that failed,
+        // force logout without trying to refresh again
+        if (error.response?.status === 401 && (originalRequest._retry || isRefreshRequest)) {
           clearAuthCache();
-          window.location.href = '/login';
+          useAuthStore.getState().logout();
         }
 
         return Promise.reject(error);
