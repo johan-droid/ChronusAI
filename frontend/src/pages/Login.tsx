@@ -252,8 +252,8 @@ export default function Login() {
               </div>
             )}
 
-              {/* Auth Selection */}
-              {mode === 'oauth' ? (
+            {/* Auth Selection */}
+            {mode === 'oauth' ? (
                 <div className="space-y-4">
                   <button
                     onClick={() => handleOAuthLogin('google')}
