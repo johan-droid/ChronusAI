@@ -73,12 +73,14 @@ export default function History() {
         setShowLogout={setShowLogout}
       />
 
-      <main className="saas-main">
+      <main className="saas-main px-3 sm:px-4 lg:px-6">
         {/* Page Header */}
-        <div className="history-header fade-in-up">
-          <div>
-            <h1 className="history-title">Meeting History</h1>
-            <p className="history-subtitle">View and manage all your past and upcoming meetings</p>
+        <div className="mb-4 sm:mb-6 fade-in-up">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">Meeting History</h1>
+              <p className="text-xs sm:text-sm text-slate-400">View and manage all your meetings</p>
+            </div>
           </div>
         </div>
 
