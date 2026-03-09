@@ -1,5 +1,5 @@
-import { useEffect, useState, memo, useCallback, useMemo } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect, useState, memo, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Clock,
@@ -8,8 +8,6 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
-  BarChart3,
-  LogOut,
   ChevronRight,
   Settings,
   CalendarClock,
@@ -200,7 +198,6 @@ TimeBreakdown.displayName = 'TimeBreakdown';
 
 export default function StatsOverview() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
   const [showLogout, setShowLogout] = useState(false);

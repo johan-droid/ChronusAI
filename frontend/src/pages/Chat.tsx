@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import NavigationBar from '../components/NavigationBar';
 import ChatWindow from '../components/ChatWindow';
 import LogoutMenu from '../components/LogoutMenu';
