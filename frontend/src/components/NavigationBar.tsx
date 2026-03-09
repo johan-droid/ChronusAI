@@ -121,7 +121,7 @@ const NavigationBar = memo(({
                             <div className="space-y-2">
                                 {[
                                     { path: '/dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-blue-400' },
-                                    { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'text-cyan-400' },
+                                    { path: '/chat', label: 'Chat', icon: () => null, color: 'text-cyan-400' },
                                     { path: '/availability', label: 'Availability', icon: Clock, color: 'text-purple-400' },
                                     { path: '/history', label: 'History', icon: Calendar, color: 'text-emerald-400' },
                                 ].map(({ path, label, icon: Icon, color }) => (
