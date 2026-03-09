@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { Send, Loader2, Sparkles, Calendar, Clock, Zap, Mic, Paperclip, Plus, Smile, Check, CheckCheck, ArrowRight } from 'lucide-react';
+import { Send, Loader2, Sparkles, Calendar, Clock, Zap, Mic, Paperclip, Plus, Smile, CheckCheck, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';

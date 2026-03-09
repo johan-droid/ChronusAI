@@ -1,4 +1,4 @@
-import { User, Bot, Check, CheckCheck, Clock } from 'lucide-react';
+import { User, Bot, Check, CheckCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
