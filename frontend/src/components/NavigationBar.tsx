@@ -86,12 +86,6 @@ const NavigationBar = memo(({
                             </div>
                         )}
                         <button
-                            onClick={() => setShowLogout(true)}
-                            className="h-10 w-10 sm:h-11 sm:w-11 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-red-500/10 hover:border-red-500/20 smooth-transition"
-                        >
-                            <LogOut className="h-5 w-5" />
-                        </button>
-                        <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             className="md:hidden h-11 w-11 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-white smooth-transition active:scale-90 z-[70]"
                             aria-label="Toggle Menu"
@@ -103,9 +97,9 @@ const NavigationBar = memo(({
 
                 {mobileMenuOpen && (
                     <>
-                        {/* Full Opacity Overlay Backdrop */}
+                        {/* Full Opacity Overlay Backdrop - Complete Black */}
                         <div
-                            className="fixed inset-0 bg-[#030303]/95 backdrop-blur-2xl z-[55] md:hidden animate-fade-in"
+                            className="fixed inset-0 bg-[#000000] z-[55] md:hidden animate-fade-in"
                             onClick={() => setMobileMenuOpen(false)}
                             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
                         />
