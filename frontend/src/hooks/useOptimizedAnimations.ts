@@ -77,13 +77,14 @@ export const useIntersectionObserver = (
       options
     );
 
-    if (targetRef.current) {
-      observer.observe(targetRef.current);
+    const currentTarget = targetRef.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
     }
 
     return () => {
-      if (targetRef.current) {
-        observer.unobserve(targetRef.current);
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
       }
     };
   }, [callback, options]);
@@ -122,7 +123,7 @@ export const useThrottledCallback = <T extends (...args: unknown[]) => unknown>(
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      
+
       timeoutRef.current = setTimeout(() => {
         if (Date.now() - lastRun.current >= delay) {
           callback(...args);

@@ -11,12 +11,20 @@ interface Notification {
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([])
 
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id))
+  }, [])
+
+  const clearNotifications = useCallback(() => {
+    setNotifications([])
+  }, [])
+
   const addNotification = useCallback((notification: Omit<Notification, 'id'>) => {
     const id = Math.random().toString(36).substr(2, 9)
     const newNotification = { ...notification, id }
-    
+
     setNotifications(prev => [...prev, newNotification])
-    
+
     // Auto-remove after duration (default 5 seconds)
     const duration = notification.duration ?? 5000
     if (duration > 0) {
@@ -24,17 +32,9 @@ export function useNotifications() {
         removeNotification(id)
       }, duration)
     }
-    
+
     return id
-  }, [])
-
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id))
-  }
-
-  const clearNotifications = () => {
-    setNotifications([])
-  }
+  }, [removeNotification])
 
   const showSuccess = (title: string, message?: string) => {
     return addNotification({ type: 'success', title, message })

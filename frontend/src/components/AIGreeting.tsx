@@ -11,10 +11,10 @@ export default function AIGreeting({ userName }: { userName?: string }) {
     const fetchGreeting = async () => {
       try {
         const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const response = await apiClient.get(`/greetings/personalized?timezone=${timezone}`) as any;
+        const response = await apiClient.get(`/greetings/personalized?timezone=${timezone}`) as { data: { greeting: string, local_time: string } };
         setGreeting(response.data.greeting);
         setLocalTime(response.data.local_time);
-      } catch (error) {
+      } catch {
         const hour = new Date().getHours();
         const name = userName || 'there';
         const period = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';

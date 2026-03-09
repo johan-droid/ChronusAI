@@ -34,7 +34,7 @@ export default function StatsCard({ title, value, description, icon }: StatsCard
 
       return () => clearInterval(timer)
     }
-  }, [targetValue])
+  }, [targetValue, value])
 
   return (
     <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl p-4 sm:p-6 transition-all duration-300 hover:border-white/20 hover:bg-white/[0.05] hover:shadow-xl hover:shadow-blue-500/5">

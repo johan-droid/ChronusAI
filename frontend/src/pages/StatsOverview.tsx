@@ -213,7 +213,7 @@ export default function StatsOverview() {
       await detectTimezone();
     };
     initTimezone();
-  }, [detectTimezone]);
+  }, [detectTimezone, timezone]);
 
   useEffect(() => {
     const fetchGreeting = async () => {
@@ -221,15 +221,15 @@ export default function StatsOverview() {
         // Use timezone from auth store (detected from backend IP)
         const tz = timezone;
         const response = await apiClient.getPersonalizedGreeting(tz);
-        
+
         // Use API greeting which is calculated correctly based on user's timezone and cultural context
         setAiGreeting(response.greeting);
-        
+
         // Update store if backend detected different timezone or context
         if (response.timezone !== timezone) {
           updateUser({ timezone: response.timezone });
         }
-        
+
         // Update Indian context if detected
         if (response.is_indian !== isIndian) {
           // Could update some state here if needed
@@ -253,7 +253,7 @@ export default function StatsOverview() {
       }
     };
     if (user) fetchGreeting();
-  }, [user, timezone, getLocalHour, updateUser]);
+  }, [user, timezone, getLocalHour, updateUser, isIndian, culturalContext]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -338,7 +338,7 @@ export default function StatsOverview() {
                 {(() => {
                   // Use timezone from auth store (detected from backend IP)
                   const hour = getLocalHour();
-                  
+
                   // Determine greeting based on local hour
                   let greeting: string;
                   if (hour >= 5 && hour < 12) {
@@ -350,7 +350,7 @@ export default function StatsOverview() {
                   } else {
                     greeting = 'Good Night';
                   }
-                  
+
                   const firstName = user?.full_name?.split(' ')[0] || 'User';
                   return <>{greeting}, <span className="gradient-text">{firstName}</span> 👋</>;
                 })()}

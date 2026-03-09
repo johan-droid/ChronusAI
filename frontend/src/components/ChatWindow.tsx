@@ -219,7 +219,7 @@ export default function ChatWindow() {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/health/llm`);
         const data = await response.json();
         setIsLlmOnline(data.status === 'online');
-      } catch (err) {
+      } catch {
         setIsLlmOnline(false);
       }
     };
@@ -392,8 +392,8 @@ export default function ChatWindow() {
             whileTap={{ scale: 0.9 }}
             disabled={!message.trim() || isLoading}
             className={`p-3 sm:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 ${message.trim() && !isLoading
-                ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/25'
-                : 'bg-white/5 text-slate-500 cursor-not-allowed'
+              ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/25'
+              : 'bg-white/5 text-slate-500 cursor-not-allowed'
               }`}
           >
             {isLoading ? (

@@ -50,11 +50,7 @@ const isMobileDevice = () => {
 
 // Optimized Background Component
 const OptimizedBackground = memo(() => {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    setIsMobile(isMobileDevice());
-  }, []);
+  const [isMobile] = useState(() => isMobileDevice());
 
   if (isMobile) {
     return (

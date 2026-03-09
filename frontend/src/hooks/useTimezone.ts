@@ -6,7 +6,7 @@ interface IndianContext {
   is_indian: boolean;
   cultural_context: string;
   festivals: Record<string, string[]>;
-  preferences: Record<string, any>;
+  preferences: Record<string, unknown>;
   timezone: string;
 }
 
@@ -23,18 +23,18 @@ export function useTimezone() {
    */
   const detectTimezone = useCallback(async () => {
     if (!isAuthenticated) return;
-    
+
     try {
       // Call backend to detect timezone and cultural context from IP
       const result = await apiClient.detectTimezone();
-      
+
       if (result.detected && result.timezone !== timezone) {
         // Update store with new timezone and context
         setTimezone(result.timezone);
         updateUser({ timezone: result.timezone });
         console.log('Timezone and context updated from IP geolocation:', result);
       }
-      
+
       return result.timezone;
     } catch (err) {
       console.error('Failed to detect timezone:', err);
@@ -47,7 +47,7 @@ export function useTimezone() {
    */
   const getIndianContext = useCallback(async () => {
     if (!isAuthenticated) return;
-    
+
     try {
       const context = await apiClient.getIndianContext();
       setIndianContext(context);
@@ -115,26 +115,31 @@ export function useTimezone() {
    */
   const isIndianFestival = useCallback((date: Date | string) => {
     if (!indianContext || !indianContext.is_indian) return false;
-    
+
     const d = typeof date === 'string' ? new Date(date) : date;
     const dateStr = d.toISOString().split('T')[0]; // YYYY-MM-DD format
-    
-    return Object.values(indianContext.festivals).some(festivalDates => 
+
+    return Object.values(indianContext.festivals).some(festivalDates =>
       festivalDates.includes(dateStr)
     );
   }, [indianContext]);
 
   // Auto-detect timezone and context on mount
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Only detect if user doesn't have a timezone set yet
-      if (!user.timezone || user.timezone === 'UTC') {
-        detectTimezone();
+    const timer = setTimeout(() => {
+      if (isAuthenticated && user) {
+        // Only detect if user doesn't have a timezone set yet
+        if (!user.timezone || user.timezone === 'UTC') {
+          void detectTimezone();
+        }
+        // Get Indian context only if not already loaded
+        if (!indianContext) {
+          void getIndianContext();
+        }
       }
-      // Get Indian context
-      getIndianContext();
-    }
-  }, [isAuthenticated, user, detectTimezone, getIndianContext]);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, user, detectTimezone, getIndianContext, indianContext]);
 
   return {
     timezone: user?.timezone || timezone || 'UTC',

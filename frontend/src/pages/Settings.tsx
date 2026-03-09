@@ -42,7 +42,7 @@ export default function Settings() {
         navigate('/login');
       }, 2000);
     } catch (error: unknown) {
-      setDeleteError((error as any)?.response?.data?.detail || (error as Error)?.message || 'Failed to delete account');
+      setDeleteError((error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || (error as Error)?.message || 'Failed to delete account');
       setDeleteLoading(false);
     }
   };

@@ -102,12 +102,12 @@ class ApiClient {
     }
   }
 
-  async login(data: any): Promise<{ access_token: string; refresh_token: string; user: User }> {
+  async login(data: Record<string, unknown>): Promise<{ access_token: string; refresh_token: string; user: User }> {
     const response = await this.client.post('auth/login', data);
     return response.data;
   }
 
-  async signup(data: any): Promise<{ access_token: string; refresh_token: string; user: User }> {
+  async signup(data: Record<string, unknown>): Promise<{ access_token: string; refresh_token: string; user: User }> {
     const response = await this.client.post('auth/signup', data);
     return response.data;
   }
@@ -141,7 +141,7 @@ class ApiClient {
     is_indian: boolean;
     cultural_context: string;
     festivals: Record<string, string[]>;
-    preferences: Record<string, any>;
+    preferences: Record<string, unknown>;
     timezone: string;
   }> {
     const response = await this.client.get('users/indian-context');

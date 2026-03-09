@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, XCircle, CheckCircle, Clock, Sunrise, Sunset } from 'lucide-react';
 import NavigationBar from '../components/NavigationBar';
@@ -33,6 +33,23 @@ export default function Availability() {
   const [busyCount, setBusyCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
+
+  const fetchAvailability = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiClient.getAvailability(selectedDate, user?.timezone);
+      setTimeSlots(data.slots);
+      setAvailableCount(data.available_count);
+      setBusyCount(data.busy_count);
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { detail?: string } } };
+      setError(axiosError.response?.data?.detail || (err as Error).message || 'Failed to load availability');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedDate, user?.timezone]);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { accessToken, isAuthenticated } = useAuthStore.getState();
@@ -56,28 +73,13 @@ export default function Availability() {
       }
     };
     checkAuth();
-  }, [navigate]);
-
-  const fetchAvailability = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await apiClient.getAvailability(selectedDate, user?.timezone);
-      setTimeSlots(data.slots);
-      setAvailableCount(data.available_count);
-      setBusyCount(data.busy_count);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.detail || (err as Error)?.message || 'Failed to load availability');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [navigate, fetchAvailability]);
 
   useEffect(() => {
     if (user) {
       fetchAvailability();
     }
-  }, [selectedDate, user]);
+  }, [selectedDate, user, fetchAvailability]);
 
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);

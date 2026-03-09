@@ -452,14 +452,13 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.5 }}
                 whileHover={{ y: -5 }}
-                className={`premium-glass p-5 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] space-y-4 sm:space-y-6 hover:border-primary/30 transition-all duration-300 shadow-xl shadow-black/20 ${
-                  testimonial.height === 'tall' ? 'md:row-span-2' : ''
-                }`}
+                className={`premium-glass p-5 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] space-y-4 sm:space-y-6 hover:border-primary/30 transition-all duration-300 shadow-xl shadow-black/20 ${testimonial.height === 'tall' ? 'md:row-span-2' : ''
+                  }`}
               >
                 <div className="flex items-center gap-3 sm:gap-4">
                   {testimonial.avatar?.startsWith('http') ? (
-                    <img 
-                      src={testimonial.avatar} 
+                    <img
+                      src={testimonial.avatar}
                       alt={testimonial.name}
                       className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl object-cover ring-1 ring-white/20"
                     />
@@ -552,13 +551,13 @@ export default function LandingPage() {
               key={i}
               className="absolute rounded-full bg-white animate-pulse"
               style={{
-                width: `${Math.random() * 2 + 1}px`,
-                height: `${Math.random() * 2 + 1}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                opacity: Math.random() * 0.3 + 0.05,
-                animationDelay: `${Math.random() * 5}s`,
-                animationDuration: `${Math.random() * 3 + 2}s`,
+                width: `${(i % 3) + 1}px`,
+                height: `${(i % 3) + 1}px`,
+                top: `${(i * 7) % 100}%`,
+                left: `${(i * 13) % 100}%`,
+                opacity: 0.1 + (i % 5) * 0.05,
+                animationDelay: `${i % 5}s`,
+                animationDuration: `${3 + (i % 3)}s`,
               }}
             />
           ))}
