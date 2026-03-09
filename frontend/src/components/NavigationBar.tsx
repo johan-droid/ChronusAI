@@ -1,5 +1,6 @@
 import { memo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
     BarChart3,
     MessageSquare,
