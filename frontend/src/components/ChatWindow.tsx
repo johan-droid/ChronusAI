@@ -329,8 +329,8 @@ export default function ChatWindow() {
         )}
       </AnimatePresence>
 
-      {/* Input Area - Enhanced WhatsApp Style */}
-      <div className="shrink-0 p-2.5 sm:p-4 bg-[#0a0a14]/95 backdrop-blur-xl border-t border-white/5 relative z-40">
+      {/* Input Area - Fixed at bottom for mobile keyboard */}
+      <div className="shrink-0 p-2.5 sm:p-4 bg-[#0a0a14]/95 backdrop-blur-xl border-t border-white/5 relative z-40 md:relative fixed bottom-0 left-0 right-0 sm:static safe-area-bottom">
         <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex items-end gap-2">
           {/* Plus Button for Actions */}
           <motion.button

@@ -30,7 +30,7 @@ export default function Chat() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col h-screen max-h-screen bg-[#050510] relative overflow-hidden">
+    <div className="flex flex-col h-[100dvh] max-h-[100dvh] bg-[#050510] relative overflow-hidden">
       <div className="page-bg" />
       <div className="page-grid-overlay" />
 
