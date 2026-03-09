@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 import uvicorn
 from contextlib import asynccontextmanager
 import structlog
@@ -127,6 +127,16 @@ async def log_requests(request: Request, call_next):
     )
     
     return response
+
+
+# Legacy OAuth Redirects (without /api/v1 prefix)
+@app.get("/auth/{provider}/callback")
+async def legacy_oauth_callback(provider: str, request: Request):
+    """Redirect legacy OAuth callbacks to the versioned API path."""
+    query_params = str(request.query_params)
+    redirect_url = f"/api/v1/auth/{provider}/callback?{query_params}"
+    logger.info("Redirecting legacy OAuth callback", provider=provider, to=redirect_url)
+    return RedirectResponse(url=redirect_url)
 
 
 # Include API routes
