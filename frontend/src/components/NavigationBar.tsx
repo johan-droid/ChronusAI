@@ -103,14 +103,14 @@ const NavigationBar = memo(({
 
                 {mobileMenuOpen && (
                     <>
-                        {/* Hazy Overlay Backdrop */}
+                        {/* Full Opacity Overlay Backdrop */}
                         <div
-                            className="fixed inset-0 bg-black/40 backdrop-blur-xl z-[55] md:hidden animate-fade-in"
+                            className="fixed inset-0 bg-[#030303]/95 backdrop-blur-2xl z-[55] md:hidden animate-fade-in"
                             onClick={() => setMobileMenuOpen(false)}
                             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
                         />
                         {/* Mobile Menu Content */}
-                        <div className="absolute top-full left-0 right-0 bg-[#050515]/90 backdrop-blur-3xl border-b border-white/10 p-6 space-y-3 animate-slide-down md:hidden z-[60] shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-b-[2.5rem]">
+                        <div className="absolute top-full left-0 right-0 bg-[#050515]/98 backdrop-blur-3xl border-b border-white/10 p-6 space-y-3 animate-slide-down md:hidden z-[60] shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-b-[2.5rem]">
                             {[
                                 { path: '/dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-blue-400' },
                                 { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'text-cyan-400' },
