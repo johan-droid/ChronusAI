@@ -629,11 +629,21 @@ export default function LandingPage() {
           </div>
 
           {/* Bottom bar */}
-          <div className="pt-8 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs sm:text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5">© 2026 ChronusAI. Made with <span className="text-red-500">❤️</span> for world-class teams.</span>
-            <div className="flex items-center gap-2">
-              <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
-              <span className="uppercase font-semibold tracking-wider text-[10px]">System Status: All systems go</span>
+          <div className="pt-8 border-t border-white/[0.06] flex flex-col items-center gap-5 text-center">
+            {/* Major Project Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-primary">🎓 Major Project</span>
+              <span className="text-[10px] text-muted-foreground">— B.Tech Final Year</span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3">
+              <span className="text-sm font-semibold text-foreground/80 flex items-center gap-1.5">
+                © 2026 <span className="font-bold gradient-text">ChronusAI</span>. Made with <span className="text-red-500">❤️</span> for world-class teams.
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shadow-[0_0_6px_rgba(34,197,94,0.6)]" />
+                <span className="uppercase font-semibold tracking-wider text-[10px] text-muted-foreground">System Status: All systems go</span>
+              </div>
             </div>
           </div>
         </div>
