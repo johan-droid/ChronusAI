@@ -1973,3 +1973,530 @@
     transform: translateY(-1px);
     box-shadow: 0 8px 24px rgba(59, 130, 246, .3);
 }
+
+/* ============================================================
+   MOBILE RESPONSIVE OVERRIDES
+   ============================================================ */
+
+/* ------ NAVBAR MOBILE ------ */
+@media (max-width: 767px) {
+    .saas-nav-content {
+        height: 56px;
+        padding: 0 .25rem;
+    }
+
+    .saas-nav-logo {
+        gap: .5rem;
+        max-width: 55%;
+        overflow: hidden;
+    }
+
+    .saas-nav-logo-img {
+        height: 28px;
+        border-radius: 7px;
+        flex-shrink: 0;
+    }
+
+    .saas-nav-logo-text {
+        font-size: .975rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Redesigned hamburger toggle */
+    .saas-nav-mobile-toggle {
+        display: flex;
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(15, 15, 35, .6);
+        border: 1px solid rgba(99, 102, 241, .25);
+        backdrop-filter: blur(12px);
+        color: #a5b4fc;
+        cursor: pointer;
+        transition: all .25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .saas-nav-mobile-toggle::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, .08), rgba(139, 92, 246, .08));
+        opacity: 0;
+        transition: opacity .25s;
+    }
+
+    .saas-nav-mobile-toggle:hover,
+    .saas-nav-mobile-toggle:active {
+        border-color: rgba(99, 102, 241, .45);
+        color: #c7d2fe;
+        transform: scale(1.04);
+    }
+
+    .saas-nav-mobile-toggle:hover::before,
+    .saas-nav-mobile-toggle:active::before {
+        opacity: 1;
+    }
+
+    .saas-nav-mobile-toggle svg {
+        position: relative;
+        z-index: 1;
+        transition: transform .2s ease;
+    }
+
+    .saas-nav-mobile-toggle:active svg {
+        transform: scale(.9);
+    }
+
+    /* Mobile menu panel */
+    .saas-mobile-menu {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 14px 12px 18px;
+        border-top: 1px solid rgba(255, 255, 255, .05);
+        background: rgba(8, 8, 22, .65);
+        backdrop-filter: blur(20px);
+        animation: mobileMenuSlideDown .25s ease-out;
+    }
+
+    @keyframes mobileMenuSlideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-8px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .saas-mobile-item {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        font-size: .875rem;
+        font-weight: 500;
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, .03);
+        border: 1px solid rgba(255, 255, 255, .04);
+        cursor: pointer;
+        transition: all .2s;
+        width: 100%;
+        min-height: 48px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .saas-mobile-item:active {
+        background: rgba(255, 255, 255, .07);
+        transform: scale(.98);
+    }
+
+    .saas-mobile-item--active {
+        background: linear-gradient(135deg, rgba(59, 130, 246, .9), rgba(124, 58, 237, .9));
+        color: #fff;
+        border-color: transparent;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, .3);
+        font-weight: 600;
+    }
+
+    .saas-mobile-item--danger {
+        background: rgba(239, 68, 68, .07);
+        color: #fb7185;
+        border: 1px solid rgba(239, 68, 68, .15);
+    }
+
+    .saas-mobile-item--danger:active {
+        background: rgba(239, 68, 68, .14);
+    }
+
+    /* User section in nav */
+    .saas-nav-user {
+        gap: .5rem;
+    }
+}
+
+/* ------ MAIN CONTENT MOBILE ------ */
+@media (max-width: 480px) {
+    .saas-main {
+        padding: .75rem .625rem;
+        padding-bottom: max(.75rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* ------ HISTORY PAGE MOBILE ------ */
+@media (max-width: 639px) {
+
+    /* Filter tabs: horizontal scroll with snap */
+    .history-filters {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 1.25rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+        margin-left: -.25rem;
+        margin-right: -.25rem;
+        padding-left: .25rem;
+        padding-right: .25rem;
+    }
+
+    .history-filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .history-filter-tab {
+        scroll-snap-align: start;
+        padding: 7px 14px;
+        font-size: .75rem;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .history-filter-count {
+        font-size: .5625rem;
+        padding: 1px 5px;
+    }
+
+    /* History cards */
+    .history-card {
+        gap: .75rem;
+        padding: .875rem;
+        border-radius: 12px;
+    }
+
+    .history-card-date {
+        width: 44px;
+        height: 48px;
+        border-radius: 9px;
+    }
+
+    .history-card-day {
+        font-size: 1rem;
+    }
+
+    .history-card-month {
+        font-size: .5rem;
+    }
+
+    .history-card-body {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .5rem;
+    }
+
+    /* Allow title to wrap on mobile instead of single-line ellipsis */
+    .history-card-title {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        font-size: .8125rem;
+        line-height: 1.35;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .history-card-desc {
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        -webkit-line-clamp: 1;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        font-size: .6875rem;
+    }
+
+    .history-card-meta {
+        gap: .5rem;
+        margin-top: .375rem;
+    }
+
+    .history-meta-item {
+        font-size: .625rem;
+        gap: 3px;
+    }
+
+    .history-meta-item svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .history-status {
+        font-size: .625rem;
+        padding: 3px 10px;
+        border-radius: 6px;
+    }
+
+    /* Toolbar */
+    .history-toolbar {
+        gap: .5rem;
+        margin-bottom: .75rem;
+    }
+
+    .history-search-input {
+        padding: 9px 12px 9px 36px;
+        font-size: .8125rem;
+        border-radius: 10px;
+    }
+
+    .history-sort-btn {
+        padding: 9px 14px;
+        font-size: .75rem;
+    }
+
+    /* Title */
+    .history-title {
+        font-size: 1.375rem;
+    }
+
+    .history-subtitle {
+        font-size: .8125rem;
+    }
+
+    .history-header {
+        margin-bottom: 1rem;
+    }
+
+    .history-list {
+        gap: .375rem;
+    }
+}
+
+/* ------ AVAILABILITY PAGE MOBILE ------ */
+@media (max-width: 639px) {
+
+    /* Summary stats: force 3 columns on mobile */
+    .avail-summary {
+        grid-template-columns: repeat(3, 1fr);
+        gap: .5rem;
+    }
+
+    .avail-summary-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .5rem;
+        padding: .75rem .625rem;
+        border-radius: 12px;
+    }
+
+    .avail-summary-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+    }
+
+    .avail-summary-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .avail-summary-value {
+        font-size: 1.25rem;
+        line-height: 1;
+    }
+
+    .avail-summary-label {
+        font-size: .5625rem;
+    }
+
+    /* Date controls */
+    .avail-date-controls {
+        gap: .375rem;
+    }
+
+    .avail-date-btn {
+        height: 34px;
+        padding: 0 10px;
+        font-size: .75rem;
+        border-radius: 8px;
+    }
+
+    .avail-date-input {
+        height: 34px;
+        padding: 0 10px;
+        font-size: .75rem;
+    }
+
+    /* Title */
+    .avail-title {
+        font-size: 1.375rem;
+    }
+
+    .avail-subtitle {
+        font-size: .8125rem;
+    }
+
+    .avail-header {
+        margin-bottom: 1rem;
+    }
+
+    /* Sections */
+    .avail-section {
+        padding: 1rem .875rem;
+        border-radius: 14px;
+    }
+
+    .avail-section-title {
+        font-size: .8125rem;
+    }
+
+    /* Slots grid: 2 columns on small mobile */
+    .avail-slots-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: .375rem;
+    }
+
+    .avail-slot {
+        padding: 8px 10px;
+        font-size: .75rem;
+        border-radius: 8px;
+        gap: 6px;
+    }
+
+    .avail-slot-time {
+        font-size: .75rem;
+    }
+
+    .avail-slot-label {
+        font-size: .5625rem;
+    }
+
+    /* Progress bar */
+    .avail-progress {
+        height: 2px;
+    }
+}
+
+/* ------ DASHBOARD MOBILE ------ */
+@media (max-width: 639px) {
+    .dashboard-welcome {
+        margin-bottom: 1.25rem;
+    }
+
+    .dashboard-welcome-title {
+        font-size: 1.375rem;
+    }
+
+    .dashboard-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: .5rem;
+    }
+
+    .saas-card {
+        padding: 1rem;
+        border-radius: 14px;
+    }
+
+    .dashboard-analytics-item {
+        gap: .5rem;
+        padding: .75rem;
+        border-radius: 10px;
+    }
+
+    .dashboard-analytics-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+
+    .dashboard-analytics-value {
+        font-size: 1.125rem;
+    }
+
+    .dashboard-analytics-label {
+        font-size: .625rem;
+    }
+
+    .dashboard-meeting-item {
+        gap: .625rem;
+        padding: .75rem;
+    }
+
+    .dashboard-meeting-title {
+        font-size: .75rem;
+    }
+
+    .dashboard-action-btn {
+        padding: .75rem;
+        gap: .625rem;
+    }
+
+    .dashboard-action-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+    }
+
+    .dashboard-action-label {
+        font-size: .75rem;
+    }
+
+    .dashboard-action-desc {
+        font-size: .625rem;
+    }
+}
+
+/* ------ CHAT PAGE MOBILE ------ */
+@media (max-width: 639px) {
+    .chat-container {
+        padding: .5rem .375rem;
+    }
+
+    .chat-wrapper {
+        border-radius: 14px;
+    }
+
+    .chat-header {
+        padding: .75rem 1rem;
+    }
+
+    .chat-header-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+    }
+
+    .chat-header-title {
+        font-size: .875rem;
+    }
+
+    .chat-header-sub {
+        font-size: .625rem;
+    }
+}
+
+/* ------ GLOBAL MOBILE TOUCH IMPROVEMENTS ------ */
+@media (max-width: 767px) {
+
+    /* Better tap targets */
+    button,
+    a,
+    [role="button"] {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Smooth scrolling */
+    .history-list,
+    .dashboard-meetings-list,
+    .avail-periods {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Safe area padding for notched devices */
+    .saas-nav {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
