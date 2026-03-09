@@ -20,7 +20,7 @@ class CalendarProvider(Enum):
 class CalendarIntegrationService:
     """Unified calendar integration service"""
     
-    def __init__(self, user_id: str, provider: str, db_session, access_token: str = None, user_timezone: str = "UTC"):
+    def __init__(self, user_id: str, provider: str, db_session, access_token: Optional[str] = None, user_timezone: str = "UTC"):
         self.user_id = user_id
         self.provider = CalendarProvider(provider.lower())
         self.db = db_session

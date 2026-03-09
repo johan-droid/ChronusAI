@@ -105,7 +105,7 @@ async def get_indian_context(
     """
     try:
         # Check if user has Indian context
-        is_indian = TimezoneDetectionService.is_indian_context(current_user.timezone)
+        is_indian = TimezoneDetectionService.is_indian_context(str(current_user.timezone))
         
         if is_indian:
             festivals = TimezoneDetectionService.get_indian_festivals()

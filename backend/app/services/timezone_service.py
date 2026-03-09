@@ -189,11 +189,11 @@ class TimezoneDetectionService:
         from datetime import datetime
         year = datetime.now().year
         
-        festivals = {}
+        festivals: Dict[str, list] = {}
         for festival, dates in TimezoneDetectionService.INDIAN_FESTIVALS.items():
             for date_str in dates:
                 if str(year) in date_str:
-                    festivals[festival] = date_str
+                    festivals[festival] = dates
                     break
         
         return festivals

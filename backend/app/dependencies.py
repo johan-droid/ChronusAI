@@ -134,10 +134,10 @@ async def get_calendar_integration_provider(
         from app.services.calendar_integration_service import CalendarIntegrationService
         return CalendarIntegrationService(
             user_id=str(current_user.id),
-            provider=current_user.provider,
+            provider=str(current_user.provider),
             db_session=db,
             access_token=access_token,
-            user_timezone=user_timezone
+            user_timezone=str(current_user.timezone or "UTC")
         )
     except HTTPException:
         raise
