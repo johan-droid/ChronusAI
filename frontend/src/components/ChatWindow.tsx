@@ -361,7 +361,7 @@ export default function ChatWindow() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Message ChronosAI..."
-                className="flex-1 bg-transparent border-none focus:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2.5 px-1 resize-none min-h-[44px] max-h-[120px] font-medium"
+                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2.5 px-1 resize-none min-h-[44px] max-h-[120px] font-medium outline-none"
                 style={{ scrollbarWidth: 'none' }}
               />
               

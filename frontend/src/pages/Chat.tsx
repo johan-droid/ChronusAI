@@ -42,8 +42,8 @@ export default function Chat() {
       />
 
 
-      <main className="flex-1 relative z-10 w-full max-w-5xl mx-auto flex flex-col min-h-0 overflow-hidden sm:px-4 sm:py-4 pt-16 sm:pt-0">
-        <div className="flex-1 flex flex-col min-h-0 bg-slate-900/40 backdrop-blur-2xl sm:rounded-3xl sm:border sm:border-white/10 shadow-3xl overflow-hidden relative">
+      <main className="flex-1 relative z-10 w-full max-w-5xl mx-auto flex flex-col min-h-0 overflow-hidden sm:px-4 sm:py-4">
+        <div className="flex-1 flex flex-col min-h-0 bg-slate-900/40 backdrop-blur-2xl sm:rounded-3xl sm:border sm:border-white/10 shadow-3xl overflow-hidden relative -mt-[1px]">
           {/* Header Area - Mobile optimized */}
           <div className="px-4 py-2 sm:py-3 border-b border-white/5 bg-slate-900/60 shrink-0">
             <div className="flex items-center gap-3">

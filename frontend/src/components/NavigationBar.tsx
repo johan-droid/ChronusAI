@@ -97,9 +97,9 @@ const NavigationBar = memo(({
 
                 {mobileMenuOpen && (
                     <>
-                        {/* Full Opacity Overlay Backdrop - Complete Black */}
+                        {/* Heavy Blur Backdrop */}
                         <div
-                            className="fixed inset-0 bg-[#000000] z-[55] md:hidden animate-fade-in"
+                            className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[55] md:hidden animate-fade-in"
                             onClick={() => setMobileMenuOpen(false)}
                             style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
                         />
