@@ -1837,19 +1837,3 @@ nav {
 html {
   scroll-behavior: smooth;
 }
-
-/* Version Stamp for Debugging */
-.debug-version-stamp {
-  position: fixed;
-  bottom: 0px;
-  right: 0px;
-  background: rgba(0, 255, 0, 1);
-  color: #000;
-  font-size: 10px;
-  font-weight: bold;
-  padding: 2px 6px;
-  border-top-left-radius: 4px;
-  z-index: 99999;
-  pointer-events: none;
-  font-family: monospace;
-}

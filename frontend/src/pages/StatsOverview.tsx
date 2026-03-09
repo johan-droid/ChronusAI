@@ -383,7 +383,6 @@ export default function StatsOverview() {
       </main>
 
       <LogoutMenu isOpen={showLogout} onClose={() => setShowLogout(false)} />
-      <div className="debug-version-stamp">DASHBOARD_STABLE_V4</div>
     </div>
   );
 }
