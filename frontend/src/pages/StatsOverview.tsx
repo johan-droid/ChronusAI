@@ -201,11 +201,10 @@ export default function StatsOverview() {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
-  const { timezone, getLocalHour, detectTimezone, isIndian, culturalContext, indianContext, getIndianContext, isIndianFestival } = useTimezone();
+  const { timezone, getLocalHour, detectTimezone, isIndian, culturalContext } = useTimezone();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiGreeting, setAiGreeting] = useState<string>('');
-  const [localGreeting, setLocalGreeting] = useState<string>('');
 
   // Detect timezone and update greeting on mount
   useEffect(() => {
@@ -366,6 +365,9 @@ export default function StatsOverview() {
                     </span>
                   ) : (
                     "Loading your personalized insight..."
+                  )}
+                  {isIndian && culturalContext === 'indian' && (
+                    <span className="ml-2 text-xs text-orange-400">🇮🇳 Indian Context</span>
                   )}
                 </p>
               </div>
