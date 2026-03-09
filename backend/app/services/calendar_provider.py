@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from app.schemas.meeting import MeetingCreate
 
@@ -44,4 +44,9 @@ class CalendarProvider(ABC):
 
     @abstractmethod
     async def update_event(self, external_event_id: str, meeting: MeetingCreate) -> bool:
+        pass
+
+    @abstractmethod
+    async def list_events(self, start: datetime, end: datetime) -> List[Dict[str, Any]]:
+        """Returns list of events as dictionaries."""
         pass

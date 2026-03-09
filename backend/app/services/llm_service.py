@@ -1,8 +1,7 @@
-from __future__ import annotations
-
+# pyre-unsafe
 import json
 from datetime import datetime, timezone
-from typing import Any, List
+from typing import Any, List, Dict, Optional, cast
 
 from openai import AsyncOpenAI
 
@@ -31,7 +30,8 @@ class LLMService:
             "• Google Meet: Attached via Calendar API conferenceData; no duration limit; one Meet per event.\n"
             "• Zoom: meeting_platform 'zoom' = create Zoom meeting; duration 15-720 min; type 2 = scheduled; always include topic and agenda.\n"
             "• Microsoft Teams: meeting_platform 'teams' = create Teams online meeting; isOnlineMeeting true; one per event.\n"
-            "• Reschedule: Use intent 'reschedule'; always provide new start_time and end_time in ISO UTC; identify meeting by title or 'my next meeting' = most imminent scheduled.\n\n"
+            "• Reschedule: Use intent 'reschedule'; provide new start_time and end_time in ISO UTC; ALWAYS identify meeting by its 'title' field based on user's query.\n"
+            "• Cancel/Delete: Use intent 'cancel'; ALWAYS identify meeting by its 'title' field based on user's query.\n\n"
             "INTENTS: schedule | reschedule | cancel | check_availability | find_time | list_meetings | suggest_times | unknown\n"
             "MEETING_PLATFORM: zoom | meet | teams | none (use 'meet' for Google Meet, 'teams' for Teams, 'zoom' for Zoom, 'none' for no video).\n"
             "DURATIONS: standup=15, sync=30, review/call=60, presentation=45-90; infer from context.\n"
@@ -65,19 +65,20 @@ class LLMService:
             "Always be ready to take action on their calendar when they ask."
         )
 
-    async def parse_intent(self, message: str, user_timezone: str, user_email: str, user_name: str, context: List[dict[str, Any]]) -> ParsedIntent:
+    async def parse_intent(self, message: str, user_timezone: str, user_email: str, user_name: str, context: List[Dict[str, Any]]) -> ParsedIntent:
         """Parse user message into structured meeting intent using DeepSeek AI."""
         try:
-            messages: list[dict[str, str]] = [
+            messages: List[Dict[str, str]] = [
                 {"role": "system", "content": self._system_prompt(user_timezone, user_email, user_name)},
             ]
             
             # Add context (last 4 messages)
-            for item in context[-4:]:
+            context_slice = context[-4:]  # pyre-ignore[6]
+            for item in context_slice:
                 role = item.get("role")
-                content = item.get("content", "")
+                content_ctx = item.get("content", "")
                 if role in ["user", "assistant"]:
-                    messages.append({"role": role, "content": content})
+                    messages.append({"role": str(role), "content": str(content_ctx)})
             
             messages.append({"role": "user", "content": message})
             
@@ -111,7 +112,7 @@ class LLMService:
                 elif "{" in content and "}" in content:
                     idx_start = content.find("{")
                     idx_end = content.rfind("}") + 1
-                    json_str = content[idx_start:idx_end]
+                    json_str = content[idx_start:idx_end]  # pyre-ignore[6]
                 else:
                     json_str = content
 

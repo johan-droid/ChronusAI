@@ -4,6 +4,7 @@ import { Calendar, Clock, MessageSquare, BarChart3, LogOut, Menu, X, CheckCircle
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
+import AnimatedLogo from '../components/AnimatedLogo';
 
 interface TimeSlot {
   start_time: string;
@@ -130,7 +131,7 @@ export default function Availability() {
         <div className="saas-nav-inner">
           <div className="saas-nav-content">
             <div className="saas-nav-logo" onClick={() => navigate('/dashboard')}>
-              <img src="/logo.png" alt="ChronosAI" className="saas-nav-logo-img" />
+              <AnimatedLogo className="saas-nav-logo-img" />
               <span className="saas-nav-logo-text">ChronosAI</span>
             </div>
 

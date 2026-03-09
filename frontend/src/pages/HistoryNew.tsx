@@ -5,6 +5,7 @@ import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
+import AnimatedLogo from '../components/AnimatedLogo';
 
 export default function History() {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ export default function History() {
         <div className="saas-nav-inner">
           <div className="saas-nav-content">
             <div className="saas-nav-logo" onClick={() => navigate('/dashboard')}>
-              <img src="/logo.png" alt="ChronosAI" className="saas-nav-logo-img" />
+              <AnimatedLogo className="saas-nav-logo-img" />
               <span className="saas-nav-logo-text">ChronosAI</span>
             </div>
 

@@ -1,3 +1,4 @@
+# pyre-unsafe
 from __future__ import annotations
 
 from datetime import datetime, time, timedelta, timezone
@@ -344,14 +345,36 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
 async def handle_cancel_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle meeting cancellation intent."""
     try:
-        # Find the most recent scheduled meeting
-        result = await db.execute(
-            select(Meeting)
-            .where(and_(Meeting.user_id == user.id, Meeting.status == "scheduled"))
-            .order_by(Meeting.start_time.asc())
-            .limit(1)
+        now_utc = datetime.now(timezone.utc)
+        
+        # Try to find by title first, otherwise get next upcoming
+        query = select(Meeting).where(
+            and_(
+                Meeting.user_id == user.id, 
+                Meeting.status == "scheduled",
+                Meeting.start_time >= now_utc
+            )
         )
+        
+        # Check if the AI parsed a specific title to look for, ignoring generic terms
+        is_specific_title = intent.title and intent.title.lower() not in ["meeting", "my meeting", "my next meeting", "next meeting"]
+        if is_specific_title:
+            query = query.where(Meeting.title.ilike(f"%{intent.title}%"))
+            
+        result = await db.execute(query.order_by(Meeting.start_time.asc()).limit(1))
         meeting = result.scalar_one_or_none()
+        
+        # Fallback if specific title wasn't found but meetings exist
+        if not meeting and is_specific_title:
+            fallback = select(Meeting).where(
+                and_(
+                    Meeting.user_id == user.id, 
+                    Meeting.status == "scheduled",
+                    Meeting.start_time >= now_utc
+                )
+            ).order_by(Meeting.start_time.asc()).limit(1)
+            result = await db.execute(fallback)
+            meeting = result.scalar_one_or_none()
         
         if not meeting:
             return ChatResponse(
@@ -422,14 +445,35 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
                 requires_clarification=True,
             )
         
-        # Find the most recent scheduled meeting to reschedule
-        result = await db.execute(
-            select(Meeting)
-            .where(and_(Meeting.user_id == user.id, Meeting.status == "scheduled"))
-            .order_by(Meeting.start_time.asc())
-            .limit(1)
+        now_utc = datetime.now(timezone.utc)
+        
+        # Try to find by title first, otherwise get next upcoming
+        query = select(Meeting).where(
+            and_(
+                Meeting.user_id == user.id, 
+                Meeting.status == "scheduled",
+                Meeting.start_time >= now_utc
+            )
         )
+        
+        is_specific_title = intent.title and intent.title.lower() not in ["meeting", "my meeting", "my next meeting", "next meeting"]
+        if is_specific_title:
+            query = query.where(Meeting.title.ilike(f"%{intent.title}%"))
+            
+        result = await db.execute(query.order_by(Meeting.start_time.asc()).limit(1))
         meeting = result.scalar_one_or_none()
+        
+        # Fallback if specific title wasn't found
+        if not meeting and is_specific_title:
+            fallback = select(Meeting).where(
+                and_(
+                    Meeting.user_id == user.id, 
+                    Meeting.status == "scheduled",
+                    Meeting.start_time >= now_utc
+                )
+            ).order_by(Meeting.start_time.asc()).limit(1)
+            result = await db.execute(fallback)
+            meeting = result.scalar_one_or_none()
         
         if not meeting:
             return ChatResponse(

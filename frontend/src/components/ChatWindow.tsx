@@ -37,9 +37,9 @@ const StatusBar = memo(() => (
 StatusBar.displayName = 'StatusBar';
 
 // Memoized Quick Prompt Component
-const QuickPrompt = memo(({ prompt, onClick }: { 
-  prompt: typeof QUICK_PROMPTS[0]; 
-  onClick: (text: string) => void; 
+const QuickPrompt = memo(({ prompt, onClick }: {
+  prompt: typeof QUICK_PROMPTS[0];
+  onClick: (text: string) => void;
 }) => (
   <button
     onClick={() => onClick(prompt.text)}
@@ -152,23 +152,23 @@ export default function ChatWindow() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0 w-full relative">
       <StatusBar />
 
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 overscroll-contain">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-4 overscroll-contain scroll-smooth saas-scrollbar focus:outline-none" tabIndex={-1}>
         {messages.length === 0 && (
           <EmptyState onQuickPrompt={handleQuickPrompt} />
         )}
-        
+
         {messages.map((msg, index) => (
-          <div key={index} className="animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
+          <div key={index} className="animate-slide-up" style={{ animationDelay: `${index * 0.05}s` }}>
             <ChatMessage message={msg} />
           </div>
         ))}
-        
+
         {isLoading && currentResponse && (
           <div className="animate-slide-up">
-            <ChatMessage 
+            <ChatMessage
               message={{
                 role: 'assistant',
                 content: currentResponse,
@@ -178,33 +178,33 @@ export default function ChatWindow() {
             />
           </div>
         )}
-        
+
         {isLoading && !currentResponse && <LoadingIndicator />}
-        
-        <div ref={messagesEndRef} />
+
+        <div ref={messagesEndRef} className="h-4" />
       </div>
-      
-      <form onSubmit={handleSubmit} className="border-t border-white/5 p-3 sm:p-4 glass animate-slide-up shrink-0 pb-[env(safe-area-inset-bottom)]">
-        <div className="flex gap-2 sm:gap-3">
+
+      <form onSubmit={handleSubmit} className="border-t border-white/5 p-4 sm:p-5 bg-slate-900/60 backdrop-blur-md animate-slide-up shrink-0 pb-[max(env(safe-area-inset-bottom),1rem)] relative z-20 shadow-[0_-10px_40px_-5px_rgba(0,0,0,0.3)]">
+        <div className="flex gap-3 items-end max-w-4xl mx-auto">
           <textarea
             ref={textareaRef}
             value={message}
             onChange={handleInput}
             onKeyDown={handleKeyDown}
-            placeholder="Schedule, reschedule, or check availability..."
-            className="flex-1 min-h-[48px] max-h-[120px] px-3 sm:px-4 py-3 glass-card rounded-xl sm:rounded-2xl text-sm text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 smooth-transition"
+            placeholder="Type 'Schedule a meeting with John...'"
+            className="flex-1 min-h-[52px] max-h-[160px] px-4 sm:px-5 py-3.5 bg-slate-800/50 border border-white/10 rounded-2xl text-[15px] text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-[#8899aa]/50 focus:border-[#8899aa]/50 smooth-transition shadow-inner saas-scrollbar"
             rows={1}
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={!message.trim() || isLoading}
-            className="w-12 h-12 min-w-[48px] min-h-[48px] bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl sm:rounded-2xl hover:shadow-lg hover:shadow-blue-500/50 hover:scale-105 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center flex-shrink-0 animate-glow-pulse touch-manipulation active:scale-95"
+            className="w-[52px] h-[52px] shrink-0 bg-gradient-to-br from-[#d0dcea] to-[#8899aa] text-slate-900 rounded-2xl hover:shadow-lg hover:shadow-[#a0b0c0]/30 hover:-translate-y-0.5 smooth-transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center animate-glow-pulse"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Send className="h-5 w-5" />
+              <Send className="h-[22px] w-[22px] translate-x-[-1px] translate-y-[1px]" />
             )}
           </button>
         </div>

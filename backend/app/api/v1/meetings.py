@@ -1,7 +1,8 @@
+# pyre-unsafe
 from __future__ import annotations
 
 from datetime import datetime, timezone, timedelta
-from typing import List
+from typing import List, Dict, Any
 import structlog
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -33,10 +34,13 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
         start_time = datetime.now(timezone.utc) - timedelta(days=7)  # Include past 7 days
         
         # Fetch events from Google Calendar
-        events = await calendar_provider.list_events(start_time, end_time)
+        events: List[Dict[str, Any]] = await calendar_provider.list_events(start_time, end_time)
         
-        # Sync each event to database
-        for event in events:
+        # Keep track of active external event IDs from Google Calendar
+        active_external_ids = set()
+        
+        # Sync each event to database (Add/Update)
+        for event in events:  # pyre-ignore[29]
             # events are always plain dicts from list_events
             event_id = event.get("id")
             event_summary = event.get("summary", "No Title")
@@ -58,6 +62,8 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
 
             if not event_id or not event_start or not event_end:
                 continue
+                
+            active_external_ids.add(event_id)
 
             # Check if meeting already exists
             result = await db.execute(
@@ -94,9 +100,31 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
                     raw_user_input="Synced from Google Calendar"
                 )
                 db.add(meeting)
+                
+        # Handle Deletions: Find all local meetings in this timeframe that are no longer on GC
+        local_meetings_result = await db.execute(
+            select(Meeting).where(
+                and_(
+                    Meeting.user_id == user_id,
+                    Meeting.status != "canceled",
+                    Meeting.external_event_id.isnot(None),
+                    Meeting.start_time >= start_time,
+                    Meeting.start_time <= end_time
+                )
+            )
+        )
+        local_meetings = local_meetings_result.scalars().all()
+        
+        canceled_count = 0
+        for local_meeting in local_meetings:
+            if local_meeting.external_event_id not in active_external_ids:
+                # The event exists in our DB but was deleted from Google Calendar
+                local_meeting.status = "canceled"
+                local_meeting.updated_at = datetime.now(timezone.utc)
+                canceled_count += 1
         
         await db.commit()
-        logger.info("google_calendar_synced", user_id=user_id, events_count=len(events))
+        logger.info("google_calendar_synced", user_id=user_id, events_synced=len(events), events_canceled=canceled_count)
         
     except Exception as e:
         logger.error("google_calendar_sync_failed", error=str(e), user_id=str(current_user.id) if hasattr(current_user, 'id') else "unknown", exc_info=True)
