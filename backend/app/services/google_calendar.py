@@ -2,7 +2,7 @@ import uuid
 from typing import List, Optional
 from datetime import datetime, timezone
 from app.services.calendar_provider import CalendarProvider, TimeSlot, CreateEventResult
-from app.schemas.meeting import MeetingCreate, Attendee
+from app.schemas.meeting import MeetingCreate
 import httpx
 import structlog
 
@@ -47,6 +47,7 @@ class GoogleCalendarAdapter(CalendarProvider):
                     busy_slots.append(TimeSlot(start=start_time, end=end_time))
             
             return busy_slots
+        return []  # unreachable, satisfies type checker
     
     async def list_events(self, start: datetime, end: datetime) -> List[dict]:
         """List events from Google Calendar with enhanced error handling."""
@@ -115,6 +116,7 @@ class GoogleCalendarAdapter(CalendarProvider):
         except Exception as e:
             logger.error("Unexpected error in Google Calendar API", error=str(e))
             raise Exception(f"Unexpected error: {str(e)}")
+        return []  # unreachable, satisfies type checker
     
     def _parse_datetime(self, datetime_obj: dict) -> datetime:
         """Parse datetime object from Google Calendar API response with enhanced error handling."""
@@ -199,6 +201,7 @@ class GoogleCalendarAdapter(CalendarProvider):
             )
             
             return response.status_code == 204
+        return False  # unreachable, satisfies type checker
     
     async def update_event(self, external_event_id: str, meeting: MeetingCreate) -> bool:
         """Update an event in Google Calendar."""
@@ -224,3 +227,4 @@ class GoogleCalendarAdapter(CalendarProvider):
             )
             
             return response.status_code == 200
+        return False  # unreachable, satisfies type checker
