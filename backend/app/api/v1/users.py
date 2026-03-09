@@ -16,18 +16,65 @@ async def get_current_user_info(
     request: Request,
     current_user: User = Depends(get_current_user)
 ):
-    """Get current user information with timezone detection."""
+    """Get current user information with timezone and cultural context detection."""
     # Get headers for IP detection
     forwarded_for = request.headers.get("x-forwarded-for")
     
-    # Detect timezone from IP in background (don't block response)
+    # Detect timezone and cultural context from IP in background (don't block response)
     try:
-        detected_tz = await TimezoneDetectionService.detect_and_update_user_timezone(
+        detected_context = await TimezoneDetectionService.detect_and_update_user_timezone(
             current_user,
             dict(request.headers),
             forwarded_for
         )
+        
         # If timezone changed, update it
+        if detected_context:
+            detected_tz = detected_context.get("timezone")
+            if detected_tz and detected_tz != current_user.timezone:
+                async with AsyncSessionLocal() as db:
+                    from sqlalchemy import select
+                    result = await db.execute(
+                        select(User).where(User.id == current_user.id)
+                    )
+                    user = result.scalar_one_or_none()
+                    if user:
+                        user.timezone = detected_tz
+                        await db.commit()
+                        current_user.timezone = detected_tz
+                        logger.info(
+                            "user_timezone_and_context_auto_updated",
+                            user_id=str(user.id),
+                            new_timezone=detected_tz,
+                            is_indian=detected_context.get("is_indian", False)
+                        )
+    except Exception as e:
+        logger.error("timezone_and_context_detection_error", error=str(e))
+    
+    return current_user
+
+
+@router.post("/detect-timezone")
+async def detect_user_timezone(
+    request: Request,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Detect user's timezone and cultural context from their IP address and update their profile.
+    Returns detected timezone and cultural context.
+    """
+    forwarded_for = request.headers.get("x-forwarded-for")
+    
+    # Detect timezone and cultural context
+    detected_context = await TimezoneDetectionService.detect_and_update_user_timezone(
+        current_user,
+        dict(request.headers),
+        forwarded_for
+    )
+    
+    # Update user if timezone changed
+    if detected_context:
+        detected_tz = detected_context.get("timezone")
         if detected_tz and detected_tz != current_user.timezone:
             async with AsyncSessionLocal() as db:
                 from sqlalchemy import select
@@ -39,53 +86,73 @@ async def get_current_user_info(
                     user.timezone = detected_tz
                     await db.commit()
                     current_user.timezone = detected_tz
-                    logger.info(
-                        "user_timezone_auto_updated",
-                        user_id=str(user.id),
-                        new_timezone=detected_tz
-                    )
-    except Exception as e:
-        logger.error("timezone_detection_error", error=str(e))
-    
-    return current_user
-
-
-@router.post("/detect-timezone")
-async def detect_user_timezone(
-    request: Request,
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Detect user's timezone from their IP address and update their profile.
-    Returns the detected timezone.
-    """
-    forwarded_for = request.headers.get("x-forwarded-for")
-    
-    # Detect timezone
-    detected_tz = await TimezoneDetectionService.detect_and_update_user_timezone(
-        current_user,
-        dict(request.headers),
-        forwarded_for
-    )
-    
-    # Update user if timezone changed
-    if detected_tz and detected_tz != current_user.timezone:
-        async with AsyncSessionLocal() as db:
-            from sqlalchemy import select
-            result = await db.execute(
-                select(User).where(User.id == current_user.id)
-            )
-            user = result.scalar_one_or_none()
-            if user:
-                user.timezone = detected_tz
-                await db.commit()
-                current_user.timezone = detected_tz
     
     return {
         "timezone": current_user.timezone,
-        "detected": detected_tz != "UTC" if detected_tz else False,
+        "detected": detected_context.get("is_indian", False) if detected_context else False,
+        "cultural_context": detected_context.get("cultural_context", "global") if detected_context else "global",
+        "country": detected_context.get("country", "") if detected_context else "",
         "source": "ip_geolocation"
     }
+
+
+@router.get("/indian-context")
+async def get_indian_context(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get Indian cultural context including festivals and scheduling preferences.
+    """
+    try:
+        # Check if user has Indian context
+        is_indian = TimezoneDetectionService.is_indian_context(current_user.timezone)
+        
+        if is_indian:
+            festivals = TimezoneDetectionService.get_indian_festivals()
+            
+            # Indian scheduling preferences
+            preferences = {
+                "avoid_mahurat": False,  # Can be customized
+                "consider_festivals": True,
+                "business_hours": {
+                    "start": "09:00",
+                    "end": "18:00",
+                    "weekdays": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+                },
+                "lunch_break": {
+                    "start": "13:00",
+                    "end": "14:00"
+                }
+            }
+            
+            return {
+                "is_indian": True,
+                "cultural_context": "indian",
+                "festivals": festivals,
+                "preferences": preferences,
+                "timezone": current_user.timezone
+            }
+        else:
+            return {
+                "is_indian": False,
+                "cultural_context": "global",
+                "festivals": {},
+                "preferences": {
+                    "business_hours": {
+                        "start": "09:00",
+                        "end": "17:00"
+                    }
+                },
+                "timezone": current_user.timezone
+            }
+            
+    except Exception as e:
+        logger.error("indian_context_error", error=str(e))
+        return {
+            "is_indian": False,
+            "cultural_context": "global",
+            "error": str(e)
+        }
 
 
 @router.put("/me", response_model=UserRead)

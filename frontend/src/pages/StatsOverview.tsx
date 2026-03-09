@@ -201,7 +201,7 @@ export default function StatsOverview() {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
-  const { timezone, getLocalHour, detectTimezone } = useTimezone();
+  const { timezone, getLocalHour, detectTimezone, isIndian, culturalContext, indianContext, getIndianContext, isIndianFestival } = useTimezone();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiGreeting, setAiGreeting] = useState<string>('');
@@ -219,16 +219,22 @@ export default function StatsOverview() {
   useEffect(() => {
     const fetchGreeting = async () => {
       try {
-        // Use the timezone from auth store (detected from backend IP)
+        // Use timezone from auth store (detected from backend IP)
         const tz = timezone;
         const response = await apiClient.getPersonalizedGreeting(tz);
         
-        // Use API greeting which is calculated correctly based on user's timezone
+        // Use API greeting which is calculated correctly based on user's timezone and cultural context
         setAiGreeting(response.greeting);
         
-        // Update store if backend detected different timezone
+        // Update store if backend detected different timezone or context
         if (response.timezone !== timezone) {
           updateUser({ timezone: response.timezone });
+        }
+        
+        // Update Indian context if detected
+        if (response.is_indian !== isIndian) {
+          // Could update some state here if needed
+          console.log('Indian context detected:', response.is_indian);
         }
       } catch (err) {
         console.error("Failed to fetch greeting", err);

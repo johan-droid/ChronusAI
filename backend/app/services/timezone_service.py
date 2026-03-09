@@ -1,18 +1,41 @@
-"""Timezone detection service using IP geolocation."""
+"""Timezone detection service with Indian context support."""
 
 import httpx
-from typing import Optional
+from typing import Optional, Dict, Any
 import structlog
 
 logger = structlog.get_logger()
 
 
 class TimezoneDetectionService:
-    """Service to detect user's timezone from their IP address."""
+    """Service to detect user's timezone and cultural context from their IP address."""
     
     # Free IP geolocation services
-    IP_API_URL = "http://ip-api.com/json/{ip}?fields=status,message,timezone,query"
+    IP_API_URL = "http://ip-api.com/json/{ip}?fields=status,message,timezone,countryCode,country,query"
     IPINFO_URL = "https://ipinfo.io/{ip}/json"
+    
+    # Indian timezones
+    INDIAN_TIMEZONES = {
+        'Asia/Kolkata',
+        'Asia/Calcutta',
+        'Asia/Delhi',
+        'Asia/Mumbai',
+        'Asia/Bangalore',
+        'Asia/Chennai'
+    }
+    
+    # Indian festivals and holidays (simplified)
+    INDIAN_FESTIVALS = {
+        'Diwali': ['2024-11-01', '2025-10-21', '2026-11-10'],
+        'Holi': ['2024-03-25', '2025-03-14', '2026-03-04'],
+        'Dussehra': ['2024-10-24', '2025-10-13', '2026-10-02'],
+        'Raksha Bandhan': ['2024-08-19', '2025-08-08', '2026-07-28'],
+        'Eid': ['2024-04-10', '2025-03-31', '2026-03-21'],
+        'Christmas': ['2024-12-25', '2025-12-25', '2026-12-25'],
+        'New Year': ['2024-01-01', '2025-01-01', '2026-01-01'],
+        'Independence Day': ['2024-08-15', '2025-08-15', '2026-08-15'],
+        'Republic Day': ['2024-01-26', '2025-01-26', '2026-01-26']
+    }
     
     @staticmethod
     def get_client_ip(request_headers: dict, forwarded_for: Optional[str] = None) -> str:
@@ -45,10 +68,10 @@ class TimezoneDetectionService:
         return client_ip
     
     @classmethod
-    async def detect_timezone_from_ip(cls, ip_address: str) -> Optional[str]:
+    async def detect_timezone_from_ip(cls, ip_address: str) -> Optional[Dict[str, Any]]:
         """
-        Detect timezone from IP address using geolocation API.
-        Returns timezone string or None if detection fails.
+        Detect timezone and cultural context from IP address using geolocation API.
+        Returns dictionary with timezone, country, and cultural context.
         """
         # Skip for localhost/private IPs
         if ip_address in ("127.0.0.1", "localhost", "::1") or \
@@ -68,13 +91,29 @@ class TimezoneDetectionService:
                     data = response.json()
                     if data.get("status") == "success":
                         timezone = data.get("timezone")
+                        country_code = data.get("countryCode", "")
+                        country = data.get("country", "")
+                        
+                        # Detect Indian context
+                        is_indian = cls.is_indian_context(timezone, country_code, country)
+                        
+                        result = {
+                            "timezone": timezone,
+                            "country_code": country_code,
+                            "country": country,
+                            "is_indian": is_indian,
+                            "cultural_context": "indian" if is_indian else "global"
+                        }
+                        
                         logger.info(
-                            "timezone_detected_from_ip",
+                            "timezone_and_context_detected",
                             ip=ip_address,
                             timezone=timezone,
+                            country=country_code,
+                            is_indian=is_indian,
                             provider="ip-api"
                         )
-                        return timezone
+                        return result
                     else:
                         logger.warning(
                             "ip_api_lookup_failed",
@@ -88,16 +127,31 @@ class TimezoneDetectionService:
                 
                 if response.status_code == 200:
                     data = response.json()
-                    # ipinfo returns timezone in the format "America/New_York"
+                    # ipinfo returns timezone in format "America/New_York"
                     timezone = data.get("timezone")
+                    country = data.get("country", "")
+                    country_code = data.get("country", "")
+                    
                     if timezone:
+                        is_indian = cls.is_indian_context(timezone, country_code, country)
+                        
+                        result = {
+                            "timezone": timezone,
+                            "country_code": country_code,
+                            "country": country,
+                            "is_indian": is_indian,
+                            "cultural_context": "indian" if is_indian else "global"
+                        }
+                        
                         logger.info(
-                            "timezone_detected_from_ip",
+                            "timezone_and_context_detected",
                             ip=ip_address,
                             timezone=timezone,
+                            country=country_code,
+                            is_indian=is_indian,
                             provider="ipinfo"
                         )
-                        return timezone
+                        return result
                         
         except Exception as e:
             logger.error(
@@ -108,32 +162,75 @@ class TimezoneDetectionService:
         
         return None
     
+    @staticmethod
+    def is_indian_context(timezone: str, country_code: str = "", country: str = "") -> bool:
+        """
+        Determine if user is in Indian context based on timezone and country.
+        """
+        # Check if timezone is Indian
+        if timezone in TimezoneDetectionService.INDIAN_TIMEZONES:
+            return True
+        
+        # Check if country is India
+        if country_code.upper() == "IN" or country.lower() in ["india", "bharat"]:
+            return True
+        
+        # Check if timezone starts with Asia and has Indian city
+        if timezone and "Asia" in timezone:
+            indian_cities = ["kolkata", "calcutta", "delhi", "mumbai", "bangalore", "chennai", "hyderabad", "pune"]
+            if any(city in timezone.lower() for city in indian_cities):
+                return True
+        
+        return False
+    
+    @staticmethod
+    def get_indian_festivals() -> Dict[str, list]:
+        """Get current year's Indian festivals."""
+        from datetime import datetime
+        year = datetime.now().year
+        
+        festivals = {}
+        for festival, dates in cls.INDIAN_FESTIVALS.items():
+            for date_str in dates:
+                if str(year) in date_str:
+                    festivals[festival] = date_str
+                    break
+        
+        return festivals
+    
     @classmethod
     async def detect_and_update_user_timezone(
         cls,
         user,
         request_headers: dict,
         forwarded_for: Optional[str] = None
-    ) -> Optional[str]:
+    ) -> Optional[Dict[str, Any]]:
         """
-        Detect timezone from request and update user if different.
-        Returns the detected timezone or the user's current timezone.
+        Detect timezone and cultural context from request and update user if different.
+        Returns detected context or user's current timezone.
         """
         # Get client IP
         client_ip = cls.get_client_ip(request_headers, forwarded_for)
         
-        # Try to detect timezone from IP
-        detected_tz = await cls.detect_timezone_from_ip(client_ip)
+        # Try to detect timezone and context from IP
+        detected_context = await cls.detect_timezone_from_ip(client_ip)
         
-        if detected_tz and detected_tz != user.timezone:
-            logger.info(
-                "updating_user_timezone",
-                user_id=str(user.id),
-                old_timezone=user.timezone,
-                new_timezone=detected_tz,
-                ip=client_ip
-            )
-            return detected_tz
+        if detected_context:
+            detected_tz = detected_context.get("timezone")
+            if detected_tz and detected_tz != user.timezone:
+                logger.info(
+                    "updating_user_timezone_and_context",
+                    user_id=str(user.id),
+                    old_timezone=user.timezone,
+                    new_timezone=detected_tz,
+                    is_indian=detected_context.get("is_indian", False),
+                    ip=client_ip
+                )
+                return detected_context
         
         # Return existing timezone if detection failed or matches
-        return user.timezone if user.timezone else "UTC"
+        return {
+            "timezone": user.timezone if user.timezone else "UTC",
+            "is_indian": cls.is_indian_context(user.timezone or "UTC"),
+            "cultural_context": "indian" if cls.is_indian_context(user.timezone or "UTC") else "global"
+        }

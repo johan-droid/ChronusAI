@@ -137,6 +137,17 @@ class ApiClient {
     return response.data;
   }
 
+  async getIndianContext(): Promise<{
+    is_indian: boolean;
+    cultural_context: string;
+    festivals: Record<string, string[]>;
+    preferences: Record<string, any>;
+    timezone: string;
+  }> {
+    const response = await this.client.get('users/indian-context');
+    return response.data;
+  }
+
   async updateUser(data: { full_name?: string; timezone?: string }): Promise<User> {
     const response = await this.client.put('users/me', data);
     cacheManager.invalidate('user:current');
