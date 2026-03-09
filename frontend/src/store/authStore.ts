@@ -8,8 +8,11 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  timezone: string;
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   updateAccessToken: (accessToken: string) => void;
+  updateUser: (user: Partial<User>) => void;
+  setTimezone: (timezone: string) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
 }
@@ -22,16 +25,28 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       isAuthenticated: false,
       isLoading: true, // Start with true to check initial auth state
+      timezone: 'UTC',
       setAuth: (user, accessToken, refreshToken) => set({ 
         user, 
         accessToken, 
         refreshToken,
+        timezone: user.timezone || 'UTC',
         isAuthenticated: true, 
         isLoading: false 
       }),
       updateAccessToken: (accessToken) => set((state) => ({
         ...state,
         accessToken
+      })),
+      updateUser: (userData) => set((state) => ({
+        ...state,
+        user: state.user ? { ...state.user, ...userData } : null,
+        timezone: userData.timezone || state.timezone
+      })),
+      setTimezone: (timezone) => set((state) => ({
+        ...state,
+        timezone,
+        user: state.user ? { ...state.user, timezone } : null
       })),
       logout: () => {
         // Clear auth state
@@ -67,7 +82,8 @@ export const useAuthStore = create<AuthState>()(
         user: state.user, 
         accessToken: state.accessToken,
         refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated 
+        isAuthenticated: state.isAuthenticated,
+        timezone: state.timezone
       }),
       onRehydrateStorage: () => (state) => {
         // Set loading to false after rehydration

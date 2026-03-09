@@ -18,6 +18,7 @@ import NavigationBar from '../components/NavigationBar';
 import StatsCard from '../components/StatsCard';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
+import { useTimezone } from '../hooks/useTimezone';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -198,57 +199,56 @@ TimeBreakdown.displayName = 'TimeBreakdown';
 
 export default function StatsOverview() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
+  const { timezone, getLocalHour, detectTimezone } = useTimezone();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [aiGreeting, setAiGreeting] = useState<string>('');
+  const [localGreeting, setLocalGreeting] = useState<string>('');
+
+  // Detect timezone and update greeting on mount
+  useEffect(() => {
+    const initTimezone = async () => {
+      // Detect timezone from backend (IP geolocation)
+      await detectTimezone();
+    };
+    initTimezone();
+  }, [detectTimezone]);
 
   useEffect(() => {
     const fetchGreeting = async () => {
       try {
-        // Get user's timezone or default to system timezone
-        const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // Use the timezone from auth store (detected from backend IP)
+        const tz = timezone;
         const response = await apiClient.getPersonalizedGreeting(tz);
         
         // Use API greeting which is calculated correctly based on user's timezone
         setAiGreeting(response.greeting);
         
-        // Also update the user's timezone if not set
-        if (!user?.timezone && response.timezone) {
-          // Could update user store here if needed
-          console.log('Using timezone from API:', response.timezone);
+        // Update store if backend detected different timezone
+        if (response.timezone !== timezone) {
+          updateUser({ timezone: response.timezone });
         }
       } catch (err) {
         console.error("Failed to fetch greeting", err);
-        // Fallback to local calculation
-        const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const now = new Date();
-        
-        // More reliable method to get hour in user's timezone
-        const formatter = new Intl.DateTimeFormat('en-US', {
-          timeZone: tz,
-          hour: 'numeric',
-          hour12: false,
-        });
-        const hour = parseInt(formatter.format(now), 10);
-        
-        let fallbackGreeting: string;
+        // Use local greeting based on detected timezone
+        const hour = getLocalHour();
+        let greeting: string;
         if (hour >= 5 && hour < 12) {
-          fallbackGreeting = 'Good morning! Ready to conquer your schedule?';
+          greeting = 'Good morning! Ready to conquer your schedule?';
         } else if (hour >= 12 && hour < 17) {
-          fallbackGreeting = 'Good afternoon! How are your meetings going?';
+          greeting = 'Good afternoon! How are your meetings going?';
         } else if (hour >= 17 && hour < 21) {
-          fallbackGreeting = 'Good evening! Time to wrap up your day?';
+          greeting = 'Good evening! Time to wrap up your day?';
         } else {
-          fallbackGreeting = 'Good night! Rest well for tomorrow.';
+          greeting = 'Good night! Rest well for tomorrow.';
         }
-        
-        setAiGreeting(fallbackGreeting);
+        setAiGreeting(greeting);
       }
     };
     if (user) fetchGreeting();
-  }, [user]);
+  }, [user, timezone, getLocalHour, updateUser]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -331,16 +331,8 @@ export default function StatsOverview() {
             <div className="relative z-10 space-y-2 sm:space-y-4">
               <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
                 {(() => {
-                  // Get user's timezone or default to system timezone
-                  const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-                  
-                  // More reliable method to get hour in user's timezone
-                  const formatter = new Intl.DateTimeFormat('en-US', {
-                    timeZone: tz,
-                    hour: 'numeric',
-                    hour12: false,
-                  });
-                  const hour = parseInt(formatter.format(new Date()), 10);
+                  // Use timezone from auth store (detected from backend IP)
+                  const hour = getLocalHour();
                   
                   // Determine greeting based on local hour
                   let greeting: string;

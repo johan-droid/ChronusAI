@@ -126,15 +126,20 @@ class ApiClient {
     return response.data;
   }
 
-  async getPersonalizedGreeting(timezone?: string): Promise<{
-    greeting: string;
-    time_period: string;
-    local_time: string;
+  async detectTimezone(): Promise<{
     timezone: string;
+    detected: boolean;
+    source: string;
   }> {
-    const params = new URLSearchParams();
-    if (timezone) params.append('timezone', timezone);
-    const response = await this.client.get(`greetings/personalized?${params.toString()}`);
+    const response = await this.client.post('users/detect-timezone');
+    // Clear user cache since timezone was updated
+    cacheManager.invalidate('user:current');
+    return response.data;
+  }
+
+  async updateUser(data: { full_name?: string; timezone?: string }): Promise<User> {
+    const response = await this.client.put('users/me', data);
+    cacheManager.invalidate('user:current');
     return response.data;
   }
 
