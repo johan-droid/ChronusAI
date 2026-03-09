@@ -207,11 +207,44 @@ export default function StatsOverview() {
   useEffect(() => {
     const fetchGreeting = async () => {
       try {
+        // Get user's timezone or default to system timezone
         const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
         const response = await apiClient.getPersonalizedGreeting(tz);
+        
+        // Use API greeting which is calculated correctly based on user's timezone
         setAiGreeting(response.greeting);
+        
+        // Also update the user's timezone if not set
+        if (!user?.timezone && response.timezone) {
+          // Could update user store here if needed
+          console.log('Using timezone from API:', response.timezone);
+        }
       } catch (err) {
         console.error("Failed to fetch greeting", err);
+        // Fallback to local calculation
+        const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const now = new Date();
+        
+        // More reliable method to get hour in user's timezone
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          hour: 'numeric',
+          hour12: false,
+        });
+        const hour = parseInt(formatter.format(now), 10);
+        
+        let fallbackGreeting: string;
+        if (hour >= 5 && hour < 12) {
+          fallbackGreeting = 'Good morning! Ready to conquer your schedule?';
+        } else if (hour >= 12 && hour < 17) {
+          fallbackGreeting = 'Good afternoon! How are your meetings going?';
+        } else if (hour >= 17 && hour < 21) {
+          fallbackGreeting = 'Good evening! Time to wrap up your day?';
+        } else {
+          fallbackGreeting = 'Good night! Rest well for tomorrow.';
+        }
+        
+        setAiGreeting(fallbackGreeting);
       }
     };
     if (user) fetchGreeting();
@@ -301,14 +334,13 @@ export default function StatsOverview() {
                   // Get user's timezone or default to system timezone
                   const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
                   
-                  // Create date in user's timezone
-                  const now = new Date();
-                  const timeString = now.toLocaleTimeString('en-US', { 
-                    timeZone: tz, 
-                    hour: 'numeric', 
-                    hour12: false 
+                  // More reliable method to get hour in user's timezone
+                  const formatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: tz,
+                    hour: 'numeric',
+                    hour12: false,
                   });
-                  const hour = parseInt(timeString, 10);
+                  const hour = parseInt(formatter.format(new Date()), 10);
                   
                   // Determine greeting based on local hour
                   let greeting: string;
@@ -323,7 +355,7 @@ export default function StatsOverview() {
                   }
                   
                   const firstName = user?.full_name?.split(' ')[0] || 'User';
-                  return <>{greeting}, <span className="gradient-text">{firstName}</span> 👋 <span className="text-[0px]">v3</span></>;
+                  return <>{greeting}, <span className="gradient-text">{firstName}</span> 👋</>;
                 })()}
               </h1>
 
