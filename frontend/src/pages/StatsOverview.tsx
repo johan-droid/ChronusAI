@@ -54,11 +54,10 @@ const NavButton = memo(({
   <button
     type="button"
     onClick={() => onClick(path)}
-    className={`px-5 py-2.5 rounded-full text-sm font-medium smooth-transition flex items-center gap-2 ${
-      isActive
-        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/20'
-        : 'text-slate-400 hover:text-white hover:bg-white/5'
-    }`}
+    className={`px-5 py-2.5 rounded-full text-sm font-medium smooth-transition flex items-center gap-2 ${isActive
+      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/20'
+      : 'text-slate-400 hover:text-white hover:bg-white/5'
+      }`}
   >
     <Icon className="h-4 w-4 shrink-0" />
     {label}
@@ -386,7 +385,14 @@ export default function StatsOverview() {
       <main className="saas-main">
         <header className="mb-5 sm:mb-8 animate-fade-in">
           <h1 className="text-xl sm:text-3xl md:text-4xl font-bold text-white mb-0.5 sm:mb-1">
-            Welcome back, <span className="gradient-text">{user?.full_name?.split(' ')[0] || 'User'}</span>
+            {(() => {
+              const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+              const hour = new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: tz }).replace(/\D/g, '');
+              const h = parseInt(hour, 10);
+              const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
+              const firstName = user?.full_name?.split(' ')[0] || 'User';
+              return <>{greeting}, <span className="gradient-text">{firstName}</span> 👋</>;
+            })()}
           </h1>
           <p className="text-slate-400 text-xs sm:text-base">Here’s your meeting overview and quick actions.</p>
         </header>

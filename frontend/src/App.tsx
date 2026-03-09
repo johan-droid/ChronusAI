@@ -7,6 +7,16 @@ import { useAuthStore } from './store/authStore';
 import Footer from './components/Footer';
 import './index.css';
 
+// Hide footer on authenticated app pages
+const AUTHENTICATED_PATHS = ['/dashboard', '/chat', '/availability', '/history', '/settings'];
+const ConditionalFooter = () => {
+  const location = useLocation();
+  const currentPath = location.pathname.replace(/\/$/, '') || '/';
+  if (AUTHENTICATED_PATHS.includes(currentPath)) return null;
+  return <Footer />;
+};
+
+
 // Lazy load components for better performance
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const Login = lazy(() => import('./pages/Login'));
@@ -304,7 +314,7 @@ function App() {
             </OAuthCallbackGuard>
           </main>
 
-          <Footer />
+          <ConditionalFooter />
         </div>
       </Router>
       <Toaster

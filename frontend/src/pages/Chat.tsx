@@ -30,11 +30,11 @@ export default function Chat() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative overflow-hidden flex flex-col">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-grid-white/[0.02]" />
+    <div className="h-screen h-[100dvh] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 relative flex flex-col overflow-hidden">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-grid-white/[0.02] pointer-events-none" />
 
-      <nav className="relative z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl safe-area-top">
+      <nav className="relative z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl safe-area-top shrink-0">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
             <button type="button" onClick={() => navigate('/dashboard')} className="flex items-center gap-2 sm:gap-3 min-h-[44px] -ml-1">
@@ -102,9 +102,9 @@ export default function Chat() {
         </div>
       </nav>
 
-      <main className="relative z-10 flex-1 flex flex-col min-h-0 overflow-hidden">
-        <div className="max-w-5xl mx-auto w-full h-full flex-1 flex flex-col min-h-0 px-3 sm:px-6 py-3 sm:py-6">
-          <div className="h-full min-h-0 bg-slate-900/30 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/5 shadow-2xl overflow-hidden flex flex-col">
+      <main className="relative z-10 flex-1 flex flex-col min-h-0">
+        <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col min-h-0 px-3 sm:px-6 py-3 sm:py-6">
+          <div className="flex-1 min-h-0 bg-slate-900/30 backdrop-blur-xl rounded-xl sm:rounded-2xl border border-white/5 shadow-2xl overflow-hidden flex flex-col">
             <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5 bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
@@ -117,8 +117,8 @@ export default function Chat() {
               </div>
             </div>
 
-            {/* Chat Window */}
-            <div className="flex-1 overflow-hidden">
+            {/* Chat Window - flex-1 + min-h-0 ensures proper scroll */}
+            <div className="flex-1 min-h-0">
               <ChatWindow />
             </div>
           </div>
@@ -129,3 +129,4 @@ export default function Chat() {
     </div>
   );
 }
+
