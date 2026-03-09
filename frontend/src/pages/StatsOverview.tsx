@@ -51,9 +51,9 @@ const StatsGrid = memo(({ stats }: {
     totalAttendees: number;
   };
 }) => (
-  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+  <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
     <div className="animate-scale-in" style={{ animationDelay: '0.05s' }}>
-      <StatsCard title="Total Meetings" value={stats.total} icon={<Calendar className="h-4 w-4" />} />
+      <StatsCard title="Total" value={stats.total} icon={<Calendar className="h-4 w-4" />} />
     </div>
     <div className="animate-scale-in" style={{ animationDelay: '0.1s' }}>
       <StatsCard title="Scheduled" value={stats.scheduled} icon={<CheckCircle className="h-4 w-4" />} />
@@ -70,31 +70,31 @@ StatsGrid.displayName = 'StatsGrid';
 
 const QuickActions = memo(({ navigate }: { navigate: (path: string) => void }) => {
   const actions = [
-    { path: '/chat', label: 'AI Chat', description: 'Schedule with natural language', icon: MessageSquare, accent: 'from-blue-500 to-cyan-500' },
-    { path: '/availability', label: 'Availability', description: 'Set slots', icon: CalendarClock, accent: 'from-violet-500 to-purple-600' },
-    { path: '/history', label: 'History', description: 'View history', icon: Calendar, accent: 'from-amber-500 to-orange-500' },
+    { path: '/chat', label: 'AI Chat', description: 'Schedule with AI', icon: MessageSquare, accent: 'from-blue-500 to-cyan-500' },
+    { path: '/availability', label: 'Availability', description: 'View slots', icon: CalendarClock, accent: 'from-violet-500 to-purple-600' },
+    { path: '/history', label: 'History', description: 'Past meetings', icon: Calendar, accent: 'from-amber-500 to-orange-500' },
     { path: '/settings', label: 'Settings', description: 'Preferences', icon: Settings, accent: 'from-slate-500 to-slate-600' },
   ];
 
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
       {actions.map(({ path, label, description, icon: Icon, accent }, i) => (
         <button
           key={path}
           type="button"
           onClick={() => navigate(path)}
-          className="group relative overflow-hidden rounded-[1.5rem] bg-white/[0.02] border border-white/5 p-3 sm:p-5 text-left smooth-transition hover:border-white/20 hover:bg-white/[0.05] hover:shadow-2xl hover:shadow-blue-500/10 animate-scale-in focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 min-h-[64px] sm:min-h-0 active:scale-[0.98] backdrop-blur-sm"
+          className="group relative overflow-hidden rounded-xl sm:rounded-2xl bg-white/[0.02] border border-white/5 p-3 sm:p-4 lg:p-5 text-left smooth-transition hover:border-white/20 hover:bg-white/[0.05] hover:shadow-2xl hover:shadow-blue-500/10 animate-scale-in focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 min-h-[72px] sm:min-h-0 active:scale-[0.98] backdrop-blur-sm touch-manipulation"
           style={{ animationDelay: `${0.1 + i * 0.05}s` }}
         >
           <div className={`absolute top-0 right-0 w-10 h-10 rounded-full bg-gradient-to-br ${accent} opacity-10 group-hover:opacity-20 smooth-transition -translate-y-1/2 translate-x-1/2`} />
-          <div className="flex items-center gap-2.5 mb-1 sm:mb-3">
-            <div className={`relative z-10 inline-flex p-1.5 rounded-xl bg-gradient-to-br ${accent} shadow-lg shadow-black/20`}>
+          <div className="flex items-center gap-2 sm:gap-2.5 mb-1 sm:mb-2">
+            <div className={`relative z-10 inline-flex p-1.5 rounded-lg sm:rounded-xl bg-gradient-to-br ${accent} shadow-lg shadow-black/20`}>
               <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
             </div>
-            <h3 className="relative z-10 font-black text-white text-[11px] sm:text-base tracking-tight leading-none uppercase sm:normal-case">{label}</h3>
+            <h3 className="relative z-10 font-bold text-white text-xs sm:text-sm tracking-tight leading-none">{label}</h3>
           </div>
-          <p className="relative z-10 text-[9px] sm:text-xs text-slate-500 font-medium mb-1.5 sm:mb-2 line-clamp-1">{description}</p>
-          <span className="relative z-10 inline-flex items-center text-[9px] sm:text-xs font-bold text-blue-400 group-hover:text-blue-300 smooth-transition uppercase tracking-wider">
+          <p className="relative z-10 text-[10px] sm:text-xs text-slate-500 font-medium mb-1 sm:mb-1.5 line-clamp-1 hidden sm:block">{description}</p>
+          <span className="relative z-10 inline-flex items-center text-[10px] sm:text-xs font-bold text-blue-400 group-hover:text-blue-300 smooth-transition">
             Open <ChevronRight className="h-2.5 w-2.5 ml-0.5" />
           </span>
         </button>
@@ -290,13 +290,13 @@ export default function StatsOverview() {
         setShowLogout={setShowLogout}
       />
 
-      <main className="saas-main">
-        <header className="mb-8 animate-fade-in relative">
-          <div className="premium-glass p-6 sm:p-10 rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+      <main className="saas-main px-3 sm:px-4 lg:px-6">
+        <header className="mb-4 sm:mb-6 lg:mb-8 animate-fade-in relative">
+          <div className="premium-glass p-4 sm:p-6 lg:p-10 rounded-2xl sm:rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 sm:w-64 sm:h-64 bg-primary/10 rounded-full blur-[60px] sm:blur-[100px] -translate-y-1/2 translate-x-1/2" />
 
-            <div className="relative z-10 space-y-4">
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-[1.1]">
+            <div className="relative z-10 space-y-2 sm:space-y-4">
+              <h1 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
                 {(() => {
                   // Get user's timezone or default to system timezone
                   const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -327,11 +327,11 @@ export default function StatsOverview() {
                 })()}
               </h1>
 
-              <div className="flex items-center gap-3">
-                <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-                <p className="text-slate-400 text-sm sm:text-lg font-medium">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-primary animate-pulse" />
+                <p className="text-slate-400 text-xs sm:text-sm lg:text-lg font-medium">
                   {aiGreeting ? (
-                    <span className="font-cursive text-2xl sm:text-4xl text-blue-300 drop-shadow-sm inline-block animate-typing whitespace-nowrap overflow-hidden">
+                    <span className="font-cursive text-lg sm:text-2xl lg:text-4xl text-blue-300 drop-shadow-sm inline-block animate-typing whitespace-nowrap overflow-hidden">
                       {aiGreeting}
                     </span>
                   ) : (
@@ -348,32 +348,32 @@ export default function StatsOverview() {
             <LoadingSpinner size="lg" variant="gradient" text="Loading your dashboard..." />
           </div>
         ) : (
-          <div className="space-y-5 sm:space-y-8">
+          <div className="space-y-4 sm:space-y-6 lg:space-y-8">
             <section>
-              <h2 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 sm:mb-4">Quick actions</h2>
+              <h2 className="text-[10px] sm:text-xs lg:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 sm:mb-3 lg:mb-4">Quick actions</h2>
               <QuickActions navigate={navigate} />
             </section>
 
             <section>
-              <h2 className="text-xs sm:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 sm:mb-4">Overview</h2>
+              <h2 className="text-[10px] sm:text-xs lg:text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 sm:mb-3 lg:mb-4">Overview</h2>
               <StatsGrid stats={stats} />
             </section>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
               <section className="lg:col-span-2">
                 <UpcomingMeetings meetings={meetings || []} navigate={navigate} />
               </section>
-              <section>
+              <section className="space-y-3 sm:space-y-4">
                 <TimeBreakdown stats={{ today: stats.today, thisWeek: stats.thisWeek, thisMonth: stats.thisMonth }} />
-                <div className="mt-4 rounded-2xl bg-white/[0.03] border border-white/10 p-4 sm:p-5">
-                  <h2 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
-                    <Users className="h-4 w-4 text-slate-400" />
+                <div className="rounded-xl sm:rounded-2xl bg-white/[0.03] border border-white/10 p-3 sm:p-4 lg:p-5">
+                  <h2 className="text-sm sm:text-base font-semibold text-white flex items-center gap-2 mb-2 sm:mb-3">
+                    <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400" />
                     Attendees
                   </h2>
-                  <p className="text-2xl font-bold text-white">{stats.totalAttendees}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Across all meetings</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">{stats.totalAttendees}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 mt-0.5">Across all meetings</p>
                   {stats.total > 0 && (
-                    <p className="text-sm text-slate-500 mt-2">~{(stats.totalAttendees / stats.total).toFixed(1)} per meeting</p>
+                    <p className="text-xs sm:text-sm text-slate-500 mt-1 sm:mt-2">~{(stats.totalAttendees / stats.total).toFixed(1)} per meeting</p>
                   )}
                 </div>
               </section>
