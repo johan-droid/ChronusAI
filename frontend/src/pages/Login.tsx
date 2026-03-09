@@ -394,7 +394,6 @@ export default function Login() {
             </div>
           </div>
         </div>
-      </div>
 
       {isLoading && mode === 'oauth' && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] animate-fade-in">
