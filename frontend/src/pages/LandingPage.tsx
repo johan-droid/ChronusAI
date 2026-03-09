@@ -213,13 +213,13 @@ export default function LandingPage() {
       <div className="planet planet-1 opacity-20" />
       <div className="planet planet-2 opacity-20" />
 
-      {/* Navigation */}
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-4 ${isScrolled ? 'pt-2' : 'pt-6'}`}>
-        <nav className={`max-w-5xl mx-auto transition-all duration-500 rounded-full border border-white/5 shadow-2xl ${isScrolled ? 'bg-black/60 backdrop-blur-xl border-white/10 px-6 py-2' : 'bg-transparent px-2 py-2 border-transparent'}`}>
+      {/* Navigation - Mobile Optimized */}
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 sm:px-6 py-3 sm:py-4 ${isScrolled ? 'pt-2' : 'pt-4 sm:pt-6'}`}>
+        <nav className={`max-w-5xl mx-auto transition-all duration-500 rounded-2xl sm:rounded-full border border-white/5 shadow-2xl ${isScrolled ? 'bg-black/80 backdrop-blur-xl border-white/10 px-4 sm:px-6 py-2' : 'bg-transparent px-2 py-2 border-transparent'}`}>
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <AnimatedLogo className={isScrolled ? "h-8 w-8" : "h-10 w-10"} />
-              <span className="text-xl font-bold gradient-text">ChronosAI</span>
+            <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <AnimatedLogo className={isScrolled ? "h-7 w-7 sm:h-8 sm:w-8" : "h-8 w-8 sm:h-10 sm:w-10"} />
+              <span className="text-lg sm:text-xl font-bold gradient-text">ChronosAI</span>
             </div>
 
             <div className="hidden md:flex items-center space-x-8 text-sm font-medium text-muted-foreground">
@@ -230,9 +230,10 @@ export default function LandingPage() {
 
             <button
               onClick={() => navigate('/login')}
-              className={`transition-all duration-500 px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 group ${isScrolled ? 'bg-primary text-white hover:bg-primary/90' : 'glass-card border-white/10 hover:border-primary/50 text-foreground'}`}
+              className={`transition-all duration-500 px-4 sm:px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 group ${isScrolled ? 'bg-primary text-white hover:bg-primary/90' : 'glass-card border-white/10 hover:border-primary/50 text-foreground'}`}
             >
-              <span>Sign In</span>
+              <span className="hidden sm:inline">Sign In</span>
+              <span className="sm:hidden">Sign In</span>
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
@@ -240,28 +241,28 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-20 pb-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section className="relative z-10 pt-24 sm:pt-32 pb-16 sm:pb-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="text-center space-y-8"
+            className="text-center space-y-6 sm:space-y-8"
           >
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="inline-flex items-center space-x-2 premium-glass px-4 py-2 rounded-full text-sm"
+                className="inline-flex items-center space-x-2 premium-glass px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm"
               >
-                <div className="h-4 w-4 text-primary rounded-full bg-primary/20 flex items-center justify-center">
-                  <div className="h-2 w-2 bg-primary rounded-full animate-pulse" />
+                <div className="h-3 w-3 sm:h-4 sm:w-4 text-primary rounded-full bg-primary/20 flex items-center justify-center">
+                  <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 bg-primary rounded-full animate-pulse" />
                 </div>
                 <span className="text-foreground/80 font-medium">Powered by Advanced AI</span>
               </motion.div>
 
-              <h1 className="text-5xl lg:text-8xl font-bold text-foreground tracking-tight leading-[1.12] font-heading">
+              <h1 className="text-3xl sm:text-5xl lg:text-8xl font-bold text-foreground tracking-tight leading-[1.12] font-heading">
                 Schedule meetings with
                 <span className="gradient-text pb-1 block">natural language</span>
               </h1>
@@ -270,7 +271,7 @@ export default function LandingPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.4, duration: 1 }}
-                className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+                className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4 sm:px-0"
               >
                 Transform your calendar management with ChronosAI's AI-powered scheduling. Simply tell ChronosAI what you need in plain English, and watch it handle complex scheduling automatically.
               </motion.p>
@@ -280,31 +281,31 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.5 }}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
             >
               <button
                 onClick={() => navigate('/login')}
-                className="group relative overflow-hidden premium-glass px-8 py-4 rounded-xl border border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg shadow-primary/5"
+                className="w-full sm:w-auto group relative overflow-hidden premium-glass px-6 sm:px-8 py-3.5 sm:py-4 rounded-xl border border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg shadow-primary/5"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <span className="relative flex items-center space-x-2 text-foreground font-semibold">
+                <span className="relative flex items-center justify-center space-x-2 text-foreground font-semibold">
                   <span>Get Started for Free</span>
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>
             </motion.div>
 
-            {/* Stats */}
+            {/* Stats - Mobile optimized */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.8, duration: 1 }}
-              className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-16"
+              className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 pt-12 sm:pt-16"
             >
               {stats.map((stat, index) => (
-                <div key={index} className="text-center space-y-2">
-                  <div className="text-3xl lg:text-4xl font-bold gradient-text">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground/60 font-medium uppercase tracking-wider">{stat.label}</div>
+                <div key={index} className="text-center space-y-1 sm:space-y-2">
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">{stat.value}</div>
+                  <div className="text-xs sm:text-sm text-muted-foreground/60 font-medium uppercase tracking-wider">{stat.label}</div>
                 </div>
               ))}
             </motion.div>
@@ -313,26 +314,26 @@ export default function LandingPage() {
       </section>
 
       {/* How It Works Section */}
-      <section id="features" className="relative z-10 py-32">
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+      <section id="features" className="relative z-10 py-16 sm:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
-            className="text-center space-y-6 mb-20"
+            className="text-center space-y-4 sm:space-y-6 mb-12 sm:mb-20"
           >
-            <div className="inline-flex items-center space-x-2 premium-glass px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest text-primary/80">
-              <MousePointer2 className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center space-x-2 premium-glass px-3 sm:px-4 py-2 rounded-full text-xs font-semibold uppercase tracking-widest text-primary/80">
+              <MousePointer2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
               <span>How it works</span>
             </div>
-            <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading max-w-4xl mx-auto leading-[1.1]">
+            <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-foreground font-heading max-w-4xl mx-auto leading-[1.1]">
               With us, appointment scheduling is
               <span className="gradient-text block">actually easy</span>
             </h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-4 sm:gap-8">
             {howItWorks.map((item, index) => (
               <motion.div
                 key={index}
@@ -341,18 +342,18 @@ export default function LandingPage() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.15, duration: 0.5 }}
                 whileHover={{ y: -8 }}
-                className="premium-glass rounded-3xl flex flex-col overflow-hidden group border border-white/5 hover:border-primary/30 transition-all duration-500 shadow-2xl shadow-black/40"
+                className="premium-glass rounded-2xl sm:rounded-3xl flex flex-col overflow-hidden group border border-white/5 hover:border-primary/30 transition-all duration-500 shadow-2xl shadow-black/40"
               >
-                <div className="p-8 space-y-4">
+                <div className="p-5 sm:p-8 space-y-3 sm:space-y-4">
                   <div className="text-xs font-bold text-primary/60 bg-primary/5 w-fit px-3 py-1.5 rounded-full border border-primary/10 tracking-widest uppercase">
                     Step {item.step}
                   </div>
-                  <h3 className="text-2xl font-bold text-foreground font-heading">{item.title}</h3>
+                  <h3 className="text-lg sm:text-2xl font-bold text-foreground font-heading">{item.title}</h3>
                   <p className="text-muted-foreground/80 leading-relaxed text-sm font-medium">
                     {item.description}
                   </p>
                 </div>
-                <div className="mt-auto bg-white/[0.02] border-t border-white/5 overflow-hidden transition-colors group-hover:bg-white/[0.04] p-4">
+                <div className="mt-auto bg-white/[0.02] border-t border-white/5 overflow-hidden transition-colors group-hover:bg-white/[0.04] p-3 sm:p-4">
                   {item.illustration}
                 </div>
               </motion.div>
