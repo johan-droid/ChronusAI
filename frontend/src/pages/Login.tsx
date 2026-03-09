@@ -375,23 +375,23 @@ export default function Login() {
                   </div>
                 </form>
               )}
-            </div>
 
-                {/* Verification Badges */}
-                <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
-                  <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                    <Shield className="h-3 w-3" />
-                    SOC 2
-                  </div>
-                  <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                    <Lock className="h-3 w-3" />
-                    GDPR
-                  </div>
-                  <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
-                    <Sparkles className="h-3 w-3" />
-                    ISO 27001
-                  </div>
+              {/* Verification Badges */}
+              <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
+                <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                  <Shield className="h-3 w-3" />
+                  SOC 2
                 </div>
+                <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                  <Lock className="h-3 w-3" />
+                  GDPR
+                </div>
+                <div className="flex items-center gap-1.5 grayscale opacity-50 hover:grayscale-0 hover:opacity-100 transition-all cursor-default">
+                  <Sparkles className="h-3 w-3" />
+                  ISO 27001
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
