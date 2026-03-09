@@ -481,28 +481,24 @@ export default function LandingPage() {
 
       {/* Premium Multi-Column Footer */}
       <footer className="relative z-10 border-t border-white/5 bg-[#030303]/80 backdrop-blur-xl overflow-hidden">
-        {/* Space Decorations */}
-        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden h-full w-full">
-          {/* Astronaut */}
-          <div className="absolute top-1/4 left-10 md:left-20 opacity-20 astronaut-float">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+        {/* Space Decorations - Pushed to extreme corners to ensure no overlap with text on mobile */}
+        <div className="absolute inset-0 pointer-events-none select-none overflow-hidden h-full w-full opacity-20">
+          {/* Astronaut - Moved to bottom right corner */}
+          <div className="absolute bottom-10 right-4 md:bottom-20 md:right-10 opacity-30 astronaut-float">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary/30">
               <path d="M12 2a5 5 0 0 1 5 5v2a1 1 0 0 0 1 1h1a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1a1 1 0 0 0-1 1v2a5 5 0 0 1-5 5H12a5 5 0 0 1-5-5v-2a1 1 0 0 0-1-1H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1a1 1 0 0 0 1-1V7a5 5 0 0 1 5-5z" />
               <path d="M9 13a3 3 0 0 1 6 0" />
             </svg>
           </div>
 
-          {/* Planets */}
-          <div className="absolute top-1/2 right-1/4">
+          {/* Planets - Moved to top left, away from branding */}
+          <div className="absolute top-10 left-4">
             <div className="planet-footer planet-footer-mercury"></div>
             <div className="planet-footer planet-footer-venus"></div>
             <div className="planet-footer planet-footer-earth"></div>
             <div className="planet-footer planet-footer-mars"></div>
             <div className="planet-footer planet-footer-jupiter"></div>
           </div>
-
-          {/* Random floating dots/stars for extra depth */}
-          <div className="absolute top-10 right-20 w-1 h-1 bg-white/20 rounded-full animate-pulse"></div>
-          <div className="absolute bottom-20 left-1/3 w-1.5 h-1.5 bg-primary/20 rounded-full animate-pulse delay-700"></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 md:pt-24 pb-8 md:pb-12 relative z-10">
@@ -515,15 +511,15 @@ export default function LandingPage() {
               <p className="text-muted-foreground text-lg leading-relaxed max-w-sm">
                 The next generation of AI-powered scheduling. Plan, sync, and meet without the friction.
               </p>
-              <div className="flex items-center gap-4">
-                <a href="mailto:sahooashutosh2022@gmail.com" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group" title="Email">
-                  <Mail className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+              <div className="flex items-center gap-5">
+                <a href="mailto:sahooashutosh2022@gmail.com" className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 hover:scale-110 transition-all duration-300 group shadow-lg shadow-black/20" title="Email">
+                  <Mail className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                 </a>
-                <a href="https://github.com/johan-droid" target="_blank" rel="noopener noreferrer" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group" title="GitHub">
-                  <Github className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                <a href="https://github.com/johan-droid" target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 hover:scale-110 transition-all duration-300 group shadow-lg shadow-black/20" title="GitHub">
+                  <Github className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                 </a>
-                <a href="https://chronusai.onrender.com" target="_blank" rel="noopener noreferrer" className="h-10 w-10 glass-card rounded-xl flex items-center justify-center hover:border-primary/50 transition-all group" title="Live Demo">
-                  <ExternalLink className="h-5 w-5 text-muted-foreground group-hover:text-primary" />
+                <a href="https://chronusai.onrender.com" target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center hover:bg-primary/20 hover:border-primary/50 hover:scale-110 transition-all duration-300 group shadow-lg shadow-black/20" title="Live Demo">
+                  <ExternalLink className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                 </a>
               </div>
             </div>
