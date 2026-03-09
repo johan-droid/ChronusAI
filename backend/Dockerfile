@@ -6,30 +6,31 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --user --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # Stage 2: Runtime
 FROM python:3.11-slim as runner
 
 WORKDIR /app
 
-# Install runtime dependencies (if any)
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy only the installed packages from builder
-COPY --from=builder /root/.local /root/.local
+# Copy installed packages from builder
+COPY --from=builder /install /usr/local
 COPY . .
 
 # Ensure scripts are executable
 RUN chmod +x start.sh
 
-# Update PATH
-ENV PATH=/root/.local/bin:$PATH
+# Environment variables
+ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 
 # Create and use non-root user
