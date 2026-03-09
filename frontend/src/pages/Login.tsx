@@ -374,7 +374,7 @@ export default function Login() {
                     </button>
                   </div>
                 </form>
-              )}
+            )}
 
               {/* Verification Badges */}
               <div className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-[10px] text-slate-600 uppercase tracking-widest font-bold">
