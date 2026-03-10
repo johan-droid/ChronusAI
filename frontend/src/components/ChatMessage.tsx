@@ -70,28 +70,28 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2 sm:gap-3 w-full group px-2 sm:px-0`}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-1.5 sm:gap-2 md:gap-3 w-full group px-1.5 sm:px-2 md:px-0`}
     >
       {/* Avatar - AI only */}
       {!isUser && (
         <div className="flex-shrink-0 self-end mb-1">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-white/10 rounded-full flex items-center justify-center shadow-lg">
-            <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-white/10 rounded-full flex items-center justify-center shadow-lg">
+            <Bot className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-blue-400" />
           </div>
         </div>
       )}
 
       {/* Message Bubble */}
-      <div className={`max-w-[85%] sm:max-w-[75%] min-w-0 ${isUser ? 'order-1' : 'order-2'}`}>
+      <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] min-w-0 ${isUser ? 'order-1' : 'order-2'}`}>
         <div 
-          className={`relative px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl transition-all duration-200 ${
+          className={`relative px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 rounded-2xl transition-all duration-200 ${
             isUser
               ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-br-md shadow-md'
               : 'bg-[#1a1a2e] border border-white/10 text-slate-100 rounded-bl-md shadow-md'
           } ${isTyping ? 'animate-pulse' : ''}`}
         >
           {/* Message Content */}
-          <div className="text-[14px] sm:text-[15px] leading-[1.5] font-normal whitespace-pre-wrap break-words">
+          <div className="text-[13px] sm:text-[14px] md:text-[15px] leading-[1.5] font-normal whitespace-pre-wrap break-words">
             {cleanContent}
             {isTyping && (
               <span className="inline-flex gap-1 ml-1">
@@ -104,21 +104,21 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* Meeting Card - if present */}
           {!isUser && message.meeting?.meeting_url && (
-            <div className="mt-3 p-3 bg-black/30 border border-white/10 rounded-xl flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="mt-2.5 sm:mt-3 p-2.5 sm:p-3 bg-black/30 border border-white/10 rounded-xl flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
               <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-blue-400 font-bold text-xs">Z</span>
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold text-white truncate">Zoom Meeting</p>
-                  <p className="text-[10px] text-slate-400 truncate">{message.meeting.meeting_url}</p>
+                  <p className="text-[9px] sm:text-[10px] text-slate-400 truncate">{message.meeting.meeting_url}</p>
                 </div>
               </div>
               <a
                 href={message.meeting.meeting_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-400 text-white text-xs font-semibold rounded-lg transition-all text-center whitespace-nowrap"
+                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 hover:bg-blue-400 text-white text-xs font-semibold rounded-lg transition-all text-center whitespace-nowrap touch-manipulation"
               >
                 Join
               </a>
@@ -127,21 +127,21 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* Meetings List - if present */}
           {!isUser && message.meetings && message.meetings.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-2">
+            <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-1.5 sm:mb-2">
                 <Calendar className="h-3 w-3" />
                 <span>Upcoming Meetings</span>
               </div>
               {message.meetings.slice(0, 5).map((meeting, index) => (
-                <div key={meeting.id || index} className="p-2 bg-black/20 border border-white/5 rounded-lg">
+                <div key={meeting.id || index} className="p-2 sm:p-2.5 bg-black/20 border border-white/5 rounded-lg">
                   <p className="text-xs font-medium text-white truncate">{meeting.title}</p>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[9px] sm:text-[10px] text-slate-400">
                     {formatMeetingTime(meeting.start_time)}
                   </p>
                 </div>
               ))}
               {message.meetings.length > 5 && (
-                <p className="text-[10px] text-slate-500 text-center">
+                <p className="text-[9px] sm:text-[10px] text-slate-500 text-center">
                   +{message.meetings.length - 5} more meetings
                 </p>
               )}
@@ -150,22 +150,22 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* Availability Slots - if present */}
           {!isUser && message.availability && message.availability.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 mb-2">
+            <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 mb-1.5 sm:mb-2">
                 <Clock className="h-3 w-3" />
                 <span>Available Time Slots</span>
               </div>
               {message.availability.slice(0, 3).map((slot, index) => {
                 const { time, duration } = formatAvailabilitySlot(slot.start, slot.end);
                 return (
-                  <div key={index} className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                  <div key={index} className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                     <p className="text-xs font-medium text-emerald-300">{time}</p>
-                    <p className="text-[10px] text-emerald-400/70">{duration}</p>
+                    <p className="text-[9px] sm:text-[10px] text-emerald-400/70">{duration}</p>
                   </div>
                 );
               })}
               {message.availability.length > 3 && (
-                <p className="text-[10px] text-slate-500 text-center">
+                <p className="text-[9px] sm:text-[10px] text-slate-500 text-center">
                   +{message.availability.length - 3} more slots
                 </p>
               )}
@@ -174,19 +174,19 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* AI Suggestions - if present */}
           {!isUser && message.suggestions && message.suggestions.length > 0 && (
-            <div className="mt-3 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 mb-2">
+            <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 mb-1.5 sm:mb-2">
                 <Sparkles className="h-3 w-3" />
                 <span>AI Suggestions</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {message.suggestions.slice(0, 4).map((suggestion, index) => (
                   <button
                     key={index}
-                    className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-300 hover:bg-purple-500/20 transition-colors"
+                    className="px-2.5 sm:px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-300 hover:bg-purple-500/20 transition-colors touch-manipulation"
                     onClick={() => {
                       // This would trigger a new message with the suggestion
-                      const input = document.querySelector('textarea[placeholder*="Type your message"]') as HTMLTextAreaElement;
+                      const input = document.querySelector('textarea[placeholder*="Message ChronosAI"]') as HTMLTextAreaElement;
                       if (input) {
                         input.value = suggestion.time;
                         input.focus();
@@ -202,7 +202,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* Success Indicator */}
           {!isUser && isSuccess && (
-            <div className={`mt-2 pt-2 border-t border-white/10 flex items-center gap-1.5 text-[10px] sm:text-xs ${message.meeting?.meeting_url ? 'text-blue-400' : 'text-emerald-400'}`}>
+            <div className={`mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-white/10 flex items-center gap-1.5 text-[9px] sm:text-xs ${message.meeting?.meeting_url ? 'text-blue-400' : 'text-emerald-400'}`}>
               <Check className="h-3 w-3" />
               <span className="font-medium">{message.meeting?.meeting_url ? 'Meeting created' : 'Done'}</span>
             </div>
@@ -210,7 +210,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* Timestamp & Status */}
           <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <span className={`text-[10px] ${isUser ? 'text-white/70' : 'text-slate-500'}`}>
+            <span className={`text-[9px] sm:text-[10px] ${isUser ? 'text-white/70' : 'text-slate-500'}`}>
               {formattedTime}
             </span>
             {isUser && (
@@ -225,8 +225,8 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
       {/* Avatar - User only */}
       {isUser && (
         <div className="flex-shrink-0 self-end mb-1 order-2">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/10 border border-white/10 rounded-full flex items-center justify-center shadow-lg">
-            <User className="h-4 w-4 sm:h-5 sm:w-5 text-slate-300" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/10 border border-white/10 rounded-full flex items-center justify-center shadow-lg">
+            <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-slate-300" />
           </div>
         </div>
       )}
