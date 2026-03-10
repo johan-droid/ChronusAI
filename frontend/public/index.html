@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="AI-powered meeting scheduler that integrates with your calendar">
+    <meta name="keywords" content="AI, meeting scheduler, calendar, automation, productivity">
+    <meta name="author" content="ChronosAI">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="background-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ChronosAI">
+    <meta name="application-name" content="ChronosAI">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="ChronosAI - AI Meeting Scheduler">
+    <meta property="og:description" content="AI-powered meeting scheduler that integrates with your calendar">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/icons/icon-512x512.png">
+    <meta property="og:url" content="https://chronos-ai-theta.vercel.app">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ChronosAI - AI Meeting Scheduler">
+    <meta name="twitter:description" content="AI-powered meeting scheduler that integrates with your calendar">
+    <meta name="twitter:image" content="/icons/icon-512x512.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-167x167.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180x180.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <title>ChronosAI - AI Meeting Scheduler</title>
+    
+    <style>
+        /* Critical CSS for loading */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #root {
+            min-height: 100vh;
+        }
+
+        /* Loading spinner */
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+
+        .loading-subtitle {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        /* Hide loading when app is ready */
+        .app-ready .loading-container {
+            display: none;
+        }
+
+        /* PWA Install Prompt Styles */
+        .pwa-install-prompt {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+            z-index: 1000;
+            font-family: 'Inter', sans-serif;
+            max-width: 320px;
+            transform: translateY(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .pwa-install-prompt.show {
+            transform: translateY(0);
+        }
+
+        /* Offline indicator */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #ef4444;
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 1001;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .offline-indicator.show {
+            transform: translateY(0);
+        }
+
+        /* iOS Safari PWA Standalone Mode */
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+                padding-left: env(safe-area-inset-left);
+                padding-right: env(safe-area-inset-right);
+            }
+        }
+
+        /* Android PWA */
+        @media (display-mode: standalone) and (not (-webkit-touch-callout: none)) {
+            body {
+                padding-top: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <!-- Loading Screen -->
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">ChronosAI</div>
+            <div class="loading-subtitle">AI Meeting Scheduler</div>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        You're offline. Some features may be limited.
+    </div>
+
+    <!-- PWA Install Prompt (will be added dynamically) -->
+    <div id="pwaInstallPrompt"></div>
+
+    <script>
+        // PWA Installation Detection
+        (function() {
+            // Check if running in PWA mode
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                         window.navigator.standalone === true ||
+                         document.referrer.includes('android-app://');
+
+            if (isPWA) {
+                document.body.classList.add('pwa-mode');
+                console.log('📱 Running in PWA mode');
+            }
+
+            // Online/Offline detection
+            const offlineIndicator = document.getElementById('offlineIndicator');
+            
+            function updateOnlineStatus() {
+                if (navigator.onLine) {
+                    offlineIndicator.classList.remove('show');
+                    console.log('🌐 Online');
+                } else {
+                    offlineIndicator.classList.add('show');
+                    console.log('📴 Offline');
+                }
+            }
+
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            updateOnlineStatus();
+
+            // Hide loading screen when React app is ready
+            window.addEventListener('load', function() {
+                setTimeout(() => {
+                    document.body.classList.add('app-ready');
+                }, 1000);
+            });
+
+            // Prevent zoom on input focus (mobile)
+            document.addEventListener('gesturestart', function(e) {
+                e.preventDefault();
+            });
+
+            // Handle viewport height issues on mobile
+            function setViewportHeight() {
+                const vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            }
+
+            setViewportHeight();
+            window.addEventListener('resize', setViewportHeight);
+            window.addEventListener('orientationchange', setViewportHeight);
+        })();
+    </script>
+
+    <!-- Main App Script -->
+    <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>
