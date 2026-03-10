@@ -328,7 +328,7 @@ export default function StatsOverview() {
         setShowLogout={setShowLogout}
       />
 
-      <main className="saas-main px-3 sm:px-4 lg:px-6">
+      <main className="saas-main px-3 sm:px-4 lg:px-6 overflow-y-auto pb-12">
         <header className="mb-4 sm:mb-6 lg:mb-8 animate-fade-in relative">
           <div className="premium-glass p-4 sm:p-6 lg:p-10 rounded-2xl sm:rounded-[2.5rem] border border-white/5 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 sm:w-64 sm:h-64 bg-primary/10 rounded-full blur-[60px] sm:blur-[100px] -translate-y-1/2 translate-x-1/2" />

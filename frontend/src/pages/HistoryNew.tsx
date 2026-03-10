@@ -73,7 +73,7 @@ export default function History() {
         setShowLogout={setShowLogout}
       />
 
-      <main className="saas-main px-3 sm:px-4 lg:px-6">
+      <main className="saas-main px-3 sm:px-4 lg:px-6 overflow-y-auto pb-12">
         {/* Page Header */}
         <div className="mb-4 sm:mb-6 fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">

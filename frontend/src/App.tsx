@@ -185,7 +185,7 @@ function App() {
 
           {/* Mobile Navigation handled by individual pages */}
 
-          <main className="flex-1 relative z-5">
+          <main className="flex-1 relative z-5 overflow-y-auto">
             <OAuthCallbackGuard>
               <Suspense fallback={<PageLoader />}>
                 <Routes>
