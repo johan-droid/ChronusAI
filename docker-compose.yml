@@ -2,9 +2,9 @@ version: '3.9'
 
 services:
   backend:
-    build: ./backend
-    ports:
-      - "8000:8000"
+    image: ghcr.io/johan-droid/chronosai-backend:latest
+    container_name: chronosai-backend
+    restart: unless-stopped
     env_file: ./backend/.env
     environment:
       DATABASE_URL: postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD:-scheduler_password}@postgres:5432/scheduler_db
@@ -17,25 +17,29 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_BASE_URL: https://api.deepseek.com
+    ports:
+      - "8000:8000"
     depends_on:
       - postgres
     volumes:
       - ./backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   frontend:
-    build: ./frontend
+    image: ghcr.io/johan-droid/chronosai-frontend:latest
+    container_name: chronosai-frontend
+    restart: unless-stopped
     ports:
-      - "5173:5173"
+      - "3000:80"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: npm run dev -- --host
-    restart: unless-stopped
+    command: nginx -g 'daemon off;'
 
   postgres:
     image: postgres:15-alpine
+    container_name: chronosai-db
     environment:
       POSTGRES_DB: scheduler_db
       POSTGRES_USER: scheduler_user
