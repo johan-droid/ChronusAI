@@ -119,12 +119,11 @@ class CalendarIntegrationService:
         self,
         calendar_id: str = "primary",
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None,
-        max_results: int = 250
+        end_time: Optional[datetime] = None
     ) -> List[Dict[str, Any]]:
         """Get events from calendar"""
         try:
-            events = await self.service.get_events(calendar_id, start_time, end_time, max_results)
+            events = await self.service.get_events(calendar_id, start_time, end_time)
             return [
                 {
                     "id": event.id,
