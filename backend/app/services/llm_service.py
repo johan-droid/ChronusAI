@@ -128,7 +128,12 @@ class LLMService:
                 requires_clarification=True
             )
     
-    async def generate_helpful_response(self, message: str, user_name: str, user_email: str) -> str:
+    async def generate_helpful_response(
+        self, 
+        message: str, 
+        user_name: str, 
+        user_email: str
+    ) -> str:
         """Generate helpful AI response for general queries."""
         try:
             system_prompt = f"""You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name} ({user_email}). 
@@ -148,6 +153,63 @@ class LLMService:
             return response.choices[0].message.content or "I'm here to help with your calendar and scheduling needs!"
         except Exception:
             return "I'm here to help with your calendar and scheduling needs. Try asking me to 'schedule a meeting' or 'check my availability'!"
+
+    async def generate_action_response(
+        self,
+        user_message: str,
+        intent_data,
+        action_result: dict,
+        history: list
+    ) -> str:
+        """
+        Generates a natural language explanation of calendar action taken.
+        Understands the difference between successful actions and scheduling conflicts.
+        """
+        
+        system_prompt = """
+        You are ChronosAI. Your tone is professional, helpful, and concise.
+        You have just performed an action on the user's Google Calendar.
+        Your task is to explain the result naturally based on the action outcome.
+
+        RULES:
+        1. If 'action_result' contains a conflict or 'conflicts' key, suggest the 'optimal_times' provided.
+        2. If an event was successfully deleted, confirm the specific event title.
+        3. If an event was successfully scheduled/rescheduled, confirm details (time, attendees).
+        4. If action_result contains 'suggestions', present them as helpful alternatives.
+        5. Use user's local time for all schedule mentions.
+        6. If the action failed, explain what went wrong and suggest next steps.
+        7. Be empathetic but professional - acknowledge any inconvenience.
+
+        RESPONSE EXAMPLES:
+        Success: "✅ I've scheduled 'Team Sync' for tomorrow at 2:00 PM. I've invited john@example.com and jane@example.com."
+        Conflict: "⚠️ That time slot conflicts with an existing meeting. Here are some alternatives: [suggested times]"
+        Cancelled: "🗑️ I've successfully cancelled 'Weekly Standup'."
+        Failed: "❌ I couldn't reschedule that meeting due to a calendar connection issue. Please try again in a moment."
+
+        IMPORTANT: Only explain what actually happened in the backend. Don't make up information.
+        """
+
+        # Contextual data for the LLM to explain what happened
+        execution_context = {
+            "user_input": user_message,
+            "intent_detected": intent_data.dict(),
+            "backend_outcome": action_result,
+        }
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            *history[-3:],  # Recent context only
+            {"role": "user", "content": f"Result of action: {json.dumps(execution_context)}"}
+        ]
+
+        response = await self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=0.7,  # Higher temperature for more natural speech
+            max_tokens=500,
+        )
+
+        return response.choices[0].message.content
 
     async def generate_completion(self, prompt: str) -> str:
         """Generate simple completion for given prompt."""

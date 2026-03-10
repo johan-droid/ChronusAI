@@ -131,31 +131,31 @@ async def send_message(
         
         # Handle different intents
         if parsed_intent.intent == "schedule":
-            response = await handle_create_meeting(
+            result = await handle_create_meeting(
                 parsed_intent, current_user, calendar_provider, db, raw_user_input=payload.message
             )
         elif parsed_intent.intent == "cancel":
-            response = await handle_cancel_meeting(
+            result = await handle_cancel_meeting(
                 parsed_intent, current_user, calendar_provider, db
             )
         elif parsed_intent.intent == "reschedule":
-            response = await handle_update_meeting(
+            result = await handle_update_meeting(
                 parsed_intent, current_user, calendar_provider, db
             )
         elif parsed_intent.intent == "check_availability":
-            response = await handle_query_availability(
+            result = await handle_query_availability(
                 parsed_intent, current_user, calendar_provider
             )
         elif parsed_intent.intent == "find_time":
-            response = await handle_find_optimal_time(
+            result = await handle_find_optimal_time(
                 parsed_intent, current_user, calendar_provider
             )
         elif parsed_intent.intent == "suggest_times":
-            response = await handle_ai_suggestions(
+            result = await handle_ai_suggestions(
                 parsed_intent, current_user, calendar_provider, db
             )
         elif parsed_intent.intent == "list_meetings":
-            response = await handle_list_meetings(
+            result = await handle_list_meetings(
                 parsed_intent, current_user, calendar_provider, db
             )
         elif parsed_intent.intent == "chat":
@@ -177,24 +177,24 @@ async def send_message(
                     response=helpful_response,
                     intent="chat"
                 )
-        else:
-            # Use the response from the AI directly or generate helpful response
-            if parsed_intent.response and parsed_intent.response.strip():
-                response = ChatResponse(
-                    response=parsed_intent.response,
-                    intent=parsed_intent.intent
-                )
-            else:
-                # Generate helpful response with user context
-                helpful_response = await llm_service.generate_helpful_response(
-                    payload.message,
-                    str(current_user.full_name or "User"),
-                    str(current_user.email)
-                )
-                response = ChatResponse(
-                    response=helpful_response,
-                    intent="chat"
-                )
+
+        # If we executed a handler, use enhanced response generation
+        if parsed_intent.intent not in ["chat", "unknown"] and 'result' in locals():
+            # Generate natural language explanation of what happened
+            final_text = await llm_service.generate_action_response(
+                user_message=payload.message,
+                intent_data=parsed_intent,
+                action_result=result.dict() if 'result' in locals() else {},
+                history=context
+            )
+            response = ChatResponse(
+                response=final_text,
+                intent=parsed_intent.intent,
+                # Pass through any additional data from handlers
+                meetings=result.get('meetings'),
+                availability=result.get('availability'),
+                suggestions=result.get('suggestions')
+            )
         
         # Add bot response to context
         context.append({"role": "assistant", "content": response.response})
