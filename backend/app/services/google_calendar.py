@@ -228,3 +228,51 @@ class GoogleCalendarAdapter(CalendarProvider):
             
             return response.status_code == 200
         return False  # unreachable, satisfies type checker
+    
+    async def test_connection(self) -> Dict[str, Any]:
+        """Test connection to Google Calendar API."""
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                # Simple lightweight call to verify token/connection
+                response = await client.get(
+                    f"{self.base_url}/users/me/calendarList",
+                    headers=self.headers,
+                    params={"maxResults": "1"}  # Minimal request
+                )
+                
+                if response.status_code == 200:
+                    return {
+                        "status": "success",
+                        "details": "Connection to Google Calendar successful",
+                        "calendars": len(response.json().get("items", []))
+                    }
+                elif response.status_code == 401:
+                    return {
+                        "status": "error",
+                        "details": "Authentication failed - token may be expired"
+                    }
+                elif response.status_code == 403:
+                    return {
+                        "status": "error", 
+                        "details": "Insufficient permissions - check OAuth scopes"
+                    }
+                else:
+                    return {
+                        "status": "error",
+                        "details": f"Google Calendar API error: {response.status_code}"
+                    }
+        except httpx.TimeoutError:
+            return {
+                "status": "error",
+                "details": "Connection timeout to Google Calendar API"
+            }
+        except httpx.NetworkError as e:
+            return {
+                "status": "error",
+                "details": f"Network error: {str(e)}"
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "details": f"Unexpected error: {str(e)}"
+            }

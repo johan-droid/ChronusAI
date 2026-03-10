@@ -12,6 +12,44 @@ from app.services.outlook_calendar import OutlookCalendarAdapter
 
 logger = structlog.get_logger()
 
+async def fetch_live_calendar_events(calendar_provider, current_user, start_time: datetime, end_time: datetime) -> str:
+    """Fetch live calendar events for LLM context injection."""
+    try:
+        events = await calendar_provider.get_events(start_time, end_time)
+        
+        if not events:
+            return "No upcoming events in Google Calendar."
+        
+        # Format events for LLM context
+        events_list = []
+        for event in events[:10]:  # Limit to 10 most recent events
+            event_id = event.get("id", "unknown")
+            title = event.get("summary", "No Title")
+            start = event.get("start", {})
+            end = event.get("end", {})
+            attendees = event.get("attendees", [])
+            
+            # Format datetime strings
+            start_str = start.get("dateTime", start.get("date", ""))
+            end_str = end.get("dateTime", end.get("date", ""))
+            
+            # Extract attendee emails
+            attendee_emails = []
+            if isinstance(attendees, list):
+                for attendee in attendees:
+                    if isinstance(attendee, dict):
+                        email = attendee.get("email", "")
+                        if email:
+                            attendee_emails.append(email)
+            
+            events_list.append(f"- ID: {event_id}, Title: {title}, Start: {start_str}, End: {end_str}, Attendees: {attendee_emails}")
+        
+        return "\n".join(events_list)
+        
+    except Exception as e:
+        logger.error("fetch_live_calendar_events_failed", error=str(e))
+        return "Error fetching calendar events."
+
 class CalendarProvider(Enum):
     """Supported calendar providers"""
     GOOGLE = "google"
