@@ -65,18 +65,19 @@ class Settings(BaseSettings):
         super().__init__(**kwargs)
         
         # Auto-generate missing secret keys for security
-        if not self.secret_key:
+        # Only generate if truly empty (not falsy)
+        if self.secret_key == "":
             self.secret_key = secrets.token_urlsafe(32)
-            print("🔑 Generated SECRET_KEY for production")
+            print("🔑 Generated SECRET_KEY")
             
-        if not self.encryption_key:
+        if self.encryption_key == "":
             from cryptography.fernet import Fernet
             self.encryption_key = Fernet.generate_key().decode()
-            print("🔐 Generated ENCRYPTION_KEY for production")
+            print("🔐 Generated ENCRYPTION_KEY")
             
-        if not self.jwt_secret_key:
+        if self.jwt_secret_key == "":
             self.jwt_secret_key = secrets.token_urlsafe(32)
-            print("🎫 Generated JWT_SECRET_KEY for production")
+            print("🎫 Generated JWT_SECRET_KEY")
         
         # Override redirect URIs in production environment
         is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
@@ -104,8 +105,9 @@ class Settings(BaseSettings):
                     self.cors_origins.append(url)
 
 
-@lru_cache
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
+    """Get cached settings instance to ensure consistent secret keys."""
     return Settings()  # type: ignore[call-arg]
 
 
