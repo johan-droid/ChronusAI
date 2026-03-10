@@ -29,7 +29,6 @@ from app.schemas.meeting import Attendee, MeetingCreate
 from app.services.llm_service import llm_service
 from app.services.ai_scheduling_service import ai_scheduling_service
 
-router = APIRouter(prefix="/chat", tags=["chat"])
 logger = structlog.get_logger()
 
 
@@ -222,11 +221,17 @@ async def send_message(
         
         # Enhanced error diagnostics using test_connection
         try:
-            connection_status = await calendar_provider.test_connection()
+            # Get the underlying calendar service for connection test
+            if hasattr(calendar_provider, 'service'):
+                connection_status = await calendar_provider.service.test_connection()
+            else:
+                # Fallback for providers without test_connection
+                connection_status = {"success": True, "details": "Connection test not available for this provider"}
+            
             if not connection_status.get("success", False):
                 error_detail = connection_status.get("error", "Unknown calendar connection issue")
                 return ChatResponse(
-                    response=f"🔗 Calendar connection issue: {error_detail}. Please check your Google Calendar integration.",
+                    response=f"Calendar connection failed: {error_detail}",
                     intent="ERROR"
                 )
         except Exception as conn_e:
