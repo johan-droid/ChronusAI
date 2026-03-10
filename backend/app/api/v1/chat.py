@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import structlog
 import time as _time
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -132,10 +132,7 @@ async def send_message(
                 # Check for specific LLM service errors like 402 Insufficient Balance
                 if "402" in str(e) or "insufficient balance" in str(e).lower():
                     logger.error("ai_llm_insufficient_balance", error=str(e))
-                    return ChatResponse(
-                        response="I'm unable to process your request due to insufficient API credits. Please contact support or try again later.",
-                        intent="ERROR"
-                    )
+                    raise HTTPException(status_code=402, detail="insufficient_balance")
                 
                 if attempt == max_retries - 1:
                     logger.error("ai_intent_parsing_exhausted", error=last_error)
@@ -276,10 +273,13 @@ async def send_message(
         # Check for specific LLM service errors like 402 Insufficient Balance
         error_str = str(e).lower()
         if "402" in error_str or "insufficient balance" in error_str:
-            return ChatResponse(
-                response="I'm unable to process your request due to insufficient API credits. Please contact support or try again later.",
-                intent="ERROR"
-            )
+            logger.error("ai_llm_insufficient_balance_outer", error=str(e))
+            raise HTTPException(status_code=402, detail="insufficient_balance")
+        
+        # Check for 401 Unauthorized errors
+        if "401" in error_str or "unauthorized" in error_str:
+            logger.error("ai_llm_unauthorized", error=str(e))
+            raise HTTPException(status_code=401, detail="llm_unauthorized")
         
         # Enhanced error diagnostics using test_connection
         try:

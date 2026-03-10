@@ -96,6 +96,34 @@ class ApiClient {
     );
   }
 
+  // Enhanced error handling for HTTPException details
+  private extractErrorDetails(error: any): string {
+    // Extract FastAPI HTTPException details from response
+    if (error.response?.data?.detail) {
+      return error.response.data.detail;
+    }
+    
+    // Extract from standard error response
+    if (error.response?.data?.message) {
+      return error.response.data.message;
+    }
+    
+    // Extract from error response as string
+    if (error.response?.data) {
+      if (typeof error.response.data === 'string') {
+        return error.response.data;
+      }
+    }
+    
+    // Fallback to status text and message
+    if (error.response?.statusText) {
+      return error.response.statusText;
+    }
+    
+    // Final fallback to error message
+    return error.message || 'Unknown error occurred';
+  }
+
   // Auth endpoints
   async getAuthUrl(provider: 'google' | 'outlook' | 'zoom'): Promise<AuthUrlResponse> {
     try {
@@ -175,8 +203,16 @@ class ApiClient {
 
   // Chat endpoints
   async sendMessage(request: ChatRequest): Promise<ChatResponse> {
-    const response = await this.client.post('chat/message', request);
-    return response.data;
+    try {
+      const response = await this.client.post('chat/message', request);
+      return response.data;
+    } catch (error: unknown) {
+      // Enhanced error handling to extract HTTPException details
+      const enhancedError = new Error(this.extractErrorDetails(error));
+      // Preserve original error properties
+      Object.assign(enhancedError, error);
+      throw enhancedError;
+    }
   }
 
   // Meeting endpoints
