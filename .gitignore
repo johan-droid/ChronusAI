@@ -1,77 +1,481 @@
-# Environments and Python Caches
+# ChronosAI .gitignore
+# Comprehensive ignore patterns for AI-Powered Meeting Scheduler
+
+# ===========================================
+# ENVIRONMENT & CONFIGURATION
+# ===========================================
+# Environment variables (NEVER commit these)
 .env
 .env.local
+.env.development
+.env.production
+.env.test
 .env.*.local
+
+# Configuration files with secrets
+config/secrets.json
+config/local.json
+*.config.js
+*.config.ts
+
+# ===========================================
+# PYTHON BACKEND
+# ===========================================
+# Virtual environments
 venv/
 .venv/
 env/
+envs/
+.ENV/
+env.bak/
+venv.bak/
+
+# Python cache files
 __pycache__/
 *.py[cod]
 *$py.class
-.mypy_cache/
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python testing and coverage
 .pytest_cache/
 .ruff_cache/
-.cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.pytest_cache/
+cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
 
-# Node.js / Frontend Build Artifacts
+# Python development tools
+.dmypy.json
+dmypy.json
+.mypy/
+.pyre/
+
+# ===========================================
+# NODE.JS FRONTEND
+# ===========================================
+# Dependencies
 node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
 dist/
 build/
 .next/
 .nuxt/
-.parcel-cache/
-.npm
-/site
+.vuepress/dist/
+.serverless/
+.terrazo/
 
-# Databases
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# ===========================================
+# DATABASE & STORAGE
+# ===========================================
+# Database files
 *.db
 *.sqlite
 *.sqlite3
 scheduler.db
+chronosai.db
 
-# IDE and Editor Files
+# Database backups
+*.sql
+*.dump
+*.backup
+
+# Redis dump
+dump.rdb
+
+# ===========================================
+# DOCKER & CONTAINERS
+# ===========================================
+# Docker volumes
+docker/data/
+docker/logs/
+docker/tmp/
+
+# Docker machine
+.docker/
+
+# ===========================================
+# LOGS & MONITORING
+# ===========================================
+# Log files
+*.log
+logs/
+log/
+*.out
+*.err
+
+# Application logs
+app.log
+error.log
+access.log
+debug.log
+
+# ===========================================
+# IDE & EDITORS
+# ===========================================
+# VSCode
 .vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# JetBrains/IntelliJ
 .idea/
+*.iws
+*.iml
+*.ipr
+
+# Vim
 *.swp
 *.swo
 *~
 
-# OS Generated Files
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Kate
+*.kate-swp
+
+# TextMate
+*.tmproj
+*.tmproject
+
+# ===========================================
+# OPERATING SYSTEM
+# ===========================================
+# macOS
 .DS_Store
 .DS_Store?
 ._*
-Thumbs.db
+.Spotlight-V100
+.Trashes
 ehthumbs.db
+Thumbs.db
 
-# Logs and Testing Output
-*.log
-logs/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.coverage.*
-nosetests.xml
-coverage.xml
+# Windows
+*.lnk
+*.url
+*.desktop
 
-# Security and Keys (NEVER commit these)
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===========================================
+# SECURITY & KEYS (CRITICAL - NEVER COMMIT)
+# ===========================================
+# Private keys and certificates
 *.key
 *.pem
 *.crt
 *.cert
 *.p12
 *.pfx
+*.crl
+*.csr
+
+# Secret files
 secrets/
 .secrets.json
+private/
+private.key
+id_rsa
+id_rsa.pub
+*.pem
+*.key
 
-# Tool specific
-.serverless/
+# API keys and tokens
+api_keys.txt
+tokens.txt
+credentials.json
+service-account.json
+
+# ===========================================
+# TEMPORARY & BACKUP FILES
+# ===========================================
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# Swap files
+*.swp
+*.swo
+*~
+
+# Lock files
+*.lock
+*.lck
+
+# ===========================================
+# AI/MODEL FILES
+# ===========================================
+# Model files (often large)
+*.model
+*.pkl
+*.pickle
+*.joblib
+*.h5
+*.pb
+*.onnx
+
+# Training data
+data/
+datasets/
+training/
+models/
+
+# ===========================================
+# DEPLOYMENT & INFRASTRUCTURE
+# ===========================================
+# Terraform
 .terraform/
-.dynamodb/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
 
-# Byte-compiled files
-*.so
-*.egg
-*.egg-info/
-.installed.cfg
-MANIFEST
+# Kubernetes
+*.kubeconfig
+kubeconfig.yaml
+
+# Serverless
+.serverless/
+
+# CloudFormation
+*.cfn.yaml
+*.cfn.json
+
+# ===========================================
+# CHRONOSAI SPECIFIC
+# ===========================================
+# Meeting scheduler specific
+meeting-data/
+calendar-cache/
+oauth-tokens/
+user-sessions/
+
+# AI agent specific
+agent-cache/
+llm-cache/
+chat-history/
+
+# Render specific
+render-build-cache/
+render-logs/
+
+# ===========================================
+# PERFORMANCE & PROFILING
+# ===========================================
+# Profiling data
+*.prof
+*.profile
+*.trace
+
+# Benchmark results
+benchmark/
+benchmarks/
+*.benchmark
+
+# ===========================================
+# DOCUMENTATION BUILD
+# ===========================================
+# Generated docs
+docs/_build/
+docs/build/
+site/
+
+# Sphinx
+.sphinx/
+
+# ===========================================
+# MISC DEVELOPMENT
+# ===========================================
+# Local development files
+.local/
+local/
+dev/
+development/
+
+# Test artifacts
+test-results/
+test-reports/
+junit.xml
+test-results.xml
+
+# Backup files
+backup/
+backups/
+*.backup
+*.bak
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Large media files
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.flv
+*.webm
+*.mp3
+*.wav
+*.flac
+
+# ===========================================
+# EXCEPTIONS (FILES TO KEEP)
+# ===========================================
+# Keep important configuration files
+!.env.example
+!.gitkeep
+!README.md
+!LICENSE
+!CHANGELOG.md
+!CONTRIBUTING.md
+!SECURITY.md
+
+# Keep documentation
+!docs/
+!docs/*.md
+!docs/*.txt
+
+# Keep deployment scripts
+!scripts/
+!deployment/
+!tools/
+
+# Keep Makefile
+!Makefile
+!makefile
+
+# Keep Docker files
+!Dockerfile*
+!docker-compose*
+!.dockerignore
