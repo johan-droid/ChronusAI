@@ -31,6 +31,25 @@ from app.services.ai_scheduling_service import ai_scheduling_service
 
 logger = structlog.get_logger()
 
+async def fetch_live_calendar_events(calendar_provider, user: User, start: datetime, end: datetime) -> list[dict]:
+    """Helper to fetch and format live events for AI context."""
+    try:
+        # Assuming calendar_provider has a list_events method
+        events = await calendar_provider.list_events(start, end)
+        return [
+            {
+                "id": e.get("id"),
+                "title": e.get("summary"),
+                "start_time": e.get("start"),
+                "attendees": [a.get("email") for a in e.get("attendees", [])]
+            }
+            for e in events
+        ]
+    except Exception as e:
+        logger.warning("failed_to_fetch_live_events", error=str(e))
+        return []
+
+router = APIRouter(prefix="/chat", tags=["chat"])
 
 @router.post("/message", response_model=ChatResponse)
 @limiter.limit("20/minute")
