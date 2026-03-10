@@ -11,6 +11,7 @@ class ParsedIntent(BaseModel):
         "find_time",
         "list_meetings",
         "suggest_times",
+        "chat",  # Added for general conversation
         "unknown",
     ] = "unknown"
     title: Optional[str] = None

@@ -158,6 +158,25 @@ async def send_message(
             response = await handle_list_meetings(
                 parsed_intent, current_user, calendar_provider, db
             )
+        elif parsed_intent.intent == "chat":
+            # Handle general conversation using the LLM's response
+            if parsed_intent.response and parsed_intent.response.strip():
+                response = ChatResponse(
+                    response=parsed_intent.response,
+                    intent=parsed_intent.intent,
+                    requires_clarification=parsed_intent.requires_clarification
+                )
+            else:
+                # Generate helpful response with user context
+                helpful_response = await llm_service.generate_helpful_response(
+                    payload.message,
+                    str(current_user.full_name or "User"),
+                    str(current_user.email)
+                )
+                response = ChatResponse(
+                    response=helpful_response,
+                    intent="chat"
+                )
         else:
             # Use the response from the AI directly or generate helpful response
             if parsed_intent.response and parsed_intent.response.strip():
