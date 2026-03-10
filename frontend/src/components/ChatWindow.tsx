@@ -333,7 +333,7 @@ export default function ChatWindow() {
       </AnimatePresence>
 
       {/* Input Area - Floating Bar Design */}
-      <div className="shrink-0 p-4 sm:p-6 mb-6 bg-transparent relative z-40">
+      <div className="shrink-0 p-4 sm:p-6 mb-6 bg-transparent relative z-40 pb-safe-area-inset-bottom">
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
           <div className="flex items-center bg-white/[0.08] backdrop-blur-xl rounded-full border border-white/20 shadow-xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
             {/* Text Input */}
@@ -344,12 +344,12 @@ export default function ChatWindow() {
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Message ChronosAI..."
-              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base md:text-base py-3 sm:py-3.5 md:py-4 px-4 sm:px-5 md:px-6 resize-none min-h-[44px] sm:min-h-[48px] md:min-h-[52px] max-h-[120px] font-medium outline-none"
+              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-base sm:text-base md:text-lg py-3 sm:py-3.5 md:py-4 px-4 sm:px-5 md:px-6 resize-none min-h-[44px] sm:min-h-[48px] md:min-h-[52px] max-h-[120px] font-medium outline-none"
               style={{ scrollbarWidth: 'none' }}
             />
             
             {/* Loading State or Send Button */}
-            <div className="flex items-center pr-2 pl-1">
+            <div className="flex items-center pr-2 pl-1 min-h-[44px]">
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <OptimizedSpinner size="sm" variant="dots" className="text-blue-400" />
@@ -360,7 +360,7 @@ export default function ChatWindow() {
                   type="submit"
                   whileTap={{ scale: 0.95 }}
                   disabled={!message.trim()}
-                  className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 ${
+                  className={`p-3 sm:p-3.5 rounded-full transition-all duration-200 min-h-[44px] touch-manipulation ${
                     message.trim()
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/30'
                       : 'bg-white/10 text-slate-500 cursor-not-allowed'

@@ -2141,3 +2141,130 @@ textarea {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
+
+/* Mobile-First Typography */
+input, textarea, select {
+  font-size: 16px; /* Prevents iOS zoom */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Touch Optimization */
+.touch-manipulation {
+  touch-action: manipulation; /* Removes 300ms tap delay */
+}
+
+/* Safe Area Support */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.pb-safe-area-inset-bottom {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
+
+/* Mobile Grid Layout for Availability */
+@media (max-width: 640px) {
+  .avail-slots-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .avail-slot {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Mobile Calendar Optimizations */
+@media (max-width: 768px) {
+  .calendar-container {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .date-picker {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Responsive Widths */
+.w-responsive {
+  width: 100%;
+  max-width: 100%;
+}
+
+.max-w-responsive {
+  max-width: min(100%, 24rem); /* 384px */
+}
+
+/* Mobile Input Improvements */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea {
+    min-height: 44px; /* iOS touch target */
+    padding: 12px 16px; /* Larger touch area */
+  }
+  
+  button {
+    min-height: 44px; /* iOS touch target */
+    padding: 12px 20px; /* Larger touch area */
+  }
+}
+
+/* Keyboard Handling for Mobile */
+@media (max-width: 768px) {
+  .chat-input-container {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .mobile-keyboard-active {
+    transform: translateY(0);
+  }
+}
+
+/* Remove horizontal scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+body {
+  overflow-x: hidden;
+  width: 100vw;
+}
+
+/* Mobile Navigation Improvements */
+@media (max-width: 767px) {
+  .nav-desktop {
+    display: none;
+  }
+  
+  .nav-mobile {
+    display: flex;
+  }
+  
+  .hamburger-menu {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .nav-desktop {
+    display: flex;
+  }
+  
+  .nav-mobile {
+    display: none;
+  }
+  
+  .hamburger-menu {
+    display: none;
+  }
+}

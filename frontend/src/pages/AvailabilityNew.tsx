@@ -132,7 +132,7 @@ export default function Availability() {
           <h3 className="avail-section-title">{title}</h3>
           <span className="avail-section-count">{slots.filter(s => s.is_available && s.status !== 'PAST').length}/{slots.filter(s => s.status !== 'PAST').length} free</span>
         </div>
-        <div className="avail-slots-grid">
+        <div className="avail-slots-grid sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {slots.map((slot, idx) => (
             <div
               key={idx}
