@@ -1,10 +1,14 @@
-name: CI/CD Pipeline (Simplified)
+name: CI/CD Pipeline
 
 on:
   push:
     branches: ["main", "develop"]
   pull_request:
     branches: ["main"]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # Backend CI/CD
@@ -155,7 +159,7 @@ jobs:
         with:
           sarif_file: 'backend-scan.sarif'
 
-  # Docker Build and Push (only on main branch)
+  # Docker Build and Push
   docker-build:
     runs-on: ubuntu-latest
     needs: [backend-ci, frontend-ci, security-scan]
@@ -175,33 +179,53 @@ jobs:
       - name: Log in to Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for backend
+        id: meta-backend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}-backend:latest
-            ghcr.io/${{ github.repository }}-backend:${{ github.sha }}
+          tags: ${{ steps.meta-backend.outputs.tags }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Extract metadata for frontend
+        id: meta-frontend
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}-frontend:latest
-            ghcr.io/${{ github.repository }}-frontend:${{ github.sha }}
+          tags: ${{ steps.meta-frontend.outputs.tags }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Integration Tests (only on pushes)
+  # Integration Tests
   integration-tests:
     runs-on: ubuntu-latest
     needs: [docker-build]
@@ -230,23 +254,54 @@ jobs:
       - name: Run integration tests
         run: |
           echo "Running integration tests..."
-          echo "TODO: Add integration test commands here"
+          # Add your integration test commands here
           # Example: docker-compose -f docker-compose.test.yml up --abort-on-container-exit
 
-  # Simple Deployment Notification (only on main branch)
-  deploy-notification:
+  # Deploy to Staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    # environment: staging  # TODO: Create staging environment in GitHub Settings
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          echo "Note: Configure staging environment in GitHub repository settings"
+          # Add your staging deployment commands here
+          # Example: kubectl apply -f k8s/staging/
+
+  # Deploy to Production
+  deploy-production:
     runs-on: ubuntu-latest
     needs: [integration-tests]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # environment: production  # TODO: Create production environment in GitHub Settings
 
     steps:
-      - name: Deployment notification
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to production
         run: |
-          echo "🚀 Deployment completed successfully!"
-          echo "Backend image: ghcr.io/${{ github.repository }}-backend:latest"
-          echo "Frontend image: ghcr.io/${{ github.repository }}-frontend:latest"
-          echo ""
-          echo "Next steps:"
-          echo "1. Pull the images in your deployment environment"
-          echo "2. Update your deployment configuration"
-          echo "3. Restart your services"
+          echo "Deploying to production environment..."
+          echo "Note: Configure production environment in GitHub repository settings"
+          # Add your production deployment commands here
+          # Example: kubectl apply -f k8s/production/
+
+  # Notify on success/failure
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+
+    steps:
+      - name: Notify deployment status
+        run: |
+          echo "Deployment completed successfully!"
+          # Add notification logic here (Slack, Discord, Email, etc.)
+
