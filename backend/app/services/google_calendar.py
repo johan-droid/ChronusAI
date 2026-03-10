@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 from app.services.calendar_provider import CalendarProvider, TimeSlot, CreateEventResult
 from app.schemas.meeting import MeetingCreate
