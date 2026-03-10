@@ -177,20 +177,21 @@ class LLMService:
             print(f"JSON parsing error: {e}")
             print(f"Raw content: {content}")
             
-            # Fallback to a safe error intent for the retry loop in chat.py
-            return ParsedIntent(
-                intent="unknown", 
-                response="I'm having trouble understanding your request. Could you please rephrase it?",
-                requires_clarification=True
-            )
+            # Re-raise JSON parsing errors so chat.py can handle them
+            raise ValueError(f"LLM returned invalid JSON: {e}")
         except Exception as e:
-            print(f"LLM service error: {e}")
-            # Fallback to a safe error intent for the retry loop in chat.py
-            return ParsedIntent(
-                intent="unknown", 
-                response="I'm experiencing technical difficulties. Please try again.",
-                requires_clarification=True
-            )
+            # Check for specific API errors and re-raise them
+            error_str = str(e).lower()
+            if "402" in error_str or "insufficient balance" in error_str:
+                raise ValueError(f"LLM API error: {e}")
+            elif "rate limit" in error_str or "too many requests" in error_str:
+                raise ValueError(f"LLM rate limit exceeded: {e}")
+            elif "authentication" in error_str or "unauthorized" in error_str:
+                raise ValueError(f"LLM authentication failed: {e}")
+            else:
+                # For other errors, log and re-raise for proper handling
+                print(f"LLM service error: {e}")
+                raise ValueError(f"LLM service error: {e}")
     
     async def generate_helpful_response(
         self, 

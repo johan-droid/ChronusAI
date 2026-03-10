@@ -62,6 +62,7 @@ async def send_message(
 ):
     """AI-powered chat for meeting scheduling with Gemini."""
     start = _time.perf_counter()
+    response = None  # Initialize response to prevent UnboundLocalError
     
     try:
         logger.info(
@@ -118,12 +119,24 @@ async def send_message(
                 
                 # Basic validation: ensure dates are parsable if provided
                 if parsed_intent.start_time:
-                    datetime.fromisoformat(parsed_intent.start_time.replace('Z', '+00:00'))
+                    try:
+                        datetime.fromisoformat(parsed_intent.start_time.replace('Z', '+00:00'))
+                    except ValueError as e:
+                        last_error = str(e)
+                        continue
                 
                 # If we got here, parsing is successful
                 break
             except Exception as e:
                 last_error = str(e)
+                # Check for specific LLM service errors like 402 Insufficient Balance
+                if "402" in str(e) or "insufficient balance" in str(e).lower():
+                    logger.error("ai_llm_insufficient_balance", error=str(e))
+                    return ChatResponse(
+                        response="I'm unable to process your request due to insufficient API credits. Please contact support or try again later.",
+                        intent="ERROR"
+                    )
+                
                 if attempt == max_retries - 1:
                     logger.error("ai_intent_parsing_exhausted", error=last_error)
                     return ChatResponse(
@@ -187,15 +200,29 @@ async def send_message(
                 )
             else:
                 # Generate helpful response with user context
-                helpful_response = await llm_service.generate_helpful_response(
-                    payload.message,
-                    str(current_user.full_name or "User"),
-                    str(current_user.email)
-                )
-                response = ChatResponse(
-                    response=helpful_response,
-                    intent="chat"
-                )
+                try:
+                    helpful_response = await llm_service.generate_helpful_response(
+                        payload.message,
+                        str(current_user.full_name or "User"),
+                        str(current_user.email)
+                    )
+                    response = ChatResponse(
+                        response=helpful_response,
+                        intent="chat"
+                    )
+                except Exception as e:
+                    # Fallback if LLM fails
+                    logger.warning("helpful_response_generation_failed", error=str(e))
+                    response = ChatResponse(
+                        response="I'm here to help with your calendar and scheduling needs. Try asking me to 'schedule a meeting' or 'check my availability'!",
+                        intent="chat"
+                    )
+        else:
+            # Handle unknown intents with a fallback response
+            response = ChatResponse(
+                response="I'm not sure how to help with that. Try asking me to schedule a meeting, check your availability, or list your upcoming events.",
+                intent="unknown"
+            )
 
         # If we executed a handler, use enhanced response generation
         if parsed_intent.intent not in ["chat", "unknown"] and 'result' in locals():
@@ -216,16 +243,24 @@ async def send_message(
             )
         
         # Add bot response to context
-        context.append({"role": "assistant", "content": response.response})
-        await save_conversation_context(str(current_user.id), context)
+        if response and hasattr(response, 'response'):
+            context.append({"role": "assistant", "content": response.response})
+            await save_conversation_context(str(current_user.id), context)
 
         logger.info(
             "ai_chat_processed",
             user_id_hash=hash_user_id(str(current_user.id)),
             intent=parsed_intent.intent,
-            outcome="clarification" if response.requires_clarification else "completed",
+            outcome="clarification" if response and response.requires_clarification else "completed",
             duration_ms=int((_time.perf_counter() - start) * 1000),
         )
+        
+        # Final safety check: ensure response is always defined
+        if response is None:
+            response = ChatResponse(
+                response="I'm having trouble processing your request. Please try again.",
+                intent="ERROR"
+            )
         
         return response
         
@@ -237,6 +272,14 @@ async def send_message(
             user_id_hash=hash_user_id(str(current_user.id)),
             exc_info=True
         )
+        
+        # Check for specific LLM service errors like 402 Insufficient Balance
+        error_str = str(e).lower()
+        if "402" in error_str or "insufficient balance" in error_str:
+            return ChatResponse(
+                response="I'm unable to process your request due to insufficient API credits. Please contact support or try again later.",
+                intent="ERROR"
+            )
         
         # Enhanced error diagnostics using test_connection
         try:

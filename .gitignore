@@ -88,6 +88,12 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Test files
+test_*.py
+*_test.py
+tests/
+test-results/
+
 # Python development tools
 .dmypy.json
 dmypy.json
