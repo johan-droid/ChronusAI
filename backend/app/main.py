@@ -139,6 +139,11 @@ app.include_router(api_router)
 # API routes are included via api_router which already includes auth.router at /api/v1/auth
 
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
