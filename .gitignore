@@ -12,11 +12,26 @@
 .env.test
 .env.*.local
 
+# Production secrets and credentials
+production.env
+staging.env
+credentials.json
+service-account.json
+api-keys.txt
+secrets.txt
+tokens.txt
+
 # Configuration files with secrets
 config/secrets.json
 config/local.json
+config/production.json
 *.config.js
 *.config.ts
+
+# Render-specific secrets
+render-env.txt
+render-secrets.json
+*.render.env
 
 # ===========================================
 # PYTHON BACKEND
