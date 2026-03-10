@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_db
 from app.dependencies import get_calendar_provider, get_current_user
 from app.models.user import User
-from app.schemas.availability import AvailabilityResponse, TimeSlotResponse
+from app.schemas.availability import AvailabilityResponse, TimeSlotResponse, SlotStatus
 
 router = APIRouter(prefix="/availability", tags=["availability"])
 
@@ -47,7 +47,7 @@ async def check_availability(
         current_slot = start_of_day
         slot_duration = timedelta(minutes=30)
         
-        # Current time in the target timezone for filtering past slots
+        # Current time in target timezone for filtering past slots
         now = datetime.now(tz)
         
         while current_slot < end_of_day:
@@ -59,28 +59,42 @@ async def check_availability(
                 for busy in busy_slots
             )
             
-            # Additional check: mark past slots as unavailable
+            # Check if slot is in the past
             is_past = slot_end <= now
+            
+            # Determine slot status
+            if is_past:
+                status = SlotStatus.PAST
+                is_available = False
+            elif is_busy:
+                status = SlotStatus.BUSY
+                is_available = False
+            else:
+                status = SlotStatus.AVAILABLE
+                is_available = True
             
             all_slots.append(TimeSlotResponse(
                 start_time=current_slot.isoformat(),
                 end_time=slot_end.isoformat(),
-                is_available=not is_busy and not is_past,
+                is_available=is_available,
+                status=status,
                 timezone=tz_str
             ))
             
             current_slot = slot_end
         
-        # Count available and busy slots
-        available_count = sum(1 for slot in all_slots if slot.is_available)
-        busy_count = len(all_slots) - available_count
+        # Count available, busy, and past slots
+        available_count = sum(1 for slot in all_slots if slot.status == SlotStatus.AVAILABLE)
+        busy_count = sum(1 for slot in all_slots if slot.status == SlotStatus.BUSY)
+        past_count = sum(1 for slot in all_slots if slot.status == SlotStatus.PAST)
         
         return AvailabilityResponse(
             date=date,
             timezone=tz_str,
             slots=all_slots,
             available_count=available_count,
-            busy_count=busy_count
+            busy_count=busy_count,
+            past_count=past_count
         )
         
     except ValueError:

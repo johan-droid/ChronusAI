@@ -1,11 +1,19 @@
 from pydantic import BaseModel, Field
 from typing import List
+from enum import Enum
+
+
+class SlotStatus(str, Enum):
+    AVAILABLE = "available"
+    BUSY = "busy"
+    PAST = "past"
 
 
 class TimeSlotResponse(BaseModel):
     start_time: str = Field(..., description="ISO format datetime")
     end_time: str = Field(..., description="ISO format datetime")
     is_available: bool
+    status: SlotStatus = Field(..., description="Slot status: available, busy, or past")
     timezone: str
 
 
@@ -20,3 +28,4 @@ class AvailabilityResponse(BaseModel):
     slots: List[TimeSlotResponse]
     available_count: int
     busy_count: int
+    past_count: int = Field(0, description="Number of past time slots")
