@@ -1,32 +1,20 @@
-# Changelog
+# ChronosAI Changelog
 
-## [2.12.0] - 2026-03-05
+All notable changes to ChronosAI will be documented in this file.
 
-### Added
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-- Support for paginated workflows task run listing
-- Handle `succeeded` workflows task run status
-
-### Changed
-
-- Renamed "task identifier" / "task ID" to "task slug" in error messages and help text for workflows
-
-## [2.11.0] - 2026-03-03
+## [Unreleased]
 
 ### Added
-
-#### Workflows
-- `render workflows list` interactive palette for browsing and managing workflows
-- Support for named-parameter (object) input for task runs (Python workflows only)
-
-#### Early Access
-- `render ea objects delete` supports deleting multiple objects
+- Enhanced AI scheduling capabilities
+- Improved calendar integration
+- Better error handling and logging
 
 ### Changed
-
-#### General
-- Skip auth and workspace selection prompts for `--local` commands
-
+- Updated dependencies
+- Improved performance optimizations
 #### Workflows
 - **Breaking:** Promoted workflows commands from `render ea` to `render workflows`
 - **Breaking:** Moved `taskruns start` to `tasks start`

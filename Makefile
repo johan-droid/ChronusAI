@@ -43,7 +43,7 @@ build-backend:
 
 build-frontend:
 	@echo "🔨 Building frontend Docker image..."
-	docker build -t $(FRONTEND_IMAGE):$(TAG) ./frontend
+	docker build -t $(FRONTEND_IMAGE):$(TAG) ./deployment/frontend
 	@echo "✅ Frontend image built: $(FRONTEND_IMAGE):$(TAG)"
 
 build-all: build-backend build-frontend
@@ -84,7 +84,7 @@ deploy-enhanced:
 # Development Commands
 dev:
 	@echo "🛠️ Starting development environment..."
-	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+	docker-compose -f deployment/docker-compose.yml up --build
 	@echo "✅ Development environment started!"
 
 # Management Commands
@@ -115,8 +115,8 @@ clean-images:
 # Test Commands
 test:
 	@echo "🧪 Running tests..."
-	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
-	docker-compose -f docker-compose.test.yml down
+	docker-compose -f deployment/docker-compose.test.yml up --build --abort-on-container-exit
+	docker-compose -f deployment/docker-compose.test.yml down
 	@echo "✅ Tests complete!"
 
 test-backend:
@@ -126,7 +126,7 @@ test-backend:
 
 test-frontend:
 	@echo "🧪 Running frontend tests..."
-	docker run --rm -v $(PWD)/frontend:/app -w /app node:18-slim bash -c "npm ci && npm test"
+	docker run --rm -v $(PWD)/deployment/frontend:/app -w /app node:18-slim bash -c "npm ci && npm test"
 	@echo "✅ Frontend tests complete!"
 
 # Stop Commands
