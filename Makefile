@@ -1,255 +1,219 @@
-# ChronosAI Makefile
-# Convenient commands for development and deployment
+# ChronosAI Docker Image Management Makefile
 
-.PHONY: help setup dev build test start stop logs clean deploy health
+.PHONY: help build push deploy clean test logs
 
 # Default target
 help:
-	@echo "ChronosAI Development Commands"
+	@echo "ChronosAI Docker Management Commands:"
 	@echo ""
-	@echo "Setup & Development:"
-	@echo "  make setup          - Setup development environment"
-	@echo "  make dev            - Start development servers"
-	@echo "  make build          - Build all Docker images"
-	@echo "  make test           - Run all tests"
-	@echo "  make test-backend   - Run backend tests only"
-	@echo "  make test-frontend  - Run frontend tests only"
-	@echo "  make test-e2e       - Run E2E tests"
+	@echo "Build Commands:"
+	@echo "  build-backend     Build backend Docker image"
+	@echo "  build-frontend    Build frontend Docker image"
+	@echo "  build-all         Build all Docker images"
 	@echo ""
-	@echo "Docker Commands:"
-	@echo "  make start          - Start all services"
-	@echo "  make stop           - Stop all services"
-	@echo "  make restart        - Restart all services"
-	@echo "  make logs           - Show logs for all services"
-	@echo "  make logs-backend   - Show backend logs"
-	@echo "  make logs-frontend  - Show frontend logs"
-	@echo "  make clean          - Clean up Docker resources"
+	@echo "Push Commands:"
+	@echo "  push-backend      Push backend image to registry"
+	@echo "  push-frontend     Push frontend image to registry"
+	@echo "  push-all          Push all images to registry"
 	@echo ""
-	@echo "Deployment:"
-	@echo "  make deploy-staging   - Deploy to staging"
-	@echo "  make deploy-prod      - Deploy to production"
-	@echo "  make health           - Check service health"
+	@echo "Deploy Commands:"
+	@echo "  deploy            Deploy with docker-compose"
+	@echo "  deploy-prod       Deploy with production compose"
+	@echo "  deploy-enhanced   Deploy with enhanced compose"
 	@echo ""
-	@echo "Utilities:"
-	@echo "  make lint            - Run linting for both frontend and backend"
-	@echo "  make format          - Format code"
-	@echo "  make db-migrate      - Run database migrations"
-	@echo "  make db-seed         - Seed database with sample data"
+	@echo "Management Commands:"
+	@echo "  logs              Show application logs"
+	@echo "  clean             Clean up containers and images"
+	@echo "  test              Run tests"
+	@echo "  dev               Start development environment"
+	@echo "  stop              Stop all services"
 
-# Setup development environment
-setup:
-	@echo "Setting up development environment..."
-	./deploy.sh setup development
-	@echo "Environment setup complete!"
+# Configuration
+REGISTRY ?= ghcr.io
+NAMESPACE ?= johan-droid
+BACKEND_IMAGE = $(REGISTRY)/$(NAMESPACE)/chronosai-backend
+FRONTEND_IMAGE = $(REGISTRY)/$(NAMESPACE)/chronosai-frontend
+TAG ?= latest
 
-# Start development servers
-dev:
-	@echo "Starting development servers..."
-	docker-compose -f docker-compose-enhanced.yml up --build
-	@echo "Development servers started!"
-	@echo "Frontend: http://localhost:5173"
-	@echo "Backend:  http://localhost:8000"
-	@echo "API Docs: http://localhost:8000/docs"
+# Build Commands
+build-backend:
+	@echo "🔨 Building backend Docker image..."
+	docker build -t $(BACKEND_IMAGE):$(TAG) ./backend
+	@echo "✅ Backend image built: $(BACKEND_IMAGE):$(TAG)"
 
-# Build Docker images
-build:
-	@echo "Building Docker images..."
-	./deploy.sh build all
-	@echo "Build complete!"
+build-frontend:
+	@echo "🔨 Building frontend Docker image..."
+	docker build -t $(FRONTEND_IMAGE):$(TAG) ./frontend
+	@echo "✅ Frontend image built: $(FRONTEND_IMAGE):$(TAG)"
 
-# Run tests
-test:
-	@echo "Running all tests..."
-	./deploy.sh test all
-	@echo "All tests completed!"
+build-all: build-backend build-frontend
+	@echo "🎉 All images built successfully!"
 
-test-backend:
-	@echo "Running backend tests..."
-	./deploy.sh test backend
+# Push Commands
+push-backend:
+	@echo "📤 Pushing backend Docker image..."
+	docker push $(BACKEND_IMAGE):$(TAG)
+	@echo "✅ Backend image pushed: $(BACKEND_IMAGE):$(TAG)"
 
-test-frontend:
-	@echo "Running frontend tests..."
-	./deploy.sh test frontend
+push-frontend:
+	@echo "📤 Pushing frontend Docker image..."
+	docker push $(FRONTEND_IMAGE):$(TAG)
+	@echo "✅ Frontend image pushed: $(FRONTEND_IMAGE):$(TAG)"
 
-test-e2e:
-	@echo "Running E2E tests..."
-	./deploy.sh test e2e
+push-all: push-backend push-frontend
+	@echo "🎉 All images pushed successfully!"
 
-# Docker management
-start:
-	@echo "Starting all services..."
-	./deploy.sh start all
-	@echo "Services started!"
-
-stop:
-	@echo "Stopping all services..."
-	./deploy.sh stop all
-	@echo "Services stopped!"
-
-restart: stop start
-
-# Logs
-logs:
-	@echo "Showing logs for all services..."
-	./deploy.sh logs all
-
-logs-backend:
-	@echo "Showing backend logs..."
-	./deploy.sh logs backend
-
-logs-frontend:
-	@echo "Showing frontend logs..."
-	./deploy.sh logs frontend
-
-logs-follow:
-	@echo "Following logs for all services..."
-	./deploy.sh logs all follow
-
-# Cleanup
-clean:
-	@echo "Cleaning up Docker resources..."
-	./deploy.sh cleanup
-	@echo "Cleanup complete!"
-
-clean-full:
-	@echo "Full cleanup (including volumes)..."
-	docker-compose down -v
-	docker system prune -f
-	@echo "Full cleanup complete!"
-
-# Deployment
-deploy-staging:
-	@echo "Deploying to staging..."
-	./deploy.sh deploy staging
-	@echo "Staging deployment complete!"
+# Deploy Commands
+deploy:
+	@echo "🚀 Deploying with docker-compose..."
+	docker-compose up -d
+	@echo "✅ Deployment complete!"
+	@echo "🌐 Frontend: http://localhost:3000"
+	@echo "🔧 Backend: http://localhost:8000"
 
 deploy-prod:
-	@echo "Deploying to production..."
-	./deploy.sh deploy production
-	@echo "Production deployment complete!"
+	@echo "🚀 Deploying production environment..."
+	docker-compose -f docker-compose.prod.yml up -d
+	@echo "✅ Production deployment complete!"
 
-# Health checks
+deploy-enhanced:
+	@echo "🚀 Deploying enhanced environment..."
+	docker-compose -f docker-compose-enhanced.yml up -d
+	@echo "✅ Enhanced deployment complete!"
+
+# Development Commands
+dev:
+	@echo "🛠️ Starting development environment..."
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+	@echo "✅ Development environment started!"
+
+# Management Commands
+logs:
+	@echo "📋 Showing application logs..."
+	docker-compose logs -f
+
+logs-backend:
+	@echo "📋 Backend logs..."
+	docker-compose logs -f backend
+
+logs-frontend:
+	@echo "📋 Frontend logs..."
+	docker-compose logs -f frontend
+
+clean:
+	@echo "🧹 Cleaning up..."
+	docker-compose down -v
+	docker system prune -f
+	@echo "✅ Cleanup complete!"
+
+clean-images:
+	@echo "🧹 Cleaning up Docker images..."
+	docker image prune -f
+	docker rmi $(BACKEND_IMAGE):$(TAG) $(FRONTEND_IMAGE):$(TAG) 2>/dev/null || true
+	@echo "✅ Image cleanup complete!"
+
+# Test Commands
+test:
+	@echo "🧪 Running tests..."
+	docker-compose -f docker-compose.test.yml up --build --abort-on-container-exit
+	docker-compose -f docker-compose.test.yml down
+	@echo "✅ Tests complete!"
+
+test-backend:
+	@echo "🧪 Running backend tests..."
+	docker run --rm -v $(PWD)/backend:/app -w /app python:3.11-slim bash -c "pip install -r requirements.txt && python -m pytest"
+	@echo "✅ Backend tests complete!"
+
+test-frontend:
+	@echo "🧪 Running frontend tests..."
+	docker run --rm -v $(PWD)/frontend:/app -w /app node:18-slim bash -c "npm ci && npm test"
+	@echo "✅ Frontend tests complete!"
+
+# Stop Commands
+stop:
+	@echo "🛑 Stopping all services..."
+	docker-compose down
+	@echo "✅ Services stopped!"
+
+stop-prod:
+	@echo "🛑 Stopping production services..."
+	docker-compose -f docker-compose.prod.yml down
+	@echo "✅ Production services stopped!"
+
+# Utility Commands
+status:
+	@echo "📊 Service status:"
+	docker-compose ps
+
+restart:
+	@echo "🔄 Restarting services..."
+	docker-compose restart
+	@echo "✅ Services restarted!"
+
+pull:
+	@echo "📥 Pulling latest images..."
+	docker-compose pull
+	@echo "✅ Images pulled!"
+
+pull-all:
+	@echo "📥 Pulling all images..."
+	docker pull $(BACKEND_IMAGE):$(TAG)
+	docker pull $(FRONTEND_IMAGE):$(TAG)
+	@echo "✅ All images pulled!"
+
+# CI/CD Integration
+ci-build:
+	@echo "🔨 CI/CD Build Process..."
+	$(MAKE) build-backend
+	$(MAKE) build-frontend
+	@echo "✅ CI/CD build complete!"
+
+ci-deploy:
+	@echo "🚀 CI/CD Deploy Process..."
+	$(MAKE) pull-all
+	$(MAKE) deploy
+	@echo "✅ CI/CD deploy complete!"
+
+# Version Management
+tag:
+	@echo "🏷️ Tagging images with version: $(TAG)"
+	docker tag $(BACKEND_IMAGE):latest $(BACKEND_IMAGE):$(TAG)
+	docker tag $(FRONTEND_IMAGE):latest $(FRONTEND_IMAGE):$(TAG)
+	@echo "✅ Images tagged!"
+
+# Health Check
 health:
-	@echo "Checking service health..."
-	./deploy.sh health backend
-	./deploy.sh health frontend
-	@echo "Health checks complete!"
+	@echo "🏥 Checking service health..."
+	@curl -f http://localhost:8000/api/v1/health || echo "❌ Backend health check failed"
+	@curl -f http://localhost:3000/health || echo "❌ Frontend health check failed"
 
-# Code quality
-lint:
-	@echo "Running linting..."
-	@echo "Backend linting..."
-	cd backend && ruff check app
-	@echo "Frontend linting..."
-	cd frontend && npm run lint
-	@echo "Linting complete!"
-
-format:
-	@echo "Formatting code..."
-	@echo "Backend formatting..."
-	cd backend && ruff format app
-	@echo "Frontend formatting..."
-	cd frontend && npm run format
-	@echo "Code formatted!"
-
-# Database operations
+# Database Management
 db-migrate:
-	@echo "Running database migrations..."
-	docker-compose exec backend alembic upgrade head
-	@echo "Migrations complete!"
-
-db-seed:
-	@echo "Seeding database..."
-	docker-compose exec backend python -m app.scripts.seed_data
-	@echo "Database seeded!"
+	@echo "🗄️ Running database migrations..."
+	docker-compose exec backend python -m alembic upgrade head
+	@echo "✅ Migrations complete!"
 
 db-reset:
-	@echo "Resetting database..."
-	docker-compose exec backend alembic downgrade base
-	docker-compose exec backend alembic upgrade head
-	@echo "Database reset complete!"
+	@echo "🗄️ Resetting database..."
+	docker-compose down -v
+	docker-compose up -d postgres
+	sleep 5
+	$(MAKE) db-migrate
+	@echo "✅ Database reset complete!"
 
-# Development utilities
-install-deps:
-	@echo "Installing dependencies..."
-	@echo "Backend dependencies..."
-	cd backend && pip install -r requirements.txt
-	@echo "Frontend dependencies..."
-	cd frontend && npm install
-	@echo "Dependencies installed!"
+# Environment Setup
+env-setup:
+	@echo "⚙️ Setting up environment..."
+	@if [ ! -f backend/.env ]; then cp backend/.env.example backend/.env; echo "✅ Created backend/.env"; fi
+	@if [ ! -f frontend/.env ]; then cp frontend/.env.example frontend/.env; echo "✅ Created frontend/.env"; fi
+	@echo "⚠️ Please update the .env files with your configuration!"
 
-update-deps:
-	@echo "Updating dependencies..."
-	@echo "Backend dependencies..."
-	cd backend && pip install --upgrade -r requirements.txt
-	@echo "Frontend dependencies..."
-	cd frontend && npm update
-	@echo "Dependencies updated!"
-
-# Security
-security-scan:
-	@echo "Running security scans..."
-	@echo "Backend security scan..."
-	cd backend && safety check -r requirements.txt
-	@echo "Frontend security scan..."
-	cd frontend && npm audit
-	@echo "Security scans complete!"
-
-# Performance
-perf-test:
-	@echo "Running performance tests..."
-	@echo "Backend performance tests..."
-	cd backend && pytest tests/performance/ -v
-	@echo "Performance tests complete!"
-
-# Documentation
-docs:
-	@echo "Generating documentation..."
-	@echo "Backend API docs..."
-	cd backend && python -m app.scripts.generate_docs
-	@echo "Documentation generated!"
-
-# Quick development shortcuts
-quick-start: setup build start
-	@echo "Quick start complete!"
-	@echo "Frontend: http://localhost:5173"
-	@echo "Backend:  http://localhost:8000"
-
-quick-test: lint test
-	@echo "Quick test complete!"
-
-quick-deploy: lint test build deploy-staging
-	@echo "Quick deploy complete!"
-
-# CI/CD helpers
-ci-test:
-	@echo "Running CI tests..."
-	./deploy.sh setup test
-	./deploy.sh test all --include-e2e
-	@echo "CI tests complete!"
-
-ci-build:
-	@echo "Running CI build..."
-	./deploy.sh setup production
-	./deploy.sh build all
-	@echo "CI build complete!"
-
-# Monitoring
-monitor:
-	@echo "Starting monitoring stack..."
-	docker-compose -f docker-compose-enhanced.yml --profile monitoring up -d
-	@echo "Monitoring started!"
-	@echo "Grafana: http://localhost:3001"
-	@echo "Prometheus: http://localhost:9090"
-
-# Backup
-backup:
-	@echo "Creating backup..."
-	docker-compose exec backend python -m app.scripts.backup
-	@echo "Backup complete!"
-
-# Restore
-restore:
-	@echo "Restoring from backup..."
-	docker-compose exec backend python -m app.scripts.restore
-	@echo "Restore complete!"
+# Quick Start
+quick-start:
+	@echo "🚀 Quick start ChronosAI..."
+	$(MAKE) env-setup
+	$(MAKE) pull-all
+	$(MAKE) deploy
+	@echo "🎉 ChronosAI is ready!"
+	@echo "🌐 Frontend: http://localhost:3000"
+	@echo "🔧 Backend: http://localhost:8000"
