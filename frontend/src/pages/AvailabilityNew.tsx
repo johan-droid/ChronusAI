@@ -40,7 +40,15 @@ export default function Availability() {
     setError(null);
     try {
       const data = await apiClient.getAvailability(selectedDate, user?.timezone);
-      setTimeSlots(data.slots);
+      
+      // Filter out past slots on the frontend for better UX
+      const now = new Date();
+      const filteredSlots = data.slots.filter(slot => {
+        const slotStartTime = new Date(slot.start_time);
+        return slotStartTime > now; // Only show future slots
+      });
+      
+      setTimeSlots(filteredSlots);
       setAvailableCount(data.available_count);
       setBusyCount(data.busy_count);
     } catch (err: unknown) {

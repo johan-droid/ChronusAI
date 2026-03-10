@@ -736,7 +736,7 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
 
 
 async def handle_query_availability(intent: ParsedIntent, user: User, calendar_provider) -> ChatResponse:
-    """Handle availability query intent using enhanced service."""
+    """Handle availability query intent using enhanced service with future-only filter."""
     try:
         # Use user's timezone for correct day/time calculation
         try:
@@ -748,11 +748,14 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
         now_local = datetime.now(tz)
         target_date = now_local.date()
         
+        # Enhanced future-only filter: if checking today's availability, start from current time
+        start_datetime = now_local  # Start from current time for today
+        
         # Use enhanced service's get_availability method with duration support
         availability = await calendar_provider.get_availability(
             calendar_ids=["primary"],
-            start_date=target_date,
-            end_date=target_date,
+            start_time=start_datetime,
+            end_time=start_datetime.replace(hour=20, minute=0),  # End at 8 PM
             duration_minutes=30  # Default 30-minute meetings
         )
         
@@ -762,9 +765,15 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
                 intent="check_availability"
             )
         
+        # Filter available slots to only show future times (redundant but safe)
+        future_slots = [
+            slot for slot in availability["slots"] 
+            if slot.start >= now_local
+        ]
+        
         # Format available slots
         available_slots = []
-        for slot in availability["slots"][:5]:  # Show up to 5 slots
+        for slot in future_slots[:5]:  # Show up to 5 slots
             local_start = slot.start.astimezone(tz)
             local_end = slot.end.astimezone(tz)
             duration = int((slot.end - slot.start).total_seconds() / 60)
@@ -773,9 +782,9 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
         slots_text = "\n".join(available_slots)
         
         return ChatResponse(
-            response=f"📅 Available time slots for {target_date.strftime('%A, %B %d')}:\n\n{slots_text}\n\nWould you like me to schedule a meeting in one of these slots?",
+            response=f"📅 Available time slots for {target_date.strftime('%A, %B %d')} (from now):\n\n{slots_text}\n\nWould you like me to schedule a meeting in one of these slots?",
             intent="check_availability",
-            availability=availability.get("slots", [])[:5]
+            availability=future_slots[:5]
         )
         
     except Exception as e:
@@ -787,32 +796,52 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
 
 
 async def handle_find_optimal_time(intent: ParsedIntent, user: User, calendar_provider) -> ChatResponse:
-    """Handle finding optimal meeting times with AI."""
+    """Handle finding optimal meeting times with AI and future-only filter."""
     try:
         # Extract parameters from intent or use defaults
         duration = intent.duration_minutes or 60
         attendees = intent.attendees or [user.email]
         meeting_type = intent.meeting_type or "meeting"
         
-        # Get AI suggestions for optimal times
+        # Use user's timezone for accurate time calculations
+        try:
+            tz = ZoneInfo(str(user.timezone)) if user.timezone else ZoneInfo("UTC")
+        except Exception:
+            tz = ZoneInfo("UTC")
+        
+        now_local = datetime.now(tz)
+        
+        # Enhanced future-only filter: ensure AI doesn't suggest past times
+        time_constraints = {
+            "earliest_time": now_local.strftime('%H:%M'),  # Current time or later
+            "exclude_past": True  # Explicit flag for AI service
+        }
+        
+        # Get AI suggestions for optimal times with future-only constraint
         suggestions = await ai_scheduling_service.suggest_optimal_meeting_times(
             duration_minutes=duration,
             attendees=attendees,
             meeting_type=meeting_type,
             user_timezone=str(user.timezone),
             preferred_days=None,
-            time_constraints={}
+            time_constraints=time_constraints
         )
         
         if suggestions.get("optimal_times"):
+            # Additional filter to ensure all suggestions are in the future
+            future_suggestions = [
+                suggestion for suggestion in suggestions["optimal_times"]
+                if datetime.strptime(suggestion['time'], '%H:%M').replace(tzinfo=tz) >= now_local
+            ]
+            
             times_text = "\n".join([
                 f"• {suggestion['time']}: {suggestion['reason']}"
-                for suggestion in suggestions["optimal_times"][:3]
+                for suggestion in future_suggestions[:3]
             ])
             return ChatResponse(
-                response=f"🎯 Here are the best times for your {meeting_type}:\n{times_text}\n\nWould you like me to schedule one of these?",
+                response=f"🎯 Here are the best times for your {meeting_type} (from now):\n{times_text}\n\nWould you like me to schedule one of these?",
                 intent="find_time",
-                suggestions=suggestions.get("optimal_times", [])
+                suggestions=future_suggestions[:3]
             )
         else:
             return ChatResponse(

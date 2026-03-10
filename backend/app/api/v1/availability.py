@@ -21,7 +21,7 @@ async def check_availability(
     calendar_provider = Depends(get_calendar_provider),
     db: AsyncSession = Depends(get_db),
 ):
-    """Get availability slots for a specific date."""
+    """Get availability slots for a specific date with enhanced future-only filter."""
     try:
         # Parse date
         target_date = datetime.strptime(date, "%Y-%m-%d").date()
@@ -37,10 +37,10 @@ async def check_availability(
         start_of_day = datetime.combine(target_date, time(8, 0)).replace(tzinfo=tz)
         end_of_day = datetime.combine(target_date, time(20, 0)).replace(tzinfo=tz)
         
-        # Past-time filter: if date is today, start from current time
+        # Enhanced future-only filter: if date is today, start from current time
         now = datetime.now(tz)
         if target_date == now.date():
-            # If checking availability for today, start from current time
+            # If checking availability for today, start from current time in user's timezone
             start_of_day = max(start_of_day, now)
         
         # Get busy slots from calendar
@@ -65,7 +65,7 @@ async def check_availability(
                 for busy in busy_slots
             )
             
-            # Check if slot is in the past
+            # Check if slot is in past
             is_past = slot_end <= now
             
             # Determine slot status
