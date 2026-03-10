@@ -38,7 +38,11 @@ export const useChatStore = create<ChatState>()(
           role: 'assistant',
           content: response.response,
           timestamp: new Date().toISOString(),
-          meeting: response.meeting
+          meeting: response.meeting,
+          meetings: response.meetings,
+          availability: response.availability,
+          suggestions: response.suggestions,
+          intent: response.intent
         };
 
         return {

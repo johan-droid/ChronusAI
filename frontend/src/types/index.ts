@@ -36,6 +36,22 @@ export interface ChatMessage {
   content: string;
   timestamp: string;
   meeting?: Meeting;
+  meetings?: Array<{
+    id: string;
+    title: string;
+    start_time: string;
+    end_time?: string;
+  }>;
+  availability?: Array<{
+    start: string;
+    end: string;
+  }>;
+  suggestions?: Array<{
+    time: string;
+    confidence?: number;
+    reason?: string;
+  }>;
+  intent?: string;
 }
 
 export interface ChatRequest {
@@ -47,6 +63,21 @@ export interface ChatResponse {
   intent: string;
   meeting?: Meeting;
   requires_clarification: boolean;
+  meetings?: Array<{
+    id: string;
+    title: string;
+    start_time: string;
+    end_time?: string;
+  }>;
+  availability?: Array<{
+    start: string;
+    end: string;
+  }>;
+  suggestions?: Array<{
+    time: string;
+    confidence?: number;
+    reason?: string;
+  }>;
 }
 
 export interface AuthUrlResponse {

@@ -26,13 +26,33 @@ export const useSendMessage = () => {
       finalizeResponse(response);
     },
     onError: (error) => {
+      // Enhanced error handling for calendar connection issues
+      let errorMessage = 'Sorry, something went wrong';
+      
+      if (error.message) {
+        const errorString = error.message.toLowerCase();
+        
+        // Check for calendar connection errors
+        if (errorString.includes('calendar connection') || errorString.includes('🔗')) {
+          errorMessage = '🔗 Calendar connection issue. Please check your Google Calendar integration and try again.';
+        } else if (errorString.includes('authentication') || errorString.includes('unauthorized')) {
+          errorMessage = '🔐 Authentication issue. Please sign in again.';
+        } else if (errorString.includes('network') || errorString.includes('timeout')) {
+          errorMessage = '🌐 Network issue. Please check your connection and try again.';
+        } else if (errorString.includes('rate limit') || errorString.includes('too many requests')) {
+          errorMessage = '⏱️ Too many requests. Please wait a moment and try again.';
+        } else {
+          errorMessage = `Sorry, something went wrong: ${error.message}`;
+        }
+      }
+      
       // Add error message
-      const errorMessage = {
+      const errorChatMessage = {
         role: 'assistant' as const,
-        content: `Sorry, something went wrong: ${error.message}`,
+        content: errorMessage,
         timestamp: new Date().toISOString()
       };
-      addMessage(errorMessage);
+      addMessage(errorChatMessage);
       setLoading(false);
       setCurrentResponse('');
     }

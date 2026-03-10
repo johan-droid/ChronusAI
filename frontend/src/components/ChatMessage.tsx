@@ -1,4 +1,4 @@
-import { User, Bot, Check, CheckCheck } from 'lucide-react';
+import { User, Bot, Check, CheckCheck, Calendar, Clock, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
@@ -27,6 +27,43 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
     hour: '2-digit',
     minute: '2-digit'
   });
+
+  // Format meeting time
+  const formatMeetingTime = (timeString: string) => {
+    try {
+      return new Date(timeString).toLocaleString([], {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return timeString;
+    }
+  };
+
+  // Format availability slot
+  const formatAvailabilitySlot = (start: string, end: string) => {
+    try {
+      const startDate = new Date(start);
+      const endDate = new Date(end);
+      const duration = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60));
+      
+      return {
+        time: startDate.toLocaleString([], {
+          weekday: 'short',
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        duration: `${duration} min`
+      };
+    } catch {
+      return { time: start, duration: 'Unknown' };
+    }
+  };
 
   return (
     <motion.div 
@@ -85,6 +122,81 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
               >
                 Join
               </a>
+            </div>
+          )}
+
+          {/* Meetings List - if present */}
+          {!isUser && message.meetings && message.meetings.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-2">
+                <Calendar className="h-3 w-3" />
+                <span>Upcoming Meetings</span>
+              </div>
+              {message.meetings.slice(0, 5).map((meeting, index) => (
+                <div key={meeting.id || index} className="p-2 bg-black/20 border border-white/5 rounded-lg">
+                  <p className="text-xs font-medium text-white truncate">{meeting.title}</p>
+                  <p className="text-[10px] text-slate-400">
+                    {formatMeetingTime(meeting.start_time)}
+                  </p>
+                </div>
+              ))}
+              {message.meetings.length > 5 && (
+                <p className="text-[10px] text-slate-500 text-center">
+                  +{message.meetings.length - 5} more meetings
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Availability Slots - if present */}
+          {!isUser && message.availability && message.availability.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 mb-2">
+                <Clock className="h-3 w-3" />
+                <span>Available Time Slots</span>
+              </div>
+              {message.availability.slice(0, 3).map((slot, index) => {
+                const { time, duration } = formatAvailabilitySlot(slot.start, slot.end);
+                return (
+                  <div key={index} className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                    <p className="text-xs font-medium text-emerald-300">{time}</p>
+                    <p className="text-[10px] text-emerald-400/70">{duration}</p>
+                  </div>
+                );
+              })}
+              {message.availability.length > 3 && (
+                <p className="text-[10px] text-slate-500 text-center">
+                  +{message.availability.length - 3} more slots
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* AI Suggestions - if present */}
+          {!isUser && message.suggestions && message.suggestions.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 mb-2">
+                <Sparkles className="h-3 w-3" />
+                <span>AI Suggestions</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {message.suggestions.slice(0, 4).map((suggestion, index) => (
+                  <button
+                    key={index}
+                    className="px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-300 hover:bg-purple-500/20 transition-colors"
+                    onClick={() => {
+                      // This would trigger a new message with the suggestion
+                      const input = document.querySelector('textarea[placeholder*="Type your message"]') as HTMLTextAreaElement;
+                      if (input) {
+                        input.value = suggestion.time;
+                        input.focus();
+                      }
+                    }}
+                  >
+                    {suggestion.time}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
