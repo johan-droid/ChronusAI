@@ -70,12 +70,76 @@ class LLMService:
         EXAMPLES:
         "Schedule meeting with John tomorrow at 2pm" ->
         {{"intent":"schedule","title":"meeting with John","start_time":"2026-03-10T14:00:00","end_time":"2026-03-10T14:30:00","attendees":["john@example.com"],"response":"I'll schedule that meeting with John for tomorrow at 2pm.","requires_clarification":false}}
-
+        
         "Cancel my sync meeting" ->
         {{"intent":"cancel","event_id":"abc123","title":"sync meeting","response":"I'll cancel your sync meeting.","requires_clarification":false}}
-
+        
         "Check availability" ->
         {{"intent":"check_availability","response":"I'll check your availability.","requires_clarification":false}}
+        
+        FEW-SHOT EXAMPLES FOR COMPLEX SCENARIOS:
+        
+        ### EXAMPLE 1: Complex Group Reschedule
+        User: "Move the 'Project Sync' with Dave and Sarah to Friday at 10 AM. Sarah can't make the current slot."
+        
+        LIVE CALENDAR STATE:
+        - ID: "cal_998877", Title: "Project Sync", Start: "2026-03-12T14:00:00Z", Attendees: ["user@email.com", "dave@corp.com", "sarah@corp.com"]
+        
+        YOUR OUTPUT:
+        {{
+            "intent": "reschedule",
+            "title": "Project Sync",
+            "event_id": "cal_998877",
+            "start_time": "2026-03-13T10:00:00",
+            "attendees": ["dave@corp.com", "sarah@corp.com"],
+            "response": "I'm rescheduling Project Sync for Friday at 10 AM and checking if everyone is free."
+        }}
+        
+        ### EXAMPLE 2: Resolving Ambiguity with Multiple Events
+        User: "Cancel my meeting with the designers."
+        
+        LIVE CALENDAR STATE:
+        - ID: "id_abc123", Title: "Design Review", Start: "2026-03-11T09:00:00Z"
+        - ID: "id_xyz789", Title: "UI/UX Workshop", Start: "2026-03-11T15:00:00Z"
+        
+        YOUR OUTPUT:
+        {{
+            "intent": "cancel",
+            "event_id": null,
+            "response": "You have two meetings with designers tomorrow: 'Design Review' at 9 AM and 'UI/UX Workshop' at 3 PM. Which one should I cancel?"
+        }}
+        
+        ### EXAMPLE 3: Conflict Resolution with Suggestions
+        User: "Schedule a team meeting for tomorrow afternoon."
+        
+        LIVE CALENDAR STATE:
+        - ID: "cal_123456", Title: "Team Standup", Start: "2026-03-12T15:00:00Z"
+        
+        YOUR OUTPUT:
+        {{
+            "intent": "schedule",
+            "start_time": "2026-03-13T16:00:00",
+            "response": "That time conflicts with Team Standup. How about 3 PM instead?",
+            "requires_clarification": true,
+            "suggestions": [
+                {"time": "2026-03-13T16:00:00", "reason": "No conflicts"}
+            ]
+        }}
+        
+        ### EXAMPLE 4: Attendee Management
+        User: "Add Maria to the Project Sync meeting."
+        
+        LIVE CALENDAR STATE:
+        - ID: "cal_998877", Title: "Project Sync", Start: "2026-03-12T14:00:00Z", Attendees: ["user@email.com", "dave@corp.com", "sarah@corp.com"]
+        
+        YOUR OUTPUT:
+        {{
+            "intent": "reschedule",
+            "event_id": "cal_998877",
+            "start_time": "2026-03-12T14:00:00",
+            "attendees": ["user@email.com", "dave@corp.com", "sarah@corp.com", "maria@newcompany.com"],
+            "response": "I'll add Maria to the Project Sync meeting."
+        }}
 
         "Hello" ->
         {{"intent":"chat","response":"Hello! How can I help you with your calendar today?","requires_clarification":false}}
