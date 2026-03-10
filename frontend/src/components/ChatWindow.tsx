@@ -208,6 +208,7 @@ export default function ChatWindow() {
   const [message, setMessage] = useState('');
   const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
   const [showActions, setShowActions] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const { messages, isLoading, currentResponse } = useChatStore();
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -243,6 +244,7 @@ export default function ChatWindow() {
       sendMessage.mutate({ message: message.trim() });
       setMessage('');
       setShowActions(false);
+      setIsTyping(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -267,6 +269,7 @@ export default function ChatWindow() {
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
+    setIsTyping(e.target.value.length > 0);
     e.target.style.height = 'auto';
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
   }, []);
@@ -392,25 +395,43 @@ export default function ChatWindow() {
             type="submit"
             whileTap={{ scale: 0.9 }}
             disabled={!message.trim() || isLoading}
-            className={`p-2.5 sm:p-2.5 md:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 ${message.trim() && !isLoading
+            className={`p-2.5 sm:p-2.5 md:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 relative ${message.trim() && !isLoading
               ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/25'
               : 'bg-white/5 text-slate-500 cursor-not-allowed'
               }`}
           >
             {isLoading ? (
-              <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 animate-spin" />
+              <div className="flex items-center gap-1">
+                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 animate-spin" />
+                <span className="text-xs text-white/80 ml-1">AI is thinking...</span>
+              </div>
             ) : message.trim() ? (
               <Send className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
             ) : (
               <Mic className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
             )}
+            {message.trim() && !isLoading && (
+              <motion.div
+                className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+            )}
           </motion.button>
         </form>
 
-        {/* Helper Text - Hidden on mobile for space */}
-        <p className="text-center text-[9px] sm:text-[10px] text-slate-600 mt-1.5 sm:mt-2 font-medium uppercase tracking-wider hidden sm:block">
-          Press Enter to send • Shift + Enter for new line
-        </p>
+        {/* Helper Text - Enhanced with typing indicator */}
+        <div className="flex items-center justify-between mt-1.5 sm:mt-2">
+          <p className="text-center text-[9px] sm:text-[10px] text-slate-600 font-medium uppercase tracking-wider">
+            {isTyping ? 'Typing...' : 'Press Enter to send • Shift + Enter for new line'}
+          </p>
+          {isLlmOnline && (
+            <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-slate-500">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>AI Ready</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

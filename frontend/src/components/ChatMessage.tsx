@@ -1,4 +1,4 @@
-import { User, Bot, Check, CheckCheck, Calendar, Clock, Sparkles } from 'lucide-react';
+import { User, Bot, Check, Calendar, Clock, Sparkles, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
@@ -21,12 +21,6 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
   const isSuccess = cleanContent.toLowerCase().includes('scheduled') ||
     cleanContent.toLowerCase().includes('created') ||
     cleanContent.toLowerCase().includes('confirmed');
-
-  // Format timestamp
-  const formattedTime = new Date(message.timestamp).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 
   // Format meeting time
   const formatMeetingTime = (timeString: string) => {
@@ -92,131 +86,130 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
         >
           {/* Message Content */}
           <div className="text-[13px] sm:text-[14px] md:text-[15px] leading-[1.5] font-normal whitespace-pre-wrap break-words">
-            {cleanContent}
-            {isTyping && (
-              <span className="inline-flex gap-1 ml-1">
-                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="w-1.5 h-1.5 bg-current rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </span>
-            )}
-          </div>
-
-          {/* Meeting Card - if present */}
-          {!isUser && message.meeting?.meeting_url && (
-            <div className="mt-2.5 sm:mt-3 p-2.5 sm:p-3 bg-black/30 border border-white/10 rounded-xl flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-400 font-bold text-xs">Z</span>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-white truncate">Zoom Meeting</p>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400 truncate">{message.meeting.meeting_url}</p>
-                </div>
-              </div>
-              <a
-                href={message.meeting.meeting_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-500 hover:bg-blue-400 text-white text-xs font-semibold rounded-lg transition-all text-center whitespace-nowrap touch-manipulation"
-              >
-                Join
-              </a>
-            </div>
-          )}
-
-          {/* Meetings List - if present */}
-          {!isUser && message.meetings && message.meetings.length > 0 && (
-            <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-1.5 sm:mb-2">
-                <Calendar className="h-3 w-3" />
-                <span>Upcoming Meetings</span>
-              </div>
-              {message.meetings.slice(0, 5).map((meeting, index) => (
-                <div key={meeting.id || index} className="p-2 sm:p-2.5 bg-black/20 border border-white/5 rounded-lg">
-                  <p className="text-xs font-medium text-white truncate">{meeting.title}</p>
-                  <p className="text-[9px] sm:text-[10px] text-slate-400">
-                    {formatMeetingTime(meeting.start_time)}
-                  </p>
-                </div>
-              ))}
-              {message.meetings.length > 5 && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 text-center">
-                  +{message.meetings.length - 5} more meetings
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Availability Slots - if present */}
-          {!isUser && message.availability && message.availability.length > 0 && (
-            <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 mb-1.5 sm:mb-2">
-                <Clock className="h-3 w-3" />
-                <span>Available Time Slots</span>
-              </div>
-              {message.availability.slice(0, 3).map((slot, index) => {
-                const { time, duration } = formatAvailabilitySlot(slot.start, slot.end);
-                return (
-                  <div key={index} className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-                    <p className="text-xs font-medium text-emerald-300">{time}</p>
-                    <p className="text-[9px] sm:text-[10px] text-emerald-400/70">{duration}</p>
+            <div className="pr-8">
+              {isTyping ? (
+                <div className="flex items-center gap-1">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
-                );
-              })}
-              {message.availability.length > 3 && (
-                <p className="text-[9px] sm:text-[10px] text-slate-500 text-center">
-                  +{message.availability.length - 3} more slots
+                  <span className="text-slate-400 text-sm">AI is thinking...</span>
+                </div>
+              ) : (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {cleanContent}
                 </p>
               )}
             </div>
-          )}
 
-          {/* AI Suggestions - if present */}
-          {!isUser && message.suggestions && message.suggestions.length > 0 && (
-            <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 mb-1.5 sm:mb-2">
-                <Sparkles className="h-3 w-3" />
-                <span>AI Suggestions</span>
+            {/* Meeting Card - if present */}
+            {!isUser && message.meeting?.meeting_url && (
+              <div className="mt-2.5 sm:mt-3 p-2.5 sm:p-3 bg-black/30 border border-white/10 rounded-xl flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-blue-400 font-bold text-xs">Z</span>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-white truncate">Zoom Meeting</p>
+                    <p className="text-[9px] sm:text-[10px] text-slate-400 truncate">{message.meeting.meeting_url}</p>
+                  </div>
+                </div>
+                <motion.a
+                  href={message.meeting.meeting_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-500 hover:bg-blue-400 text-white text-xs rounded-lg transition-colors"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  <span>Join Meeting</span>
+                </motion.a>
               </div>
-              <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                {message.suggestions.slice(0, 4).map((suggestion, index) => (
-                  <button
-                    key={index}
-                    className="px-2.5 sm:px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-300 hover:bg-purple-500/20 transition-colors touch-manipulation"
-                    onClick={() => {
-                      // This would trigger a new message with the suggestion
-                      const input = document.querySelector('textarea[placeholder*="Message ChronosAI"]') as HTMLTextAreaElement;
-                      if (input) {
-                        input.value = suggestion.time;
-                        input.focus();
-                      }
-                    }}
-                  >
-                    {suggestion.time}
-                  </button>
+            )}
+
+            {/* Meetings List - if present */}
+            {!isUser && message.meetings && message.meetings.length > 0 && (
+              <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-blue-400 mb-1.5 sm:mb-2">
+                  <Calendar className="h-3 w-3" />
+                  <span>Upcoming Meetings</span>
+                </div>
+                {message.meetings.slice(0, 5).map((meeting, index) => (
+                  <div key={meeting.id || index} className="p-2 sm:p-2.5 bg-black/20 border border-white/5 rounded-lg">
+                    <p className="text-xs font-medium text-white truncate">{meeting.title}</p>
+                    <p className="text-[9px] sm:text-[10px] text-slate-400">
+                      {formatMeetingTime(meeting.start_time)}
+                    </p>
+                  </div>
                 ))}
+                {message.meetings.length > 5 && (
+                  <p className="text-[9px] sm:text-[10px] text-slate-500 text-center">
+                    +{message.meetings.length - 5} more meetings
+                  </p>
+                )}
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Success Indicator */}
-          {!isUser && isSuccess && (
-            <div className={`mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-white/10 flex items-center gap-1.5 text-[9px] sm:text-xs ${message.meeting?.meeting_url ? 'text-blue-400' : 'text-emerald-400'}`}>
-              <Check className="h-3 w-3" />
-              <span className="font-medium">{message.meeting?.meeting_url ? 'Meeting created' : 'Done'}</span>
-            </div>
-          )}
+            {/* Availability Slots - if present */}
+            {!isUser && message.availability && message.availability.length > 0 && (
+              <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 mb-1.5 sm:mb-2">
+                  <Clock className="h-3 w-3" />
+                  <span>Available Time Slots</span>
+                </div>
+                {message.availability.slice(0, 3).map((slot, index) => {
+                  const { time, duration } = formatAvailabilitySlot(slot.start, slot.end);
+                  return (
+                    <div key={index} className="p-2 sm:p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
+                      <p className="text-xs font-medium text-emerald-300">{time}</p>
+                      <p className="text-[9px] sm:text-[10px] text-emerald-400/70">{duration}</p>
+                    </div>
+                  );
+                })}
+                {message.availability.length > 3 && (
+                  <p className="text-[9px] sm:text-[10px] text-slate-500 text-center">
+                    +{message.availability.length - 3} more slots
+                  </p>
+                )}
+              </div>
+            )}
 
-          {/* Timestamp & Status */}
-          <div className={`flex items-center gap-1 mt-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-            <span className={`text-[9px] sm:text-[10px] ${isUser ? 'text-white/70' : 'text-slate-500'}`}>
-              {formattedTime}
-            </span>
-            {isUser && (
-              <span className="text-white/70">
-                <CheckCheck className="h-3 w-3" />
-              </span>
+            {/* AI Suggestions - if present */}
+            {!isUser && message.suggestions && message.suggestions.length > 0 && (
+              <div className="mt-2.5 sm:mt-3 space-y-1.5 sm:space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-purple-400 mb-1.5 sm:mb-2">
+                  <Sparkles className="h-3 w-3" />
+                  <span>AI Suggestions</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                  {message.suggestions.slice(0, 4).map((suggestion, index) => (
+                    <button
+                      key={index}
+                      className="px-2.5 sm:px-3 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-xs text-purple-300 hover:bg-purple-500/20 transition-colors touch-manipulation"
+                      onClick={() => {
+                        // This would trigger a new message with the suggestion
+                        const input = document.querySelector('textarea[placeholder*="Message ChronosAI"]') as HTMLTextAreaElement;
+                        if (input) {
+                          input.value = suggestion.time;
+                          input.focus();
+                        }
+                      }}
+                    >
+                      {suggestion.time}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Success Indicator */}
+            {!isUser && isSuccess && (
+              <div className={`mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-white/10 flex items-center gap-1.5 text-[9px] sm:text-xs ${message.meeting?.meeting_url ? 'text-blue-400' : 'text-emerald-400'}`}>
+                <Check className="h-3 w-3" />
+                <span className="font-medium">{message.meeting?.meeting_url ? 'Meeting created' : 'Done'}</span>
+              </div>
             )}
           </div>
         </div>
