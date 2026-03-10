@@ -32,39 +32,6 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 logger = structlog.get_logger()
 
 
-async def fetch_live_calendar_events(calendar_provider, user: User, start_time: datetime, end_time: datetime) -> List[Dict[str, Any]]:
-    """Fetch live events from Google Calendar API - the true source of truth."""
-    try:
-        events = await calendar_provider.list_events(start_time, end_time)
-        # Filter for future events and add metadata
-        live_events = []
-        for event in events:
-            event_start = event.get('start', {}).get('dateTime') or event.get('start', {}).get('date')
-            if event_start:
-                try:
-                    start_dt = datetime.fromisoformat(event_start.replace('Z', '+00:00'))
-                    if start_dt >= datetime.now(timezone.utc):
-                        live_events.append({
-                            'id': event.get('id', ''),
-                            'title': event.get('summary', 'Untitled'),
-                            'start_time': start_dt,
-                            'end_time': datetime.fromisoformat(
-                                (event.get('end', {}).get('dateTime') or event.get('end', {}).get('date'))
-                                .replace('Z', '+00:00')
-                            ),
-                            'attendees': [attendee.get('email', '') for attendee in event.get('attendees', [])],
-                            'description': event.get('description', ''),
-                            'location': event.get('location', ''),
-                            'status': event.get('status', 'confirmed')
-                        })
-                except Exception:
-                    continue
-        return live_events
-    except Exception as e:
-        logger.error("fetch_live_events_failed", error=str(e))
-        return []
-
-
 @router.post("/message", response_model=ChatResponse)
 @limiter.limit("20/minute")
 async def send_message(
@@ -232,6 +199,19 @@ async def send_message(
             user_id_hash=hash_user_id(str(current_user.id)),
             exc_info=True
         )
+        
+        # Enhanced error diagnostics using test_connection
+        try:
+            connection_status = await calendar_provider.test_connection()
+            if not connection_status.get("success", False):
+                error_detail = connection_status.get("error", "Unknown calendar connection issue")
+                return ChatResponse(
+                    response=f"🔗 Calendar connection issue: {error_detail}. Please check your Google Calendar integration.",
+                    intent="ERROR"
+                )
+        except Exception as conn_e:
+            logger.warning("calendar_connection_test_failed", error=str(conn_e))
+        
         return ChatResponse(
             response="I'm experiencing some technical difficulties. Please try again in a moment.",
             intent="ERROR"
@@ -669,7 +649,7 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
 
 
 async def handle_query_availability(intent: ParsedIntent, user: User, calendar_provider) -> ChatResponse:
-    """Handle availability query intent."""
+    """Handle availability query intent using enhanced service."""
     try:
         # Use user's timezone for correct day/time calculation
         try:
@@ -681,36 +661,34 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
         now_local = datetime.now(tz)
         target_date = now_local.date()
         
-        # Working hours: 8 AM to 8 PM in user's timezone
-        start_of_day = datetime.combine(target_date, time(8, 0)).replace(tzinfo=tz)
-        end_of_day = datetime.combine(target_date, time(20, 0)).replace(tzinfo=tz)
-        
-        busy_slots = await calendar_provider.get_free_busy(
-            start_of_day, end_of_day, [user.email]
+        # Use enhanced service's get_availability method with duration support
+        availability = await calendar_provider.get_availability(
+            calendar_ids=["primary"],
+            start_date=target_date,
+            end_date=target_date,
+            duration_minutes=30  # Default 30-minute meetings
         )
         
-        if not busy_slots:
+        if not availability or not availability.get("slots"):
             return ChatResponse(
-                response=f"📅 You're completely free today ({target_date.strftime('%A, %B %d')})! Your calendar has no meetings between 8 AM and 8 PM.",
+                response=f"📅 You're completely free today ({target_date.strftime('%A, %B %d')})! Your calendar has no meetings.",
                 intent="check_availability"
             )
         
-        # Format busy times and find free slots
-        busy_times = []
-        for slot in busy_slots:
-            try:
-                local_start = slot.start.astimezone(tz)
-                local_end = slot.end.astimezone(tz)
-                busy_times.append(f"• {local_start.strftime('%I:%M %p')} – {local_end.strftime('%I:%M %p')}")
-            except Exception:
-                busy_times.append(f"• {slot.start.strftime('%I:%M %p')} – {slot.end.strftime('%I:%M %p')}")
+        # Format available slots
+        available_slots = []
+        for slot in availability["slots"][:5]:  # Show up to 5 slots
+            local_start = slot.start.astimezone(tz)
+            local_end = slot.end.astimezone(tz)
+            duration = int((slot.end - slot.start).total_seconds() / 60)
+            available_slots.append(f"• {local_start.strftime('%I:%M %p')} – {local_end.strftime('%I:%M %p')} ({duration} min)")
         
-        busy_text = "\n".join(busy_times)
-        free_count = max(0, 24 - len(busy_slots) * 2)  # Rough estimate of 30-min free slots
+        slots_text = "\n".join(available_slots)
         
         return ChatResponse(
-            response=f"📅 Here's your schedule for {target_date.strftime('%A, %B %d')}:\n\n**Busy:**\n{busy_text}\n\nYou have approximately {free_count} free 30-minute slots between 8 AM – 8 PM. Would you like me to suggest a time for a meeting?",
-            intent="check_availability"
+            response=f"📅 Available time slots for {target_date.strftime('%A, %B %d')}:\n\n{slots_text}\n\nWould you like me to schedule a meeting in one of these slots?",
+            intent="check_availability",
+            availability=availability.get("slots", [])[:5]
         )
         
     except Exception as e:
@@ -821,45 +799,32 @@ async def handle_ai_suggestions(intent: ParsedIntent, user: User, calendar_provi
 
 
 async def handle_list_meetings(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
-    """Handle listing meetings using live Google Calendar data."""
+    """Handle listing meetings using enhanced service."""
     try:
-        # Fetch live events from Google Calendar
         now_utc = datetime.now(timezone.utc)
         end_time = now_utc + timedelta(days=7)
         
-        live_events = await fetch_live_calendar_events(calendar_provider, user, now_utc, end_time)
-        
-        if not live_events:
-            return ChatResponse(
-                response="📅 You have no upcoming events scheduled.",
-                intent="list_meetings"
-            )
-        
-        # Format events with local time
-        events_text = []
-        for event in live_events[:10]:  # Limit to 10 events
-            try:
-                local_time = event['start_time'].astimezone(ZoneInfo(str(user.timezone)))
-                formatted_time = local_time.strftime("%A, %B %d at %I:%M %p")
-                events_text.append(f"• {event['title']} - {formatted_time}")
-            except Exception:
-                events_text.append(f"• {event['title']} - {event['start_time']}")
-        
-        return ChatResponse(
-            response=f"📅 Your upcoming events:\n{chr(10).join(events_text)}\n\nWould you like me to help you manage any of these?",
-            intent="list_meetings",
-            meetings=[{
-                "id": event['id'],
-                "title": event['title'],
-                "start_time": event['start_time'].isoformat(),
-                "end_time": event['end_time'].isoformat(),
-                "attendees": event['attendees']
-            } for event in live_events[:10]]
+        # Use the service's built-in get_events
+        events = await calendar_provider.get_events(
+            calendar_id="primary", 
+            start_time=now_utc, 
+            end_time=end_time
         )
         
+        if not events:
+            return ChatResponse(response="📅 No upcoming events found.", intent="list_meetings")
+        
+        # Format using CalendarEvent attributes
+        events_text = []
+        for event in events[:10]:
+            local_time = event.start.astimezone(ZoneInfo(str(user.timezone)))
+            events_text.append(f"• {event.summary} - {local_time.strftime('%A, %B %d at %I:%M %p')}")
+        
+        return ChatResponse(
+            response=f"📅 Your upcoming events:\n{chr(10).join(events_text)}",
+            intent="list_meetings",
+            meetings=[{"id": e.id, "title": e.summary, "start_time": e.start.isoformat()} for e in events[:10]]
+        )
     except Exception as e:
         logger.error("list_meetings_failed", error=str(e))
-        return ChatResponse(
-            response="I couldn't retrieve your events. Please try again.",
-            intent="list_meetings"
-        )
+        return ChatResponse(response="I couldn't retrieve your events.", intent="list_meetings")
