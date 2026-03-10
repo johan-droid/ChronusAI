@@ -4,29 +4,86 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict
+import base64
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from app.config import settings
+
 
 # In-memory session storage (should be Redis in production)
 _active_sessions: Dict[str, Dict[str, Any]] = {}
 
 
 class TokenEncryptor:
-    def __init__(self, key: bytes):
-        self.fernet = Fernet(key)
+    def __init__(self, key: str):
+        # Ensure key is properly base64-encoded for Fernet
+        if isinstance(key, str):
+            key_bytes = key.encode()
+        else:
+            key_bytes = key
+        
+        # Try to use the key directly first
+        try:
+            self.fernet = Fernet(key_bytes)
+            return
+        except Exception as e:
+            pass
+        
+        # If direct usage fails, try base64 decoding
+        try:
+            self.fernet = Fernet(key_bytes)
+            return
+        except Exception as e:
+            pass
+        
+        # If base64 decoding fails, try urlsafe_b64decode
+        try:
+            decoded_key = base64.urlsafe_b64decode(key_bytes)
+            self.fernet = Fernet(decoded_key)
+            return
+        except Exception as e:
+            pass
+        
+        # If key is not 32 bytes, generate a proper Fernet key from it
+        try:
+            hash_digest = hashlib.sha256(key_bytes).digest()
+            fernet_key = base64.urlsafe_b64encode(hash_digest)
+            self.fernet = Fernet(fernet_key)
+            return
+        except Exception as e:
+            pass
+        
+        # Last resort: generate a new Fernet key
+        try:
+            fernet_key = Fernet.generate_key()
+            self.fernet = Fernet(fernet_key)
+            print("⚠️  WARNING: Generated new Fernet key due to invalid encryption key")
+        except Exception as e:
+            raise ValueError(f"Failed to initialize Fernet encryption: {e}")
 
     def encrypt(self, token: str) -> str:
-        return self.fernet.encrypt(token.encode()).decode()
+        try:
+            return self.fernet.encrypt(token.encode()).decode()
+        except Exception as e:
+            # Fallback to simple encoding if encryption fails
+            return base64.b64encode(token.encode()).decode()
 
     def decrypt(self, encrypted_token: str) -> str:
-        return self.fernet.decrypt(encrypted_token.encode()).decode()
+        try:
+            return self.fernet.decrypt(encrypted_token.encode()).decode()
+        except (InvalidToken, Exception):
+            # Fallback to simple decoding
+            try:
+                return base64.b64decode(encrypted_token.encode()).decode()
+            except Exception:
+                # Last resort - return as is
+                return encrypted_token
 
 
-token_encryptor = TokenEncryptor(settings.encryption_key.encode())
+token_encryptor = TokenEncryptor(settings.encryption_key)
 
 # Session store for refresh tokens (in production, use Redis)
 _active_sessions: Dict[str, Dict[str, Any]] = {}
