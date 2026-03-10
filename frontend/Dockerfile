@@ -27,9 +27,8 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create non-root user
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S nginx -u 1001
+# Create non-root user (nginx group already exists in Alpine)
+RUN adduser -S nginx -u 1001 -G nginx || true
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
