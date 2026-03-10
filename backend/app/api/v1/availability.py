@@ -2,7 +2,7 @@ from datetime import datetime, time, timedelta
 from zoneinfo import ZoneInfo
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -98,13 +98,11 @@ async def check_availability(
         )
         
     except ValueError:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid date format. Use YYYY-MM-DD"
         )
     except Exception as e:
-        from fastapi import HTTPException, status
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to check availability: {str(e)}"
