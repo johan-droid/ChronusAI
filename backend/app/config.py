@@ -1,4 +1,5 @@
 import os
+import secrets
 from functools import lru_cache
 from typing import List, Optional
 
@@ -16,8 +17,8 @@ class Settings(BaseSettings):
 
     # App
     app_env: str = "development"
-    secret_key: str
-    encryption_key: str  # Fernet.generate_key() output (base64 urlsafe)
+    secret_key: str = ""  # Will be generated if empty
+    encryption_key: str = ""  # Will be generated if empty
     frontend_url: AnyHttpUrl = AnyHttpUrl("http://localhost:5173")
 
     # Database
@@ -53,7 +54,7 @@ class Settings(BaseSettings):
     zoom_redirect_uri: Optional[AnyHttpUrl] = AnyHttpUrl("http://localhost:8000/api/v1/auth/zoom/callback")
 
     # JWT
-    jwt_secret_key: str
+    jwt_secret_key: str = ""  # Will be generated if empty
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
 
@@ -62,6 +63,21 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
+        # Auto-generate missing secret keys for security
+        if not self.secret_key:
+            self.secret_key = secrets.token_urlsafe(32)
+            print("🔑 Generated SECRET_KEY for production")
+            
+        if not self.encryption_key:
+            from cryptography.fernet import Fernet
+            self.encryption_key = Fernet.generate_key().decode()
+            print("🔐 Generated ENCRYPTION_KEY for production")
+            
+        if not self.jwt_secret_key:
+            self.jwt_secret_key = secrets.token_urlsafe(32)
+            print("🎫 Generated JWT_SECRET_KEY for production")
+        
         # Override redirect URIs in production environment
         is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
         if is_production:
