@@ -1,0 +1,116 @@
+services:
+  # Backend API Service
+  - type: web
+    name: chronosai-backend
+    runtime: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    healthCheck:
+      path: /health
+      intervalSeconds: 15
+      timeoutSeconds: 10
+      gracePeriodSeconds: 30
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: JWT_EXPIRE_MINUTES
+        value: 60
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./scheduler.db
+      - key: REDIS_URL
+        fromService:
+          name: chronosai-redis
+          type: redis
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: deepseek-chat
+      - key: OPENAI_BASE_URL
+        value: https://api.deepseek.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_REDIRECT_URI
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+
+  # Frontend Service
+  - type: web
+    name: chronosai-frontend
+    runtime: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /
+    healthCheck:
+      path: /
+      intervalSeconds: 15
+      timeoutSeconds: 10
+      gracePeriodSeconds: 30
+    envVars:
+      - key: VITE_API_URL
+        value: https://chronosai-backend.onrender.com
+      - key: VITE_WS_URL
+        value: wss://chronosai-backend.onrender.com
+
+  # Redis Cache Service
+  - type: redis
+    name: chronosai-redis
+    region: oregon
+    plan: starter
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+    healthCheck:
+      path: /ping
+
+  # Background Worker (if needed)
+  - type: worker
+    name: chronosai-worker
+    runtime: docker
+    region: oregon
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: WORKER_MODE
+        value: true
+      # Copy all other env vars from backend service
+    healthCheck:
+      path: /worker/health
+      gracePeriodSeconds: 30
+
+  # PostgreSQL Database (Optional - for production)
+  - type: pserv
+    name: chronosai-postgres
+    region: oregon
+    plan: starter
+    databaseName: chronosai
+    user: chronos_user
+    ipAllowList: []
+    healthCheck:
+      path: /health
