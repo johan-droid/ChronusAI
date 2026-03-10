@@ -10,6 +10,19 @@ interface ChatMessageProps {
 export default function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
+  // Animation variants
+  const messageVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        duration: 0.3,
+        ease: [0.16, 1, 0.3, 1] as const
+      }
+    }
+  };
+
   // Remove markdown and clean text
   const cleanContent = message.content
     .replace(/\*\*/g, '') // Remove bold
@@ -76,12 +89,17 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
       )}
 
       {/* Message Bubble */}
-      <div className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] min-w-0 ${isUser ? 'order-1' : 'order-2'}`}>
+      <motion.div 
+        variants={messageVariants}
+        initial="hidden"
+        animate="visible"
+        className={`max-w-[90%] sm:max-w-[85%] md:max-w-[75%] min-w-0 ${isUser ? 'order-1' : 'order-2'}`}
+      >
         <div 
-          className={`relative px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 rounded-2xl transition-all duration-200 ${
+          className={`relative px-4 py-4 sm:px-4 sm:py-4 md:px-5 md:py-4 rounded-2xl transition-all duration-200 shadow-sm ${
             isUser
-              ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-br-md shadow-md'
-              : 'bg-[#1a1a2e] border border-white/10 text-slate-100 rounded-bl-md shadow-md'
+              ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-tr-none'
+              : 'bg-white/10 backdrop-blur-sm border border-white/20 text-slate-100 rounded-tl-none'
           } ${isTyping ? 'animate-pulse' : ''}`}
         >
           {/* Message Content */}
@@ -213,7 +231,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Avatar - User only */}
       {isUser && (

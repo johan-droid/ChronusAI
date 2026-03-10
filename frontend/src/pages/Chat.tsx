@@ -31,6 +31,14 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-[100dvh] max-h-[100dvh] bg-[#050510] relative overflow-hidden">
+      {/* ColorBends Background Effect */}
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div className="absolute bottom-0 right-20 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-6000"></div>
+      </div>
+      
       <div className="page-bg" />
       <div className="page-grid-overlay" />
 
@@ -60,8 +68,8 @@ export default function Chat() {
             </div>
           </div>
 
-          {/* Chat Window Container - Fully expanded */}
-          <div className="flex-1 flex flex-col min-h-0 relative">
+          {/* Chat Window Container - Centered with max-w-4xl */}
+          <div className="flex-1 flex flex-col min-h-0 relative max-w-4xl mx-auto w-full">
             <ChatWindow />
           </div>
         </div>

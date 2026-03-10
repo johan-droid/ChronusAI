@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { Send, Loader2, Sparkles, Calendar, Clock, Zap, Mic, Plus, Smile, CheckCheck, ArrowRight } from 'lucide-react';
+import { SendHorizontal, Sparkles, Calendar, Clock, Zap, CheckCheck, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';
 import ChatMessage from './ChatMessage';
+import OptimizedSpinner from './OptimizedSpinner';
 
 // Enhanced quick prompts with categories
 const QUICK_PROMPTS = [
@@ -207,7 +208,6 @@ TypingIndicator.displayName = 'TypingIndicator';
 export default function ChatWindow() {
   const [message, setMessage] = useState('');
   const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
-  const [showActions, setShowActions] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const { messages, isLoading, currentResponse } = useChatStore();
   const sendMessage = useSendMessage();
@@ -243,7 +243,6 @@ export default function ChatWindow() {
     if (message.trim() && !isLoading) {
       sendMessage.mutate({ message: message.trim() });
       setMessage('');
-      setShowActions(false);
       setIsTyping(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
@@ -333,105 +332,59 @@ export default function ChatWindow() {
         )}
       </AnimatePresence>
 
-      {/* Input Area - Fixed at bottom for mobile keyboard */}
-      <div className="shrink-0 p-2 sm:p-2.5 md:p-4 bg-[#0a0a14]/95 backdrop-blur-xl border-t border-white/5 relative z-40 md:relative fixed bottom-0 left-0 right-0 sm:static safe-area-bottom">
-        <form onSubmit={handleSubmit} className="max-w-4xl mx-auto flex items-end gap-1.5 sm:gap-2">
-          {/* Plus Button for Actions */}
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setShowActions(!showActions)}
-            className={`p-2 sm:p-2.5 md:p-3 rounded-full transition-all flex-shrink-0 ${showActions ? 'bg-blue-500 text-white rotate-45' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
-          >
-            <Plus className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-          </motion.button>
-
-          {/* Input Container */}
-          <div className="flex-1 relative bg-white/[0.05] rounded-2xl sm:rounded-2xl md:rounded-3xl border border-white/10 focus-within:border-blue-500/50 focus-within:bg-white/[0.08] transition-all">
-            <div className="flex items-end">
-              {/* Emoji Button */}
-              <button
-                type="button"
-                className="p-2 sm:p-2 md:p-2.5 md:p-3 text-slate-400 hover:text-slate-200 transition-colors flex-shrink-0"
-              >
-                <Smile className="h-4 w-4 sm:h-4 sm:w-4 md:h-5 md:w-5" />
-              </button>
-
-              {/* Text Input */}
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={message}
-                onChange={handleInput}
-                onKeyDown={handleKeyDown}
-                placeholder="Message ChronosAI..."
-                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-sm md:text-base py-2 sm:py-2 md:py-2.5 px-1 resize-none min-h-[36px] sm:min-h-[40px] md:min-h-[44px] max-h-[120px] font-medium outline-none"
-                style={{ scrollbarWidth: 'none' }}
-              />
-
-              {/* Attachment & Voice - Hidden when typing */}
-              <AnimatePresence>
-                {!message.trim() && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="flex items-center gap-1 pr-2 flex-shrink-0"
-                  >
-                    <button
-                      type="button"
-                      className="p-2 sm:p-2.5 md:p-3 text-slate-400 hover:text-slate-200 transition-colors"
-                    >
-                      <Mic className="h-4 w-4 sm:h-5 sm:w-5 md:h-5 md:w-5" />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+      {/* Input Area - Floating Bar Design */}
+      <div className="shrink-0 p-4 sm:p-6 mb-6 bg-transparent relative z-40">
+        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
+          <div className="flex items-center bg-white/[0.08] backdrop-blur-xl rounded-full border border-white/20 shadow-xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
+            {/* Text Input */}
+            <textarea
+              ref={textareaRef}
+              rows={1}
+              value={message}
+              onChange={handleInput}
+              onKeyDown={handleKeyDown}
+              placeholder="Message ChronosAI..."
+              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base md:text-base py-3 sm:py-3.5 md:py-4 px-4 sm:px-5 md:px-6 resize-none min-h-[44px] sm:min-h-[48px] md:min-h-[52px] max-h-[120px] font-medium outline-none"
+              style={{ scrollbarWidth: 'none' }}
+            />
+            
+            {/* Loading State or Send Button */}
+            <div className="flex items-center pr-2 pl-1">
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <OptimizedSpinner size="sm" variant="dots" className="text-blue-400" />
+                  <span className="text-xs text-slate-400 hidden sm:inline">AI is thinking...</span>
+                </div>
+              ) : (
+                <motion.button
+                  type="submit"
+                  whileTap={{ scale: 0.95 }}
+                  disabled={!message.trim()}
+                  className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 ${
+                    message.trim()
+                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/30'
+                      : 'bg-white/10 text-slate-500 cursor-not-allowed'
+                  }`}
+                >
+                  <SendHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
+                </motion.button>
+              )}
             </div>
           </div>
-
-          {/* Send/Voice Button */}
-          <motion.button
-            type="submit"
-            whileTap={{ scale: 0.9 }}
-            disabled={!message.trim() || isLoading}
-            className={`p-2.5 sm:p-2.5 md:p-3.5 rounded-full transition-all duration-200 flex-shrink-0 relative ${message.trim() && !isLoading
-              ? 'bg-blue-500 hover:bg-blue-400 text-white shadow-lg shadow-blue-500/25'
-              : 'bg-white/5 text-slate-500 cursor-not-allowed'
-              }`}
-          >
-            {isLoading ? (
-              <div className="flex items-center gap-1">
-                <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 animate-spin" />
-                <span className="text-xs text-white/80 ml-1">AI is thinking...</span>
+          
+          {/* Helper Text */}
+          <div className="flex items-center justify-between mt-2 sm:mt-3 px-2">
+            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium">
+              {isTyping ? 'Typing...' : 'Press Enter to send • Shift + Enter for new line'}
+            </p>
+            {isLlmOnline && (
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-[10px] sm:text-[11px] text-slate-500">AI Ready</span>
               </div>
-            ) : message.trim() ? (
-              <Send className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
-            ) : (
-              <Mic className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
             )}
-            {message.trim() && !isLoading && (
-              <motion.div
-                className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-400 rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
-            )}
-          </motion.button>
+          </div>
         </form>
-
-        {/* Helper Text - Enhanced with typing indicator */}
-        <div className="flex items-center justify-between mt-1.5 sm:mt-2">
-          <p className="text-center text-[9px] sm:text-[10px] text-slate-600 font-medium uppercase tracking-wider">
-            {isTyping ? 'Typing...' : 'Press Enter to send • Shift + Enter for new line'}
-          </p>
-          {isLlmOnline && (
-            <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-slate-500">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>AI Ready</span>
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );
