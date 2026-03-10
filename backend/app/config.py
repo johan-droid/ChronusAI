@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # JWT
     jwt_secret_key: str = ""  # Will be generated if empty
     jwt_algorithm: str = "HS256"
-    jwt_expire_minutes: int = 60
+    jwt_expire_minutes: int = 1440  # 24 hours instead of 1 hour
 
     # CORS
     cors_origins: List[str] = []

@@ -375,8 +375,17 @@ async def refresh_token(
                 detail="User not found"
             )
 
-        access_token = create_access_token(subject=str(user.id))
-        return {"access_token": access_token}
+        # Create new access token and refresh token (rotation)
+        new_access_token = create_access_token(subject=str(user.id))
+        new_refresh_token = create_refresh_token(subject=str(user.id))
+        
+        # Revoke old refresh token
+        await revoke_session(token_string)
+
+        return {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token  # Return new refresh token
+        }
 
     except HTTPException:
         raise

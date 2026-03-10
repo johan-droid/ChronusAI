@@ -11,6 +11,7 @@ interface AuthState {
   timezone: string;
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
   updateAccessToken: (accessToken: string) => void;
+  updateRefreshToken: (refreshToken: string) => void;
   updateUser: (user: Partial<User>) => void;
   setTimezone: (timezone: string) => void;
   logout: () => void;
@@ -37,6 +38,10 @@ export const useAuthStore = create<AuthState>()(
       updateAccessToken: (accessToken) => set((state) => ({
         ...state,
         accessToken
+      })),
+      updateRefreshToken: (refreshToken) => set((state) => ({
+        ...state,
+        refreshToken
       })),
       updateUser: (userData) => set((state) => ({
         ...state,

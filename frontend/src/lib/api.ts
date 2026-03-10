@@ -58,14 +58,19 @@ class ApiClient {
           originalRequest._retry = true;
 
           try {
-            const { refreshToken, updateAccessToken } = useAuthStore.getState();
+            const { refreshToken, updateAccessToken, updateRefreshToken } = useAuthStore.getState();
             if (refreshToken) {
               const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
                 headers: { Authorization: `Bearer ${refreshToken}` }
               });
 
-              const { access_token } = response.data;
+              const { access_token, refresh_token: new_refresh_token } = response.data;
               updateAccessToken(access_token);
+              
+              // Update refresh token if rotation is enabled
+              if (new_refresh_token) {
+                updateRefreshToken(new_refresh_token);
+              }
 
               // Retry original request with new token
               originalRequest.headers.Authorization = `Bearer ${access_token}`;
