@@ -15,138 +15,155 @@ class LLMService:
             api_key=settings.openai_api_key,
             base_url=settings.openai_base_url,
         )
+        self.model = "deepseek-chat"  # DeepSeek model
 
     @staticmethod
-    def _system_prompt(user_timezone: str, user_email: str, user_name: str) -> str:
+    def _enhanced_system_prompt(
+        user_timezone: str, 
+        user_email: str, 
+        user_name: str,
+        upcoming_events_context: str = ""
+    ) -> str:
         now_utc = datetime.now(timezone.utc)
         current_utc_iso = now_utc.isoformat()
         current_day = now_utc.strftime("%A, %B %d, %Y")
         
-        return (
-            f"You are ChronosAI, an expert AI meeting scheduler. Output ONLY valid JSON, no markdown formatting.\n"
-            f"Current UTC Date & Time: {current_utc_iso}\n"
-            f"Current Day of Week: {current_day}\n"
-            f"User timezone: {user_timezone}\n"
-            f"User email: {user_email}\n"
-            f"User name: {user_name}\n\n"
-            "CRITICAL RULES:\n"
-            "1. EMAIL VALIDATION: Attendees MUST be valid email addresses (e.g., john@example.com). If user provides names like 'John', either:\n"
-            "   - Ask for their email address, OR\n"
-            "   - If you know the email from context, use it.\n"
-            "   NEVER pass names directly to the API.\n"
-            "2. TIMEZONE HANDLING: Output ALL datetimes in the USER'S LOCAL TIMEZONE ({user_timezone}) using ISO format WITHOUT timezone (e.g., 2026-03-10T14:00:00).\n"
-            "   DO NOT add 'Z' or timezone offsets. Python will handle UTC conversion.\n"
-            "3. If the user says 'tomorrow' or 'next week', calculate the exact date based on the Current Day of Week provided above.\n"
-            "4. EVENT TARGETING: For cancel/reschedule operations, use the exact 'event_id' from the provided events list.\n"
-            "   If no event_id is available, use the exact title. NEVER use fuzzy matching.\n"
-            "5. If no specific attendees are mentioned, return an empty array: [] for attendees.\n"
-            "\nINTENTS: schedule | reschedule | cancel | check_availability | find_time | list_meetings | suggest_times | unknown\n"
-            "MEETING_PLATFORM: zoom | meet | teams | none\n\n"
-            "EXAMPLES:\n"
-            "'Schedule a meeting for tomorrow at 2pm' -> \n"
-            '{"intent":"schedule", "title":"Meeting", "start_time":"2026-03-10T14:00:00", "end_time":"2026-03-10T14:30:00", "attendees":[], "response":"I\'ll schedule that for you. Do you want to add anyone else?"}\n'
-            "'Cancel my sync with John' -> \n"
-            '{"intent":"cancel", "event_id":"abc123", "title":"sync", "attendees":["john@example.com"], "response":"I\'ll cancel your sync with John."}\n'
-        )
+        return f"""You are ChronosAI, a scheduling assistant. Your goal is to parse user intent into a structured JSON.
 
-    @staticmethod
-    def _chat_system_prompt(user_name: str, user_email: str) -> str:
-        return (
-            f"You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name} ({user_email}). "
-            "You have full access to their Google Calendar and can help with:\n\n"
-            "📅 Calendar Management:\n"
-            "• Schedule, reschedule, and cancel meetings\n"
-            "• Check availability and find optimal times\n"
-            "• Coordinate with multiple attendees\n"
-            "• Handle recurring meetings\n"
-            "• Resolve scheduling conflicts\n\n"
-            "🤖 AI-Powered Features:\n"
-            "• Natural language scheduling\n"
-            "• Smart time suggestions\n"
-            "• Meeting type optimization\n"
-            "• Multi-calendar synchronization\n\n"
-            "Be conversational, helpful, and proactive. If you can help with scheduling, offer specific suggestions. "
-            "Always be ready to take action on their calendar when they ask."
-        )
+CONTEXT:
+- Current Time (UTC): {current_utc_iso}
+- User Timezone: {user_timezone}
+- User Info: {user_name} ({user_email})
+- LIVE CALENDAR DATA (Source of Truth):
+{upcoming_events_context}
 
-    async def parse_intent(self, message: str, user_timezone: str, user_email: str, user_name: str, context: List[Dict[str, Any]], upcoming_events_context: str = "") -> ParsedIntent:
-        """Parse user message into structured meeting intent using DeepSeek AI."""
+INTENTS:
+- schedule: Create a new meeting
+- cancel: Delete an existing meeting (match by ID if possible)
+- reschedule: Move an existing meeting to a new time
+- check_availability: Check if a slot is free
+- list_meetings: Show upcoming events
+- find_time: Find optimal meeting times
+- suggest_times: Suggest time options
+- unknown: Unable to determine intent
+
+RULES:
+1. Always output ONLY valid JSON with the exact schema below
+2. For dates/times, use ISO 8601 format in USER'S LOCAL TIMEZONE (e.g., 2026-03-10T14:00:00)
+3. If an event ID is mentioned or matched from context, include it as 'event_id'
+4. If info is missing, set intent but keep fields null and provide a 'response' asking for details
+5. EMAIL VALIDATION: Attendees MUST be valid email addresses. If names are provided, ask for emails
+6. For cancel/reschedule, use exact event_id from LIVE CALENDAR DATA when possible
+7. Handle relative dates like 'tomorrow' based on current day: {current_day}
+
+JSON SCHEMA:
+{{
+  "intent": "schedule|cancel|reschedule|check_availability|list_meetings|find_time|suggest_times|unknown",
+  "title": "string or null",
+  "start_time": "ISO_DATE string or null",
+  "end_time": "ISO_DATE string or null",
+  "event_id": "string or null",
+  "attendees": ["email1@example.com", "email2@example.com"],
+  "response": "optional friendly message or null",
+  "requires_clarification": true/false,
+  "meeting_type": "meeting|call|review|presentation|null",
+  "description": "string or null"
+}}
+
+EXAMPLES:
+"Schedule a meeting for tomorrow at 2pm" -> 
+{{"intent":"schedule", "title":"Meeting", "start_time":"2026-03-10T14:00:00", "end_time":"2026-03-10T14:30:00", "attendees":[], "response":"I'll schedule that for you. Do you want to add anyone else?", "requires_clarification":false}}
+
+"Cancel meeting with John" -> 
+{{"intent":"cancel", "event_id":"abc123", "title":"meeting with John", "attendees":["john@example.com"], "response":"I'll cancel your meeting with John.", "requires_clarification":false}}
+
+SELF-CORRECTION:
+If you see a "Safety Warning" in context, it means your previous output had an error. Fix the specific issue mentioned:
+- Invalid ISO format: Use proper YYYY-MM-DDTHH:MM:SS format
+- Invalid email: Use proper email@domain.com format
+- Missing event_id: Use the exact ID from LIVE CALENDAR DATA
+- Timezone issues: Output in user's local timezone without 'Z'
+"""
+
+    async def parse_intent(
+        self, 
+        user_input: str, 
+        timezone: str, 
+        user_email: str, 
+        user_name: str,
+        context: List[Dict[str, Any]],
+        upcoming_events_context: str = ""
+    ) -> ParsedIntent:
+        """Parse user message into structured meeting intent using DeepSeek AI with JSON mode."""
         try:
             # Build enhanced system prompt with events context
-            system_prompt = self._system_prompt(user_timezone, user_email, user_name)
-            if upcoming_events_context:
-                system_prompt += f"\n\nUPCOMING EVENTS (for reference):\n{upcoming_events_context}\n"
+            system_prompt = self._enhanced_system_prompt(
+                timezone, user_email, user_name, upcoming_events_context
+            )
             
             messages: List[Dict[str, str]] = [
                 {"role": "system", "content": system_prompt},
             ]
             
-            # Add context (last 4 messages)
-            context_slice = context[-4:]  # pyre-ignore[6]
+            # Add context (last 6 messages for better context awareness)
+            context_slice = context[-6:]  # pyre-ignore[6]
             for item in context_slice:
                 role = item.get("role")
                 content_ctx = item.get("content", "")
-                if role in ["user", "assistant"]:
+                if role in ["user", "assistant", "system"]:
                     messages.append({"role": str(role), "content": str(content_ctx)})
             
-            messages.append({"role": "user", "content": message})
+            messages.append({"role": "user", "content": user_input})
             
+            # Use JSON mode for structured output
             response = await self._client.chat.completions.create(
-                model=settings.openai_model,
+                model=self.model,
                 messages=messages,  # type: ignore[arg-type]
-                temperature=0.1,
+                response_format={"type": "json_object"},  # Essential for DeepSeek JSON mode
+                temperature=0.1,  # Low temperature for deterministic parsing
                 max_tokens=1000,
             )
             
             content = response.choices[0].message.content
             if not content:
                 raise ValueError("Empty response from DeepSeek")
-            # Strip markdown code blocks if present
-            content = content.strip()
-            if content.startswith("```"):
-                lines = content.split("\n")
-                content = "\n".join(
-                    line for line in lines
-                    if not line.strip().startswith("```")
-                )
-            content = content.strip()
-            # Parse JSON response robustly
+            
+            # Parse JSON response (DeepSeek with JSON mode should return clean JSON)
             try:
-                # Use regex to find the JSON object, handling markdown and think blocks
-                import re
-                match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
-                
-                if match:
-                    json_str = match.group(1)
-                elif "{" in content and "}" in content:
-                    idx_start = content.find("{")
-                    idx_end = content.rfind("}") + 1
-                    json_str = content[idx_start:idx_end]  # pyre-ignore[6]
-                else:
-                    json_str = content
-
-                parsed_data = json.loads(json_str)
+                parsed_data = json.loads(content.strip())
                 return ParsedIntent(**parsed_data)
-            except json.JSONDecodeError:
-                # Fallback if not valid JSON
+            except json.JSONDecodeError as e:
+                # Log the error for debugging
+                print(f"JSON parsing error: {e}")
+                print(f"Raw content: {content}")
+                
+                # Fallback with error handling
                 return ParsedIntent(
                     intent="unknown",
-                    response="I understand you want to work with your calendar. Could you please be more specific about what you'd like to do?"
+                    response="I'm having trouble processing your request. Could you please rephrase your message?",
+                    requires_clarification=True
                 )
                 
-        except Exception:
+        except Exception as e:
+            # Enhanced error logging
+            print(f"LLM service error: {e}")
             return ParsedIntent(
                 intent="unknown",
-                response="I'm having trouble processing your request right now. Please try rephrasing your message."
+                response="I'm experiencing technical difficulties. Please try again in a moment.",
+                requires_clarification=True
             )
     
     async def generate_helpful_response(self, message: str, user_name: str, user_email: str) -> str:
         """Generate helpful AI response for general queries."""
         try:
+            system_prompt = f"""You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name} ({user_email}). 
+            You have full access to their Google Calendar and can help with scheduling, rescheduling, and managing meetings.
+            Be conversational, helpful, and proactive. If you can help with scheduling, offer specific suggestions."""
+            
             response = await self._client.chat.completions.create(
-                model=settings.openai_model,
+                model=self.model,
                 messages=[
-                    {"role": "system", "content": self._chat_system_prompt(user_name, user_email)},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": message}
                 ],
                 temperature=0.7,
@@ -161,7 +178,7 @@ class LLMService:
         """Generate simple completion for given prompt."""
         try:
             response = await self._client.chat.completions.create(
-                model=settings.openai_model,
+                model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.8,
                 max_tokens=100,

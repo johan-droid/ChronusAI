@@ -23,6 +23,7 @@ class ParsedIntent(BaseModel):
     meeting_type: Optional[str] = None   # standup, review, sync, presentation, call, other
     meeting_platform: Optional[Literal["zoom", "meet", "teams", "none"]] = None
     response: str = ""
+    requires_clarification: bool = False  # Whether the user needs to provide more information
     suggestions: Optional[List[dict[str, Any]]] = None
     conflicts: Optional[List[dict[str, Any]]] = None
     recurring: Optional[dict[str, Any]] = None
@@ -37,6 +38,8 @@ class ChatResponse(BaseModel):
     intent: str
     meeting: Optional[dict] = None
     requires_clarification: bool = False
+    meetings: Optional[List[dict[str, Any]]] = None  # List of meetings for list_meetings intent
+    availability: Optional[List[dict[str, Any]]] = None  # Available time slots
     suggestions: Optional[List[Any]] = None  # e.g. [{"time": "ISO", "reason": "..."}]
     confidence: Optional[float] = None
 
