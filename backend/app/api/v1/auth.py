@@ -537,6 +537,80 @@ async def zoom_callback(
         return RedirectResponse(url=f"{settings.frontend_url}/settings?zoom=error")
 
 
+@router.get("/google/scopes/check")
+async def check_google_scopes(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Check if Google Calendar has sufficient scopes and provide re-auth URL if needed."""
+    try:
+        # Get Google OAuth credentials
+        result = await db.execute(
+            select(OAuthCredential).where(
+                and_(
+                    OAuthCredential.user_id == current_user.id,
+                    OAuthCredential.provider == "google"
+                )
+            )
+        )
+        credential = result.scalar_one_or_none()
+        
+        if not credential:
+            return {
+                "has_credentials": False,
+                "needs_reauth": True,
+                "message": "No Google Calendar credentials found",
+                "reauth_url": f"/api/v1/auth/google/login"
+            }
+        
+        # Test the current token with a freeBusy query
+        try:
+            from app.services.google_calendar import GoogleCalendarAdapter
+            adapter = GoogleCalendarAdapter(token_encryptor.decrypt(credential.access_token))
+            
+            # Try a minimal freeBusy query
+            from datetime import datetime, timedelta, timezone
+            start_time = datetime.now(timezone.utc)
+            end_time = start_time + timedelta(hours=1)
+            
+            await adapter.get_free_busy(start_time, end_time, [current_user.email])
+            
+            return {
+                "has_credentials": True,
+                "needs_reauth": False,
+                "message": "Google Calendar scopes are sufficient",
+                "reauth_url": None
+            }
+            
+        except Exception as e:
+            if "insufficient" in str(e).lower() and "scope" in str(e).lower():
+                return {
+                    "has_credentials": True,
+                    "needs_reauth": True,
+                    "message": "Google Calendar has insufficient scopes. Please re-authenticate.",
+                    "reauth_url": "/api/v1/auth/google/login",
+                    "error": str(e)
+                }
+            else:
+                return {
+                    "has_credentials": True,
+                    "needs_reauth": True,
+                    "message": "Google Calendar token may be expired. Please re-authenticate.",
+                    "reauth_url": "/api/v1/auth/google/login",
+                    "error": str(e)
+                }
+                
+    except Exception as e:
+        logger.error("google_scopes_check_failed", error=str(e), user_id=current_user.id)
+        return {
+            "has_credentials": False,
+            "needs_reauth": True,
+            "message": "Failed to check Google Calendar scopes",
+            "reauth_url": "/api/v1/auth/google/login",
+            "error": str(e)
+        }
+
+
 # Include Microsoft router
 api_router = APIRouter()
 api_router.include_router(microsoft_router, prefix="/api/v1")

@@ -22,7 +22,9 @@ class OAuth2Provider:
                 "openid",
                 "https://www.googleapis.com/auth/userinfo.email",
                 "https://www.googleapis.com/auth/userinfo.profile",
-                "https://www.googleapis.com/auth/calendar.events"
+                "https://www.googleapis.com/auth/calendar",  # Full calendar access (includes freeBusy)
+                "https://www.googleapis.com/auth/calendar.events",
+                "https://www.googleapis.com/auth/calendar.readonly"  # Read access for backup
             ]
         elif provider == "outlook":
             self.auth_url = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
