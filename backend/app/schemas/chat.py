@@ -14,9 +14,10 @@ class ParsedIntent(BaseModel):
         "unknown",
     ] = "unknown"
     title: Optional[str] = None
+    event_id: Optional[str] = None  # Google Calendar event ID for precise targeting
     description: Optional[str] = None
-    start_time: Optional[str] = None  # ISO datetime string
-    end_time: Optional[str] = None    # ISO datetime string
+    start_time: Optional[str] = None  # ISO datetime string (local time)
+    end_time: Optional[str] = None    # ISO datetime string (local time)
     attendees: List[str] = Field(default_factory=list)  # Email addresses
     duration_minutes: Optional[int] = None
     meeting_type: Optional[str] = None   # standup, review, sync, presentation, call, other

@@ -32,6 +32,39 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 logger = structlog.get_logger()
 
 
+async def fetch_live_calendar_events(calendar_provider, user: User, start_time: datetime, end_time: datetime) -> List[Dict[str, Any]]:
+    """Fetch live events from Google Calendar API - the true source of truth."""
+    try:
+        events = await calendar_provider.list_events(start_time, end_time)
+        # Filter for future events and add metadata
+        live_events = []
+        for event in events:
+            event_start = event.get('start', {}).get('dateTime') or event.get('start', {}).get('date')
+            if event_start:
+                try:
+                    start_dt = datetime.fromisoformat(event_start.replace('Z', '+00:00'))
+                    if start_dt >= datetime.now(timezone.utc):
+                        live_events.append({
+                            'id': event.get('id', ''),
+                            'title': event.get('summary', 'Untitled'),
+                            'start_time': start_dt,
+                            'end_time': datetime.fromisoformat(
+                                (event.get('end', {}).get('dateTime') or event.get('end', {}).get('date'))
+                                .replace('Z', '+00:00')
+                            ),
+                            'attendees': [attendee.get('email', '') for attendee in event.get('attendees', [])],
+                            'description': event.get('description', ''),
+                            'location': event.get('location', ''),
+                            'status': event.get('status', 'confirmed')
+                        })
+                except Exception:
+                    continue
+        return live_events
+    except Exception as e:
+        logger.error("fetch_live_events_failed", error=str(e))
+        return []
+
+
 @router.post("/message", response_model=ChatResponse)
 @limiter.limit("20/minute")
 async def send_message(
@@ -55,25 +88,23 @@ async def send_message(
         # Get conversation context
         context = await get_conversation_context(str(current_user.id))
         
-        # 1. Fetch upcoming meetings for Context Injection
-        meetings_result = await db.execute(
-            select(Meeting).where(
-                and_(
-                    Meeting.user_id == current_user.id,
-                    Meeting.start_time >= datetime.now(timezone.utc),
-                    Meeting.status == "scheduled"
-                )
-            ).order_by(Meeting.start_time.asc()).limit(5)
-        )
-        upcoming_meetings = meetings_result.scalars().all()
+        # 1. Fetch live events from Google Calendar (Source of Truth)
+        now_utc = datetime.now(timezone.utc)
+        end_time = now_utc + timedelta(days=7)  # Next 7 days
         
-        # Format meetings for prompt injection
-        meetings_context = "No upcoming meetings scheduled."
-        if upcoming_meetings:
+        live_events = await fetch_live_calendar_events(calendar_provider, current_user, now_utc, end_time)
+        
+        # Format live events for prompt injection
+        events_context = "No upcoming events in Google Calendar."
+        if live_events:
             context_lines: list[str] = []
-            for m in upcoming_meetings:
-                context_lines.append(f'- Title: "{m.title}", Start: {m.start_time.isoformat()}')
-            meetings_context = "\n".join(context_lines)
+            for event in live_events[:5]:  # Limit to 5 for context
+                context_lines.append(
+                    f'- ID: {event["id"]}, Title: "{event["title"]}", '
+                    f'Start: {event["start_time"].isoformat()}, '
+                    f'Attendees: {event["attendees"]}'
+                )
+            events_context = "\n".join(context_lines)
         
         # 2. Implement Self-Correction Retry Loop
         max_retries = 2
@@ -96,7 +127,7 @@ async def send_message(
                     str(current_user.email),
                     str(current_user.full_name or "User"),
                     context,
-                    upcoming_meetings_context=meetings_context
+                    upcoming_events_context=events_context
                 )
                 
                 # Basic validation: ensure dates are parsable if provided
@@ -236,16 +267,22 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
                 requires_clarification=True,
             )
 
-        # Parse datetime from ISO string
+        # Parse datetime from local time string (LLM now outputs local time)
         try:
-            start_time = datetime.fromisoformat(intent.start_time.replace('Z', '+00:00'))
-            if start_time.tzinfo is None:
-                start_time = start_time.replace(tzinfo=timezone.utc)
+            # Convert local time to UTC
+            local_start = datetime.fromisoformat(intent.start_time)
+            if local_start.tzinfo is None:
+                # Assume user timezone if not specified
+                tz = ZoneInfo(str(user.timezone)) if user.timezone else ZoneInfo("UTC")
+                local_start = local_start.replace(tzinfo=tz)
+            start_time = local_start.astimezone(timezone.utc)
                 
             if intent.end_time:
-                end_time = datetime.fromisoformat(intent.end_time.replace('Z', '+00:00'))
-                if end_time.tzinfo is None:
-                    end_time = end_time.replace(tzinfo=timezone.utc)
+                local_end = datetime.fromisoformat(intent.end_time)
+                if local_end.tzinfo is None:
+                    tz = ZoneInfo(str(user.timezone)) if user.timezone else ZoneInfo("UTC")
+                    local_end = local_end.replace(tzinfo=tz)
+                end_time = local_end.astimezone(timezone.utc)
             else:
                 end_time = start_time + timedelta(minutes=30)  # Default 30 minutes
         except Exception:
@@ -255,8 +292,21 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
                 requires_clarification=True,
             )
         
-        # Build attendee list
+        # Build attendee list with email validation
         attendees_emails = list({str(user.email), *(intent.attendees or [])})
+        
+        # Validate all attendee emails
+        invalid_emails = []
+        for email in attendees_emails:
+            if not '@' in email or '.' not in email.split('@')[-1]:
+                invalid_emails.append(email)
+        
+        if invalid_emails:
+            return ChatResponse(
+                response=f"I need valid email addresses for all attendees. These don't look like emails: {', '.join(invalid_emails)}. Could you provide the correct email addresses?",
+                intent="schedule",
+                requires_clarification=True,
+            )
         
         # Check for conflicts
         busy_slots = await calendar_provider.get_free_busy(
@@ -404,78 +454,73 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
 
 
 async def handle_cancel_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
-    """Handle meeting cancellation intent."""
+    """Handle meeting cancellation intent using live events."""
     try:
         now_utc = datetime.now(timezone.utc)
+        end_time = now_utc + timedelta(days=7)
         
-        # Try to find by title first, otherwise get next upcoming
-        query = select(Meeting).where(
-            and_(
-                Meeting.user_id == user.id, 
-                Meeting.status == "scheduled",
-                Meeting.start_time >= now_utc
-            )
-        )
+        # Fetch live events from Google Calendar
+        live_events = await fetch_live_calendar_events(calendar_provider, user, now_utc, end_time)
         
-        # Check if the AI parsed a specific title to look for, ignoring generic terms
-        is_specific_title = intent.title and intent.title.lower() not in ["meeting", "my meeting", "my next meeting", "next meeting"]
-        if is_specific_title:
-            query = query.where(Meeting.title.ilike(f"%{intent.title}%"))
-            
-        result = await db.execute(query.order_by(Meeting.start_time.asc()).limit(1))
-        meeting = result.scalar_one_or_none()
-        
-        # Fallback if specific title wasn't found but meetings exist
-        if not meeting and is_specific_title:
-            fallback = select(Meeting).where(
-                and_(
-                    Meeting.user_id == user.id, 
-                    Meeting.status == "scheduled",
-                    Meeting.start_time >= now_utc
-                )
-            ).order_by(Meeting.start_time.asc()).limit(1)
-            result = await db.execute(fallback)
-            meeting = result.scalar_one_or_none()
-        
-        if not meeting:
+        if not live_events:
             return ChatResponse(
-                response="No scheduled meetings found to cancel.",
+                response="No upcoming events found to cancel.",
                 intent="cancel",
             )
-
-        if getattr(meeting, "zoom_meeting_id", None):
-            res = await db.execute(
-                select(OAuthCredential).where(
+        
+        # Find event by ID if provided, otherwise by title
+        target_event = None
+        
+        # Check if intent has event_id (preferred method)
+        if hasattr(intent, 'event_id') and intent.event_id:
+            target_event = next((e for e in live_events if e['id'] == intent.event_id), None)
+        
+        # Fallback: find by exact title match
+        if not target_event and intent.title:
+            target_event = next((e for e in live_events if e['title'].lower() == intent.title.lower()), None)
+        
+        # If still not found, try partial match (less reliable)
+        if not target_event and intent.title:
+            target_event = next((e for e in live_events if intent.title.lower() in e['title'].lower()), None)
+        
+        if not target_event:
+            return ChatResponse(
+                response="I couldn't find that event. Would you like me to list your upcoming events?",
+                intent="cancel",
+            )
+        
+        # Cancel the event in Google Calendar
+        success = await calendar_provider.delete_event(target_event['id'])
+        
+        if success:
+            # Also update local DB if meeting exists
+            meeting_result = await db.execute(
+                select(Meeting).where(
                     and_(
-                        OAuthCredential.user_id == user.id,
-                        OAuthCredential.provider == "zoom",
+                        Meeting.user_id == user.id,
+                        Meeting.external_event_id == target_event['id']
                     )
                 )
             )
-            zoom_cred = res.scalar_one_or_none()
-            if zoom_cred:
-                try:
-                    from app.core.zoom import ZoomClient
-                    zoom_client = ZoomClient(token_encryptor.decrypt(zoom_cred.access_token))
-                    await zoom_client.delete_meeting(meeting.zoom_meeting_id)
-                except Exception as ze:
-                    logger.warning("zoom_delete_on_cancel_failed", error=str(ze))
-
-        if meeting.external_event_id:
-            await calendar_provider.delete_event(meeting.external_event_id)
-
-        meeting.status = "canceled"  # type: ignore[assignment]
-        await db.commit()
-        
-        return ChatResponse(
-            response=f"❌ Meeting '{meeting.title}' has been canceled.",
-            intent="cancel"
-        )
+            meeting = meeting_result.scalar_one_or_none()
+            if meeting:
+                meeting.status = "canceled"  # type: ignore[assignment]
+                await db.commit()
+            
+            return ChatResponse(
+                response=f"❌ Event '{target_event['title']}' has been canceled.",
+                intent="cancel"
+            )
+        else:
+            return ChatResponse(
+                response="I couldn't cancel that event. Please try again or check your calendar connection.",
+                intent="cancel"
+            )
         
     except Exception as e:
         logger.error("chat_cancel_meeting_failed", error=str(e))
         return ChatResponse(
-            response="I couldn't cancel that meeting right now. Please try again.",
+            response="I couldn't cancel that event right now. Please try again.",
             intent="cancel"
         )
 
@@ -483,7 +528,7 @@ async def handle_cancel_meeting(intent: ParsedIntent, user: User, calendar_provi
 async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle meeting update/reschedule intent with AI intelligence."""
     try:
-        # Parse new time from intent
+        # Parse new time from local time string
         if not intent.start_time:
             return ChatResponse(
                 response="I need to know when you'd like to reschedule the meeting to. Could you specify a new date and time?",
@@ -491,18 +536,21 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
                 requires_clarification=True,
             )
         
-        # Parse datetime from ISO string
+        # Convert local time to UTC
         try:
-            new_start_time = datetime.fromisoformat(intent.start_time.replace('Z', '+00:00'))
-            if new_start_time.tzinfo is None:
-                new_start_time = new_start_time.replace(tzinfo=timezone.utc)
+            local_start = datetime.fromisoformat(intent.start_time)
+            if local_start.tzinfo is None:
+                tz = ZoneInfo(str(user.timezone)) if user.timezone else ZoneInfo("UTC")
+                local_start = local_start.replace(tzinfo=tz)
+            new_start_time = local_start.astimezone(timezone.utc)
                 
             if intent.end_time:
-                new_end_time = datetime.fromisoformat(intent.end_time.replace('Z', '+00:00'))
-                if new_end_time.tzinfo is None:
-                    new_end_time = new_end_time.replace(tzinfo=timezone.utc)
+                local_end = datetime.fromisoformat(intent.end_time)
+                if local_end.tzinfo is None:
+                    tz = ZoneInfo(str(user.timezone)) if user.timezone else ZoneInfo("UTC")
+                    local_end = local_end.replace(tzinfo=tz)
+                new_end_time = local_end.astimezone(timezone.utc)
             else:
-                # Default 30 minutes or calculate from existing meeting
                 new_end_time = new_start_time + timedelta(minutes=30)
         except Exception:
             return ChatResponse(
@@ -512,43 +560,40 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
             )
         
         now_utc = datetime.now(timezone.utc)
+        end_time = now_utc + timedelta(days=7)
         
-        # Try to find by title first, otherwise get next upcoming
-        query = select(Meeting).where(
-            and_(
-                Meeting.user_id == user.id, 
-                Meeting.status == "scheduled",
-                Meeting.start_time >= now_utc
-            )
-        )
+        # Fetch live events from Google Calendar
+        live_events = await fetch_live_calendar_events(calendar_provider, user, now_utc, end_time)
         
-        is_specific_title = intent.title and intent.title.lower() not in ["meeting", "my meeting", "my next meeting", "next meeting"]
-        if is_specific_title:
-            query = query.where(Meeting.title.ilike(f"%{intent.title}%"))
-            
-        result = await db.execute(query.order_by(Meeting.start_time.asc()).limit(1))
-        meeting = result.scalar_one_or_none()
-        
-        # Fallback if specific title wasn't found
-        if not meeting and is_specific_title:
-            fallback = select(Meeting).where(
-                and_(
-                    Meeting.user_id == user.id, 
-                    Meeting.status == "scheduled",
-                    Meeting.start_time >= now_utc
-                )
-            ).order_by(Meeting.start_time.asc()).limit(1)
-            result = await db.execute(fallback)
-            meeting = result.scalar_one_or_none()
-        
-        if not meeting:
+        if not live_events:
             return ChatResponse(
-                response="No scheduled meetings found to reschedule. Would you like to schedule a new meeting instead?",
+                response="No upcoming events found to reschedule.",
+                intent="reschedule"
+            )
+        
+        # Find event by ID if provided, otherwise by title
+        target_event = None
+        
+        # Check if intent has event_id (preferred method)
+        if hasattr(intent, 'event_id') and intent.event_id:
+            target_event = next((e for e in live_events if e['id'] == intent.event_id), None)
+        
+        # Fallback: find by exact title match
+        if not target_event and intent.title:
+            target_event = next((e for e in live_events if e['title'].lower() == intent.title.lower()), None)
+        
+        # If still not found, try partial match (less reliable)
+        if not target_event and intent.title:
+            target_event = next((e for e in live_events if intent.title.lower() in e['title'].lower()), None)
+        
+        if not target_event:
+            return ChatResponse(
+                response="I couldn't find that event to reschedule. Would you like me to list your upcoming events?",
                 intent="reschedule"
             )
         
         # Check for conflicts at new time
-        attendees_emails = [attendee.get("email") for attendee in meeting.attendees if attendee.get("email")]
+        attendees_emails = [attendee.get("email") for attendee in target_event['attendees'] if attendee.get("email")]
         attendees_emails.append(user.email)
         
         # Add any new attendees from intent
@@ -559,10 +604,10 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
             new_start_time, new_end_time, attendees_emails
         )
         
-        # Check if new slot conflicts (excluding the current meeting)
+        # Check if new slot conflicts (excluding the current event)
         conflict = any(
             not (new_end_time <= b.start or new_start_time >= b.end) 
-            and b.start != meeting.start_time
+            and b.start != target_event['start_time']
             for b in busy_slots
         )
         
@@ -598,79 +643,72 @@ async def handle_update_meeting(intent: ParsedIntent, user: User, calendar_provi
         try:
             from app.schemas.meeting import MeetingCreate, Attendee
 
-            if getattr(meeting, "zoom_meeting_id", None):
-                res = await db.execute(
-                    select(OAuthCredential).where(
-                        and_(
-                            OAuthCredential.user_id == user.id,
-                            OAuthCredential.provider == "zoom",
-                        )
-                    )
-                )
-                zoom_cred = res.scalar_one_or_none()
-                if zoom_cred:
-                    try:
-                        from app.core.zoom import ZoomClient
-                        zoom_client = ZoomClient(token_encryptor.decrypt(zoom_cred.access_token))
-                        await zoom_client.update_meeting(
-                            meeting.zoom_meeting_id,
-                            topic=intent.title or meeting.title,
-                            start_time=new_start_time,
-                            duration_minutes=int((new_end_time - new_start_time).total_seconds() / 60),
-                        )
-                    except Exception as ze:
-                        logger.warning("zoom_update_on_reschedule_failed", error=str(ze))
-
+            # Create updated meeting object
             updated_meeting = MeetingCreate(
-                title=intent.title or meeting.title,
-                description=intent.description or meeting.description,
+                title=intent.title or target_event['title'],
+                description=intent.description or target_event['description'],
                 start_time=new_start_time,
                 end_time=new_end_time,
                 attendees=[Attendee(email=e) for e in attendees_emails],
                 provider=str(user.provider),
-                raw_user_input=f"Rescheduled: {meeting.title}",
+                raw_user_input=f"Rescheduled: {target_event['title']}",
             )
 
-            await calendar_provider.update_event(meeting.external_event_id, updated_meeting)
+            # Update the event in Google Calendar
+            success = await calendar_provider.update_event(target_event['id'], updated_meeting)
             
-            # Update in database
-            meeting.title = updated_meeting.title
-            meeting.description = updated_meeting.description
-            meeting.start_time = updated_meeting.start_time
-            meeting.end_time = updated_meeting.end_time
-            meeting.attendees = [a.model_dump() for a in updated_meeting.attendees]
-            meeting.raw_user_input = f"Rescheduled: {meeting.title}"
-            
-            await db.commit()
-            await db.refresh(meeting)
-            
-            # Format response with local time
-            try:
-                local_time = new_start_time.astimezone(ZoneInfo(str(user.timezone)))
-                formatted_time = local_time.strftime("%A, %B %d at %I:%M %p")
-            except Exception:
-                formatted_time = new_start_time.strftime("%A, %B %d at %I:%M %p")
-            
-            logger.info(
-                "chat_meeting_rescheduled",
-                user_id_hash=hash_user_id(str(user.id)),
-                provider=user.provider,
-                meeting_id=str(meeting.id),
-                new_time=new_start_time.isoformat()
-            )
-            
-            return ChatResponse(
-                response=f"✅ Meeting rescheduled: {meeting.title} to {formatted_time}",
-                intent="reschedule",
-                meeting={
-                    "id": str(meeting.id),
-                    "title": meeting.title,
-                    "start_time": meeting.start_time.isoformat(),
-                    "end_time": meeting.end_time.isoformat(),
-                    "attendees": meeting.attendees,
-                    "status": meeting.status
-                }
-            )
+            if success:
+                # Also update local DB if meeting exists
+                meeting_result = await db.execute(
+                    select(Meeting).where(
+                        and_(
+                            Meeting.user_id == user.id,
+                            Meeting.external_event_id == target_event['id']
+                        )
+                    )
+                )
+                meeting = meeting_result.scalar_one_or_none()
+                if meeting:
+                    meeting.title = updated_meeting.title
+                    meeting.description = updated_meeting.description
+                    meeting.start_time = updated_meeting.start_time
+                    meeting.end_time = updated_meeting.end_time
+                    meeting.attendees = [a.model_dump() for a in updated_meeting.attendees]
+                    meeting.raw_user_input = f"Rescheduled: {meeting.title}"
+                    await db.commit()
+                
+                # Format response with local time
+                try:
+                    local_time = new_start_time.astimezone(ZoneInfo(str(user.timezone)))
+                    formatted_time = local_time.strftime("%A, %B %d at %I:%M %p")
+                except Exception:
+                    formatted_time = new_start_time.strftime("%A, %B %d at %I:%M %p")
+                
+                logger.info(
+                    "chat_event_rescheduled",
+                    user_id_hash=hash_user_id(str(user.id)),
+                    provider=user.provider,
+                    event_id=target_event['id'],
+                    new_time=new_start_time.isoformat()
+                )
+                
+                return ChatResponse(
+                    response=f"✅ Event rescheduled: {target_event['title']} to {formatted_time}",
+                    intent="reschedule",
+                    meeting={
+                        "id": target_event['id'],
+                        "title": updated_meeting.title,
+                        "start_time": updated_meeting.start_time.isoformat(),
+                        "end_time": updated_meeting.end_time.isoformat(),
+                        "attendees": [a.model_dump() for a in updated_meeting.attendees],
+                        "status": "rescheduled"
+                    }
+                )
+            else:
+                return ChatResponse(
+                    response="I had trouble updating the event in your calendar. Please try again or check your calendar connection.",
+                    intent="reschedule"
+                )
             
         except Exception as e:
             logger.error("calendar_update_failed", error=str(e))
@@ -840,53 +878,45 @@ async def handle_ai_suggestions(intent: ParsedIntent, user: User, calendar_provi
 
 
 async def handle_list_meetings(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
-    """Handle listing meetings with AI intelligence."""
+    """Handle listing meetings using live Google Calendar data."""
     try:
-        # Get upcoming meetings
-        result = await db.execute(
-            select(Meeting)
-            .where(
-                and_(
-                    Meeting.user_id == user.id,
-                    Meeting.start_time > datetime.now(timezone.utc),
-                    Meeting.status == "scheduled"
-                )
-            )
-            .order_by(Meeting.start_time.asc())
-            .limit(10)
-        )
-        meetings = result.scalars().all()
+        # Fetch live events from Google Calendar
+        now_utc = datetime.now(timezone.utc)
+        end_time = now_utc + timedelta(days=7)
         
-        if not meetings:
+        live_events = await fetch_live_calendar_events(calendar_provider, user, now_utc, end_time)
+        
+        if not live_events:
             return ChatResponse(
-                response="📅 You have no upcoming meetings scheduled.",
+                response="📅 You have no upcoming events scheduled.",
                 intent="list_meetings"
             )
         
-        # Format meetings with AI insights
-        meetings_text = []
-        for meeting in meetings:
+        # Format events with local time
+        events_text = []
+        for event in live_events[:10]:  # Limit to 10 events
             try:
-                local_time = meeting.start_time.astimezone(ZoneInfo(str(user.timezone)))
+                local_time = event['start_time'].astimezone(ZoneInfo(str(user.timezone)))
                 formatted_time = local_time.strftime("%A, %B %d at %I:%M %p")
-                meetings_text.append(f"• {meeting.title} - {formatted_time}")
+                events_text.append(f"• {event['title']} - {formatted_time}")
             except Exception:
-                meetings_text.append(f"• {meeting.title} - {meeting.start_time}")
+                events_text.append(f"• {event['title']} - {event['start_time']}")
         
         return ChatResponse(
-            response=f"📅 Your upcoming meetings:\n{chr(10).join(meetings_text)}\n\nWould you like me to help you manage any of these?",
+            response=f"📅 Your upcoming events:\n{chr(10).join(events_text)}\n\nWould you like me to help you manage any of these?",
             intent="list_meetings",
             meetings=[{
-                "id": str(m.id),
-                "title": m.title,
-                "start_time": m.start_time.isoformat(),
-                "end_time": m.end_time.isoformat()
-            } for m in meetings]
+                "id": event['id'],
+                "title": event['title'],
+                "start_time": event['start_time'].isoformat(),
+                "end_time": event['end_time'].isoformat(),
+                "attendees": event['attendees']
+            } for event in live_events[:10]]
         )
         
     except Exception as e:
         logger.error("list_meetings_failed", error=str(e))
         return ChatResponse(
-            response="I couldn't retrieve your meetings. Please try again.",
+            response="I couldn't retrieve your events. Please try again.",
             intent="list_meetings"
         )

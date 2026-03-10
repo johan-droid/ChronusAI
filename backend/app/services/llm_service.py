@@ -30,18 +30,23 @@ class LLMService:
             f"User email: {user_email}\n"
             f"User name: {user_name}\n\n"
             "CRITICAL RULES:\n"
-            "1. If no specific attendees are mentioned, return an empty array: [] for attendees.\n"
-            "2. ALL datetimes MUST be in exact ISO 8601 UTC format ending with 'Z' (e.g., 2024-03-09T14:00:00Z).\n"
+            "1. EMAIL VALIDATION: Attendees MUST be valid email addresses (e.g., john@example.com). If user provides names like 'John', either:\n"
+            "   - Ask for their email address, OR\n"
+            "   - If you know the email from context, use it.\n"
+            "   NEVER pass names directly to the API.\n"
+            "2. TIMEZONE HANDLING: Output ALL datetimes in the USER'S LOCAL TIMEZONE ({user_timezone}) using ISO format WITHOUT timezone (e.g., 2026-03-10T14:00:00).\n"
+            "   DO NOT add 'Z' or timezone offsets. Python will handle UTC conversion.\n"
             "3. If the user says 'tomorrow' or 'next week', calculate the exact date based on the Current Day of Week provided above.\n"
-            "4. Reschedule: Use intent 'reschedule'; provide new start_time and end_time in ISO UTC; ALWAYS identify meeting by its 'title'.\n"
-            "5. Cancel: Use intent 'cancel'; ALWAYS identify meeting by its 'title'.\n\n"
-            "INTENTS: schedule | reschedule | cancel | check_availability | find_time | list_meetings | suggest_times | unknown\n"
+            "4. EVENT TARGETING: For cancel/reschedule operations, use the exact 'event_id' from the provided events list.\n"
+            "   If no event_id is available, use the exact title. NEVER use fuzzy matching.\n"
+            "5. If no specific attendees are mentioned, return an empty array: [] for attendees.\n"
+            "\nINTENTS: schedule | reschedule | cancel | check_availability | find_time | list_meetings | suggest_times | unknown\n"
             "MEETING_PLATFORM: zoom | meet | teams | none\n\n"
             "EXAMPLES:\n"
             "'Schedule a meeting for tomorrow at 2pm' -> \n"
-            '{"intent":"schedule", "title":"Meeting", "start_time":"2026-03-10T14:00:00Z", "end_time":"2026-03-10T14:30:00Z", "attendees":[], "response":"I\'ll schedule that for you. Do you want to add anyone else?"}\n\n'
+            '{"intent":"schedule", "title":"Meeting", "start_time":"2026-03-10T14:00:00", "end_time":"2026-03-10T14:30:00", "attendees":[], "response":"I\'ll schedule that for you. Do you want to add anyone else?"}\n'
             "'Cancel my sync with John' -> \n"
-            '{"intent":"cancel", "title":"sync", "attendees":["john@example.com"], "response":"I\'ll cancel your sync with John."}\n'
+            '{"intent":"cancel", "event_id":"abc123", "title":"sync", "attendees":["john@example.com"], "response":"I\'ll cancel your sync with John."}\n'
         )
 
     @staticmethod
@@ -64,11 +69,16 @@ class LLMService:
             "Always be ready to take action on their calendar when they ask."
         )
 
-    async def parse_intent(self, message: str, user_timezone: str, user_email: str, user_name: str, context: List[Dict[str, Any]]) -> ParsedIntent:
+    async def parse_intent(self, message: str, user_timezone: str, user_email: str, user_name: str, context: List[Dict[str, Any]], upcoming_events_context: str = "") -> ParsedIntent:
         """Parse user message into structured meeting intent using DeepSeek AI."""
         try:
+            # Build enhanced system prompt with events context
+            system_prompt = self._system_prompt(user_timezone, user_email, user_name)
+            if upcoming_events_context:
+                system_prompt += f"\n\nUPCOMING EVENTS (for reference):\n{upcoming_events_context}\n"
+            
             messages: List[Dict[str, str]] = [
-                {"role": "system", "content": self._system_prompt(user_timezone, user_email, user_name)},
+                {"role": "system", "content": system_prompt},
             ]
             
             # Add context (last 4 messages)
