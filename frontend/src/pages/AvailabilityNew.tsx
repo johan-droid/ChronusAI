@@ -11,6 +11,7 @@ interface TimeSlot {
   end_time: string;
   is_available: boolean;
   timezone: string;
+  status?: 'PAST' | 'AVAILABLE' | 'BUSY';
 }
 
 export default function Availability() {
@@ -93,9 +94,9 @@ export default function Availability() {
     return 'evening';
   };
 
-  const morningSlots = timeSlots.filter(s => getTimeCategory(s.start_time) === 'morning');
-  const afternoonSlots = timeSlots.filter(s => getTimeCategory(s.start_time) === 'afternoon');
-  const eveningSlots = timeSlots.filter(s => getTimeCategory(s.start_time) === 'evening');
+  const morningSlots = timeSlots.filter(s => s.status !== 'PAST' && getTimeCategory(s.start_time) === 'morning');
+  const afternoonSlots = timeSlots.filter(s => s.status !== 'PAST' && getTimeCategory(s.start_time) === 'afternoon');
+  const eveningSlots = timeSlots.filter(s => s.status !== 'PAST' && getTimeCategory(s.start_time) === 'evening');
 
   const totalSlots = availableCount + busyCount;
   const availPercent = totalSlots > 0 ? Math.round((availableCount / totalSlots) * 100) : 0;
@@ -121,17 +122,25 @@ export default function Availability() {
         <div className="avail-section-header">
           <div className={`avail-section-icon ${gradient}`}>{icon}</div>
           <h3 className="avail-section-title">{title}</h3>
-          <span className="avail-section-count">{slots.filter(s => s.is_available).length}/{slots.length} free</span>
+          <span className="avail-section-count">{slots.filter(s => s.is_available && s.status !== 'PAST').length}/{slots.filter(s => s.status !== 'PAST').length} free</span>
         </div>
         <div className="avail-slots-grid">
           {slots.map((slot, idx) => (
             <div
               key={idx}
-              className={`avail-slot ${slot.is_available ? 'avail-slot--free' : 'avail-slot--busy'}`}
+              className={`avail-slot ${
+                slot.status === 'PAST' 
+                  ? 'avail-slot--past' 
+                  : slot.is_available 
+                    ? 'avail-slot--free' 
+                    : 'avail-slot--busy'
+              }`}
             >
               <span className="avail-slot-indicator" />
               <span className="avail-slot-time">{formatTime(slot.start_time)}</span>
-              <span className="avail-slot-label">{slot.is_available ? 'Free' : 'Busy'}</span>
+              <span className="avail-slot-label">
+                {slot.status === 'PAST' ? 'Past' : slot.is_available ? 'Free' : 'Busy'}
+              </span>
             </div>
           ))}
         </div>

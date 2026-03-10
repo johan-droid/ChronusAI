@@ -467,7 +467,11 @@ class GoogleCalendarService:
     ) -> Dict[str, List[TimeSlot]]:
 
         """Get free/busy information for multiple calendars"""
-
+        
+        # Past-time filter: ensure start_time is not in the past
+        current_utc = datetime.now(timezone.utc)
+        start_time = max(start_time, current_utc)
+        
         body = {
 
             "timeMin": start_time.isoformat(),
@@ -765,6 +769,14 @@ class GoogleCalendarService:
         if not start_time:
 
             start_time = datetime.now(timezone.utc)
+
+        else:
+
+            # Past-time filter: ensure start_time is not in the past
+
+            current_utc = datetime.now(timezone.utc)
+
+            start_time = max(start_time, current_utc)
 
         if not end_time:
 

@@ -37,6 +37,12 @@ async def check_availability(
         start_of_day = datetime.combine(target_date, time(8, 0)).replace(tzinfo=tz)
         end_of_day = datetime.combine(target_date, time(20, 0)).replace(tzinfo=tz)
         
+        # Past-time filter: if date is today, start from current time
+        now = datetime.now(tz)
+        if target_date == now.date():
+            # If checking availability for today, start from current time
+            start_of_day = max(start_of_day, now)
+        
         # Get busy slots from calendar
         busy_slots = await calendar_provider.get_free_busy(
             start_of_day, end_of_day, [str(current_user.email)]
