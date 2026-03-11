@@ -40,16 +40,12 @@ target_metadata = Base.metadata
 
 
 def _get_sqlalchemy_url() -> str:
-    # Prefer DATABASE_URL from environment (backend/.env), but Alembic needs a sync driver.
+    # Get DATABASE_URL from environment or use the default from alembic.ini
     url = os.getenv("DATABASE_URL") or config.get_main_option("sqlalchemy.url")
     if url is None:
         raise RuntimeError("No database URL configured for Alembic")
-    # Convert async URLs for migrations
-    return (
-        url.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
-        .replace("postgresql+asyncpg", "postgresql+psycopg2")
-        .replace("postgresql://", "postgresql+psycopg2://")
-    )
+    # Convert async SQLite URL to sync for Alembic
+    return url.replace("sqlite+aiosqlite://", "sqlite://")
 
 
 def run_migrations_offline() -> None:

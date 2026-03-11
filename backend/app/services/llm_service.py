@@ -245,7 +245,8 @@ class LLMService:
 
         RULES:
         1. If 'action_result' contains a conflict or 'conflicts' key, suggest the 'optimal_times' provided.
-        2. If an event was successfully deleted, confirm the specific event title.
+        2. If an event was successfully deleted,
+         confirm the specific event title.
         3. If an event was successfully scheduled/rescheduled, confirm details (time, attendees).
         4. If action_result contains 'suggestions', present them as helpful alternatives.
         5. Use user's local time for all schedule mentions.

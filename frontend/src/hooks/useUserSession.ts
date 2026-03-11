@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 
@@ -32,7 +32,12 @@ async function fetchLlmStatus(): Promise<boolean> {
 export function useUserSession() {
   const { user } = useAuthStore();
 
-  const greeting = useMemo(() => getGreeting(), []);
+  // Refresh greeting every 5 min so it catches hour transitions
+  const [greeting, setGreeting] = useState(getGreeting);
+  useEffect(() => {
+    const interval = setInterval(() => setGreeting(getGreeting()), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const firstName = useMemo(() => {
     const name = user?.full_name || user?.email || 'there';

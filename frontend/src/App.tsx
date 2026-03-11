@@ -6,6 +6,7 @@ import React, { lazy, Suspense, memo, useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import Layout from './components/Layout';
 import Toast from './components/Toast';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import './index.css';
 import './styles/mobile.css';
 
@@ -161,6 +162,7 @@ function App() {
           </AuthGuard>
 
           <Toast />
+          <PWAInstallPrompt />
         </div>
       </Router>
       <Toaster

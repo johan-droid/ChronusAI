@@ -146,20 +146,24 @@ export default function ChatWindow() {
             {/* Empty State — Claude-style centered greeting */}
             {!hasMessages && (
               <div className="flex flex-col items-center justify-center h-full min-h-[60vh] px-5">
-                {/* Greeting */}
                 {/* Greeting Tile */}
                 <div className="text-center mb-10 claude-greeting relative">
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent blur-2xl pointer-events-none" />
-                  <div className="relative bg-gradient-to-br from-white/[0.05] to-white/[0.01] backdrop-blur-xl border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl">
-                    <div className="flex items-center justify-center mb-4">
-                      <span className="text-5xl sm:text-6xl leading-none">{greeting.emoji}</span>
+                  {/* Ambient glow — matches galaxy-bg orange/purple theme */}
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-orange-500/25 via-purple-500/15 to-indigo-500/20 blur-2xl pointer-events-none" />
+                  <div className="relative glass-card rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/50">
+                    {/* Emoji with glow ring */}
+                    <div className="flex items-center justify-center mb-5">
+                      <div className="relative">
+                        <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-xl scale-150" />
+                        <span className="relative text-5xl sm:text-6xl leading-none drop-shadow-lg">{greeting.emoji}</span>
+                      </div>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white/95">
                       {greeting.text},{' '}
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">{firstName}</span>
+                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-orange-400 to-purple-400">{firstName}</span>
                     </h1>
-                    <p className="text-[15px] text-slate-400 mt-3 claude-greeting-delay-1 font-medium">
-                      How can I help you today?
+                    <p className="text-[15px] text-white/55 mt-3 claude-greeting-delay-1 font-medium">
+                      Ready to schedule your meetings with AI assistance.
                     </p>
                   </div>
                 </div>
@@ -186,52 +190,43 @@ export default function ChatWindow() {
                             <div className={`w-1.5 h-1.5 rounded-full ${
                               isLlmOnline === true ? 'bg-emerald-400/70' : isLlmOnline === false ? 'bg-rose-400/70' : 'bg-slate-500/70'
                             }`} />
-                            <span className="text-[11px] text-slate-600 font-medium">ChronosAI</span>
+                            <span className="text-[12px] text-slate-500 font-medium">
+                              {isLlmOnline === true ? 'Online' : isLlmOnline === false ? 'Offline' : 'Checking...'}
+                            </span>
                           </div>
 
-                          {isLoading ? (
-                            <div className="h-8 w-8 flex items-center justify-center">
-                              <OptimizedSpinner size="sm" variant="dots" className="text-slate-400" />
-                            </div>
-                          ) : (
-                            <button
-                              type="submit"
-                              disabled={!message.trim()}
-                              className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 touch-target ${
-                                message.trim()
-                                  ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-400 hover:to-purple-500 shadow-lg shadow-indigo-500/25 active:scale-95'
-                                  : 'text-slate-700 cursor-not-allowed bg-white/[0.03]'
-                              }`}
-                            >
-                              <SendHorizontal className="h-4 w-4" />
-                            </button>
-                          )}
+                          {/* Send button */}
+                          <button
+                            type="submit"
+                            disabled={!message.trim() || isLoading}
+                            className="p-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:bg-slate-600 disabled:opacity-50 text-white transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                          </button>
                         </div>
                       </div>
                     </div>
                   </form>
 
-                  {/* Quick Prompt Grid - Refined 2x2 layout with touch targets */}
-                  <div className="grid grid-cols-2 gap-3 mt-8 max-w-lg mx-auto claude-greeting-delay-2">
-                    {QUICK_PROMPTS.slice(0, 4).map((prompt, i) => {
-                      const Icon = prompt.icon;
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => handleQuickPrompt(prompt.text)}
-                          className="claude-pill flex flex-col items-start text-left p-4 h-auto touch-target"
-                          disabled={isLoading}
-                        >
-                          <div className={`h-8 w-8 rounded-lg border flex items-center justify-center mb-2.5 ${prompt.iconBg}`}>
-                            <Icon className={`h-4 w-4 ${prompt.color}`} />
-                          </div>
-                          <span className="font-semibold text-[14px] text-white/80">{prompt.label}</span>
-                          <span className="text-[12px] text-slate-500 font-medium line-clamp-1 mt-0.5">
-                            {prompt.text}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  {/* Quick prompts */}
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    {QUICK_PROMPTS.slice(0, 4).map((prompt, index) => (
+                      <button
+                        key={index}
+                        onClick={() => {
+                          setMessage(prompt.text);
+                          handleSubmit({ preventDefault: () => {} } as React.FormEvent);
+                        }}
+                        className="text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-105 group"
+                      >
+                        <span className="font-semibold text-[14px] text-white/80">{prompt.label}</span>
+                        <span className="text-[12px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                          {prompt.text}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -251,7 +246,8 @@ export default function ChatWindow() {
 
             {isLoading && !currentResponse && <TypingIndicator />}
           </AnimatePresence>
-          <div ref={messagesEndRef} className="h-4" />
+
+            <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
 
