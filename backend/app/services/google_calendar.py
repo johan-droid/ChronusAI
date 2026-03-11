@@ -20,6 +20,9 @@ class GoogleCalendarAdapter(CalendarProvider):
     
     async def get_free_busy(self, start: datetime, end: datetime, attendees: List[str]) -> List[TimeSlot]:
         """Get free/busy information from Google Calendar API."""
+        # Guard: Google API returns 400 if timeMin >= timeMax
+        if start >= end:
+            return []
         async with httpx.AsyncClient() as client:
             # Convert to required format
             body = {

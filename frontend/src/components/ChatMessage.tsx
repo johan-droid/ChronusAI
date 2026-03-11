@@ -85,6 +85,13 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
       <div className="max-w-3xl mx-auto w-full">
         {/* Message Content */}
         <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+          {/* AI identifier badge */}
+          {!isUser && (
+            <div className="flex items-center gap-1.5 mb-1.5 ml-1">
+              <div className="h-1.5 w-1.5 rounded-full bg-indigo-400/50" />
+              <span className="text-[10px] font-semibold text-indigo-300/50 uppercase tracking-widest">ChronosAI</span>
+            </div>
+          )}
           {/* Message bubble */}
           <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
             isUser

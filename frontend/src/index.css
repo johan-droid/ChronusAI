@@ -646,30 +646,30 @@ a:focus-visible {
    CLAUDE-INSPIRED CHAT UI STYLES
    ═══════════════════════════════════════════════════════ */
 
-/* AI Message — clean, spacious, no heavy border */
+/* AI Message — subtle indigo-tinted glass */
 .chat-message-ai {
-  background: transparent;
-  border: none;
+  background: rgba(99, 102, 241, 0.04);
+  border: 1px solid rgba(99, 102, 241, 0.1);
 }
 
-/* User Message — warm accent pill */
+/* User Message — indigo/purple gradient pill */
 .claude-msg-user {
-  background: rgba(180, 130, 90, 0.18);
-  border: 1px solid rgba(180, 130, 90, 0.12);
-  color: #e8ddd4;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.18) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  color: rgba(255, 255, 255, 0.95);
 }
 
-/* Thinking shimmer */
+/* Thinking shimmer — indigo tint */
 .chat-shimmer {
   background: linear-gradient(
     110deg,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(255, 255, 255, 0.06) 40%,
-    rgba(255, 255, 255, 0.03) 60%
+    rgba(99, 102, 241, 0.04) 0%,
+    rgba(99, 102, 241, 0.09) 40%,
+    rgba(99, 102, 241, 0.04) 60%
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.12);
 }
 
 @keyframes shimmer {
@@ -679,18 +679,18 @@ a:focus-visible {
 
 /* Claude-style input container */
 .claude-chat-input {
-  background: rgba(15, 23, 42, 0.4); /* Darker slate/blue matching dashboard */
-  border: 1px solid rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(12, 15, 35, 0.55);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(99, 102, 241, 0.04);
 }
 
 .claude-chat-input:focus-within {
-  border-color: rgba(59, 130, 246, 0.3); /* Neon blue border */
-  background: rgba(15, 23, 42, 0.6);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(12, 15, 40, 0.75);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 0 32px rgba(99, 102, 241, 0.08), 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
 /* Quick-action pill buttons - Refined for 2x2 grid */
@@ -707,10 +707,10 @@ a:focus-visible {
 }
 
 .claude-pill:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(99, 102, 241, 0.07);
+  border-color: rgba(99, 102, 241, 0.22);
   transform: translateY(-2px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.12), 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .claude-pill:active {
@@ -737,37 +737,39 @@ a:focus-visible {
   opacity: 0;
 }
 
-/* Rich data card — warmer tone */
+/* Rich data card */
 .claude-data-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(15, 15, 38, 0.55);
+  border: 1px solid rgba(99, 102, 241, 0.12);
   border-radius: 16px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.25s ease;
 }
 
 .claude-data-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(20, 20, 50, 0.65);
+  border-color: rgba(99, 102, 241, 0.22);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.07);
 }
 
 /* Smart suggestion chip */
 .claude-suggestion {
-  padding: 8px 14px;
-  border-radius: 12px;
+  padding: 8px 16px;
+  border-radius: 20px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(165, 180, 252, 0.75);
+  background: rgba(99, 102, 241, 0.06);
+  border: 1px solid rgba(99, 102, 241, 0.14);
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .claude-suggestion:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(99, 102, 241, 0.14);
+  border-color: rgba(99, 102, 241, 0.28);
+  color: rgba(165, 180, 252, 0.95);
 }
 
 /* Dashboard Typewriter Cursor */

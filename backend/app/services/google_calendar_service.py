@@ -182,7 +182,11 @@ class GoogleCalendarService:
         # Enhanced past-time filter: ensure start_time is not in the past (timezone-aware)
         current_utc = datetime.now(timezone.utc)
         start_time = max(start_time, current_utc)
-        
+
+        # Guard: Google API returns 400 if timeMin >= timeMax
+        if start_time >= end_time:
+            return {}
+
         body = {
             "timeMin": start_time.isoformat(),
             "timeMax": end_time.isoformat(),
@@ -241,7 +245,11 @@ class GoogleCalendarService:
         if start_time.date() == current_user_time.date():
             # If the requested date is today, start from current time in user's timezone
             start_time = max(start_time, current_user_time)
-        
+
+        # Guard: if start_time has been pushed past end_time, no slots remain
+        if start_time >= end_time:
+            return []
+
         # Get free/busy information
         busy_slots_by_calendar = await self.get_free_busy(calendar_ids, start_time, end_time)
         

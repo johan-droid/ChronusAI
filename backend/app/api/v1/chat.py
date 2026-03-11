@@ -751,11 +751,19 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
         
         # Enhanced future-only filter: if checking today's availability, start from current time
         start_datetime = now_local  # Start from current time for today
-        
+
+        # End of business day: 8 PM local. If already past 8 PM, use midnight (next day start).
+        end_of_day = start_datetime.replace(hour=20, minute=0, second=0, microsecond=0)
+        if start_datetime >= end_of_day:
+            return ChatResponse(
+                response=f"📅 The workday is over for today ({target_date.strftime('%A, %B %d')}). No more availability slots remaining. Would you like to check tomorrow's availability?",
+                intent="check_availability"
+            )
+
         # Use get_free_busy to find availability
         busy_slots = await calendar_provider.get_free_busy(
             start=start_datetime,
-            end=start_datetime.replace(hour=20, minute=0),  # End at 8 PM local
+            end=end_of_day,
             attendees=[str(user.email)]
         )
         
@@ -776,8 +784,7 @@ async def handle_query_availability(intent: ParsedIntent, user: User, calendar_p
                 future_slots.append({'start': last_end, 'end': busy.start})
             last_end = max(last_end, busy.end)
             
-        # Check time after last meeting until 8 PM
-        end_of_day = start_datetime.replace(hour=20, minute=0)
+        # Check time after last meeting until end of business day
         if (end_of_day - last_end).total_seconds() >= 1800:
             future_slots.append({'start': last_end, 'end': end_of_day})
             
