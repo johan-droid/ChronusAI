@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
 import google.genai as genai
+from google.genai import types
 from app.config import settings
 from app.schemas.chat import ParsedIntent
 
@@ -162,7 +163,7 @@ class LLMService:
             response = await self.client.models.generate_content(
                 model=self.model,
                 contents=contents,
-                config=genai.GenerationConfig(
+                config=types.GenerateContentConfig(
                     system_instruction=system_instructions,
                     temperature=0.1
                 )
@@ -214,7 +215,7 @@ class LLMService:
             response = await self.client.models.generate_content(
                 model=self.model,
                 contents=contents,
-                config=genai.GenerationConfig(
+                config=types.GenerateContentConfig(
                     system_instruction=system_prompt,
                     temperature=0.7,
                     max_output_tokens=500
@@ -228,9 +229,9 @@ class LLMService:
     async def generate_action_response(
         self,
         user_message: str,
-        intent_data,
+        intent_data: Any,
         action_result: dict,
-        history: list
+        history: List[Dict[str, Any]]
     ) -> str:
         """
         Generates a natural language explanation of calendar action taken.
@@ -268,14 +269,16 @@ class LLMService:
         contents = [{"role": "user", "parts": [{"text": f"Result of action: {json.dumps(execution_context)}"}]}]
         
         # Add recent context from history with role mapping (assistant -> model)
-        for msg in history[-3:]:
+        # pyre-ignore[16]
+        recent_history = history[-3:] if len(history) >= 3 else history
+        for msg in recent_history:
             role = "model" if msg["role"] == "assistant" else "user"
             contents.insert(-1, {"role": role, "parts": [{"text": msg["content"]}]})
 
-        model = genai.GenerativeModel(self.model)
-        response = await model.generate_content(
+        response = await self.client.models.generate_content(
+            model=self.model,
             contents=contents,
-            config=genai.GenerationConfig(
+            config=types.GenerateContentConfig(
                 system_instruction=system_prompt,
                 temperature=0.7,
                 max_output_tokens=500
@@ -289,10 +292,10 @@ class LLMService:
         try:
             contents = [{"role": "user", "parts": [{"text": prompt}]}]
             
-            model = genai.GenerativeModel(self.model)
-            response = await model.generate_content(
+            response = await self.client.models.generate_content(
+                model=self.model,
                 contents=contents,
-                config=genai.GenerationConfig(
+                config=types.GenerateContentConfig(
                     temperature=0.8,
                     max_output_tokens=100
                 )
