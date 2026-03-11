@@ -30,7 +30,7 @@ export default function Chat() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col h-screen bg-[#F9FAFB] relative overflow-hidden">
+    <div className="flex flex-col h-screen bg-background relative overflow-hidden">
       <NavigationBar
         user={user}
         mobileMenuOpen={mobileMenuOpen}
@@ -39,16 +39,16 @@ export default function Chat() {
       />
 
       <main className="flex-1 relative z-10 w-full flex flex-col min-h-0 overflow-hidden">
-        <div className="flex-1 flex flex-col min-h-0 bg-white relative overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 bg-card relative overflow-hidden">
           {/* Header Area - Clean SaaS Style */}
-          <div className="px-6 py-4 border-b border-gray-200 bg-white shrink-0">
+          <div className="px-6 py-4 border-b border-border bg-card shrink-0">
             <div className="flex items-center gap-3 max-w-4xl mx-auto">
-              <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-gray-900">ChronosAI Assistant</h2>
-                <p className="text-xs text-gray-500">AI-powered meeting scheduling</p>
+                <h2 className="text-sm font-semibold text-foreground">ChronosAI Assistant</h2>
+                <p className="text-xs text-muted-foreground">AI-powered meeting scheduling</p>
               </div>
             </div>
           </div>
@@ -64,4 +64,3 @@ export default function Chat() {
     </div >
   );
 }
-

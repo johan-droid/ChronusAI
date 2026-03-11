@@ -85,7 +85,7 @@ const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.05 }}
               onClick={() => onSuggestionClick(suggestion)}
-              className="flex-shrink-0 px-3 py-2 bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-lg text-xs text-gray-700 hover:text-blue-600 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 touch-manipulation min-h-[32px]"
+              className="flex-shrink-0 px-3 py-2 bg-card border border-border hover:border-primary hover:bg-card rounded-lg text-xs text-muted-foreground hover:text-primary transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 touch-manipulation min-h-[32px]"
             >
               <span className="truncate max-w-[120px]">{suggestion}</span>
               <ArrowRight className="h-3 w-3 text-gray-400" />
@@ -110,14 +110,14 @@ const QuickPrompt = memo(({ prompt, onClick, index }: {
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.1 }}
     onClick={() => onClick(prompt.text)}
-    className="group flex items-center gap-3 p-4 bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl transition-all active:scale-[0.98] touch-manipulation text-left w-full"
+    className="group flex items-center gap-3 p-4 bg-card border border-border hover:border-primary hover:bg-card rounded-xl transition-all active:scale-[0.98] touch-manipulation text-left w-full"
   >
-    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
-      <prompt.icon className="h-5 w-5 text-blue-600" />
+    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+      <prompt.icon className="h-5 w-5 text-primary" />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{prompt.category}</p>
-      <p className="text-sm text-gray-900 group-hover:text-blue-600 transition-colors">{prompt.text}</p>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{prompt.category}</p>
+      <p className="text-sm text-foreground group-hover:text-primary transition-colors">{prompt.text}</p>
     </div>
   </motion.button>
 ));
@@ -133,14 +133,14 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
-        <Sparkles className="h-8 w-8 text-white" />
+      <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg">
+        <Sparkles className="h-8 w-8 text-primary-foreground" />
       </div>
     </motion.div>
 
     <div className="text-center space-y-3">
       <motion.h3
-        className="text-xl font-semibold text-gray-900"
+        className="text-xl font-semibold text-foreground"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -148,7 +148,7 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
         AI Meeting Assistant
       </motion.h3>
       <motion.p
-        className="text-sm text-gray-600 max-w-md leading-relaxed"
+        className="text-sm text-muted-foreground max-w-md leading-relaxed"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -175,22 +175,22 @@ EmptyState.displayName = 'EmptyState';
 // Typing Indicator with animated dots
 const TypingIndicator = memo(() => (
   <div className="flex items-center gap-3 px-4 py-4">
-    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-      <Sparkles className="h-4 w-4 text-white" />
+    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+      <Sparkles className="h-4 w-4 text-primary-foreground" />
     </div>
-    <div className="bg-gray-100 rounded-xl px-4 py-3 flex items-center gap-2">
+    <div className="bg-muted rounded-xl px-4 py-3 flex items-center gap-2">
       <motion.span
-        className="w-2 h-2 bg-gray-400 rounded-full"
+        className="w-2 h-2 bg-muted-foreground rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
       />
       <motion.span
-        className="w-2 h-2 bg-gray-400 rounded-full"
+        className="w-2 h-2 bg-muted-foreground rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
       />
       <motion.span
-        className="w-2 h-2 bg-gray-400 rounded-full"
+        className="w-2 h-2 bg-muted-foreground rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
       />
@@ -331,11 +331,11 @@ export default function ChatWindow() {
       {/* Input Area - Fixed at Bottom with Gradient Fade */}
       <div className="shrink-0 relative">
         {/* Gradient Fade Above Input */}
-        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-white pointer-events-none z-10" />
+        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-card pointer-events-none z-10" />
         
-        <div className="bg-white border-t border-gray-200 px-4 py-4">
+        <div className="bg-card border-t border-border px-4 py-4">
           <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative">
-            <div className="flex items-end gap-3 bg-white border border-gray-200 rounded-2xl shadow-sm focus-within:border-blue-500 focus-within:shadow-md transition-all duration-200">
+            <div className="flex items-end gap-3 bg-card border border-border rounded-2xl shadow-sm focus-within:border-primary focus-within:shadow-md transition-all duration-200">
               {/* Text Input */}
               <textarea
                 ref={textareaRef}
@@ -344,7 +344,7 @@ export default function ChatWindow() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Message ChronosAI..."
-                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed py-3 px-4 resize-none min-h-[44px] max-h-[200px] font-normal outline-none"
+                className="flex-1 bg-transparent border-0 outline-none resize-none text-base leading-relaxed text-foreground placeholder-muted-foreground"
                 style={{ scrollbarWidth: 'none' }}
               />
               
@@ -352,8 +352,8 @@ export default function ChatWindow() {
               <div className="flex items-center pr-2 pb-1">
                 {isLoading ? (
                   <div className="flex items-center gap-2 px-2">
-                    <OptimizedSpinner size="sm" variant="dots" className="text-blue-500" />
-                    <span className="text-xs text-gray-500 hidden sm:inline">ChronosAI is thinking...</span>
+                    <OptimizedSpinner size="sm" variant="dots" className="text-primary" />
+                    <span className="text-xs text-muted-foreground hidden sm:inline">ChronosAI is thinking...</span>
                   </div>
                 ) : (
                   <motion.button
@@ -362,8 +362,8 @@ export default function ChatWindow() {
                     disabled={!message.trim()}
                     className={`p-2 rounded-lg transition-all duration-200 min-h-[32px] touch-manipulation ${
                       message.trim()
-                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        ? 'bg-primary hover:bg-primary/90 text-primary-foreground'
+                        : 'bg-card/10 text-muted-foreground cursor-not-allowed'
                     }`}
                   >
                     <SendHorizontal className="h-4 w-4" />
