@@ -74,10 +74,10 @@ const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-t border-white/5"
+      className="px-4 py-3 bg-gray-50 border-t border-gray-200"
     >
-      <div className="max-w-4xl lg:max-w-5xl mx-auto">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x justify-center sm:justify-start">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {suggestions.map((suggestion, i) => (
             <motion.button
               key={i}
@@ -85,10 +85,10 @@ const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.05 }}
               onClick={() => onSuggestionClick(suggestion)}
-              className="flex-shrink-0 snap-start px-3 py-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.15] hover:border-blue-500/30 rounded-full text-xs text-slate-300 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 touch-manipulation min-h-[32px] sm:min-h-[36px]"
+              className="flex-shrink-0 px-3 py-2 bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-lg text-xs text-gray-700 hover:text-blue-600 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 touch-manipulation min-h-[32px]"
             >
-              <span className="truncate max-w-[120px] sm:max-w-none">{suggestion}</span>
-              <ArrowRight className="h-3 w-3 opacity-50 flex-shrink-0" />
+              <span className="truncate max-w-[120px]">{suggestion}</span>
+              <ArrowRight className="h-3 w-3 text-gray-400" />
             </motion.button>
           ))}
         </div>
@@ -110,44 +110,37 @@ const QuickPrompt = memo(({ prompt, onClick, index }: {
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay: index * 0.1 }}
     onClick={() => onClick(prompt.text)}
-    className="group flex items-center gap-3 p-3 sm:p-3.5 bg-white/[0.03] hover:bg-white/[0.08] border border-white/10 hover:border-blue-500/30 rounded-2xl transition-all active:scale-[0.98] touch-manipulation text-left w-full"
+    className="group flex items-center gap-3 p-4 bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 rounded-xl transition-all active:scale-[0.98] touch-manipulation text-left w-full"
   >
-    <div className="w-10 h-10 sm:w-11 sm:h-11 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
-      <prompt.icon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-400" />
+    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+      <prompt.icon className="h-5 w-5 text-blue-600" />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">{prompt.category}</p>
-      <p className="text-sm text-slate-200 group-hover:text-white transition-colors truncate">{prompt.text}</p>
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">{prompt.category}</p>
+      <p className="text-sm text-gray-900 group-hover:text-blue-600 transition-colors">{prompt.text}</p>
     </div>
   </motion.button>
 ));
 
 QuickPrompt.displayName = 'QuickPrompt';
 
-// Enhanced Empty State with animated icon
+// Enhanced Empty State with clean design
 const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => void }) => (
-  <div className="flex flex-col items-center justify-center h-full px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+  <div className="flex flex-col items-center justify-center h-full px-4 py-8 space-y-6">
     <motion.div
       className="relative"
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 blur-3xl opacity-30" />
-      <motion.div
-        className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-2xl relative"
-        animate={{
-          boxShadow: ['0 0 20px rgba(59,130,246,0.3)', '0 0 40px rgba(59,130,246,0.5)', '0 0 20px rgba(59,130,246,0.3)']
-        }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <Sparkles className="h-8 w-8 sm:h-10 sm:w-10 text-white" />
-      </motion.div>
+      <div className="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+        <Sparkles className="h-8 w-8 text-white" />
+      </div>
     </motion.div>
 
-    <div className="text-center space-y-2">
+    <div className="text-center space-y-3">
       <motion.h3
-        className="text-lg sm:text-xl font-bold text-white"
+        className="text-xl font-semibold text-gray-900"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -155,7 +148,7 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
         AI Meeting Assistant
       </motion.h3>
       <motion.p
-        className="text-xs sm:text-sm text-slate-400 max-w-[200px] sm:max-w-[220px] leading-relaxed"
+        className="text-sm text-gray-600 max-w-md leading-relaxed"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -165,12 +158,12 @@ const EmptyState = memo(({ onQuickPrompt }: { onQuickPrompt: (text: string) => v
     </div>
 
     <motion.div
-      className="w-full max-w-xs sm:max-w-sm space-y-2 sm:space-y-2.5"
+      className="w-full max-w-lg space-y-3"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
     >
-      {QUICK_PROMPTS.map((prompt, i) => (
+      {QUICK_PROMPTS.slice(0, 3).map((prompt, i) => (
         <QuickPrompt key={i} prompt={prompt} onClick={onQuickPrompt} index={i} />
       ))}
     </motion.div>
@@ -181,23 +174,23 @@ EmptyState.displayName = 'EmptyState';
 
 // Typing Indicator with animated dots
 const TypingIndicator = memo(() => (
-  <div className="flex items-center gap-2 px-3 sm:px-4 py-2">
-    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-      <Sparkles className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
+  <div className="flex items-center gap-3 px-4 py-4">
+    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+      <Sparkles className="h-4 w-4 text-white" />
     </div>
-    <div className="bg-white/5 rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-1.5 min-w-[50px] sm:min-w-[60px]">
+    <div className="bg-gray-100 rounded-xl px-4 py-3 flex items-center gap-2">
       <motion.span
-        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full"
+        className="w-2 h-2 bg-gray-400 rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
       />
       <motion.span
-        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full"
+        className="w-2 h-2 bg-gray-400 rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.15 }}
       />
       <motion.span
-        className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full"
+        className="w-2 h-2 bg-gray-400 rounded-full"
         animate={{ y: [0, -6, 0] }}
         transition={{ duration: 0.6, repeat: Infinity, delay: 0.3 }}
       />
@@ -274,7 +267,7 @@ export default function ChatWindow() {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
     }
   }, [message]);
 
@@ -284,49 +277,45 @@ export default function ChatWindow() {
     : [];
 
   return (
-    <div className="flex flex-col h-full min-h-0 w-full relative overflow-hidden">
-      <StatusBar isOnline={isLlmOnline} />
+    <div className="flex flex-col h-full min-h-0 w-full relative overflow-hidden bg-white">
+      {/* Messages Area - Clean White Background */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-6 space-y-1 overscroll-contain">
+        <AnimatePresence>
+          {messages.length === 0 && (
+            <EmptyState onQuickPrompt={handleQuickPrompt} />
+          )}
 
-      {/* Messages Area - Optimized Width */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-2 sm:py-3 space-y-2 sm:space-y-3 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
-        <div className="max-w-4xl lg:max-w-5xl mx-auto w-full">
-          <AnimatePresence>
-            {messages.length === 0 && (
-              <EmptyState onQuickPrompt={handleQuickPrompt} />
-            )}
+          {messages.map((msg, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ChatMessage message={msg} />
+            </motion.div>
+          ))}
 
-            {messages.map((msg, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <ChatMessage message={msg} />
-              </motion.div>
-            ))}
+          {isLoading && currentResponse && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <ChatMessage
+                message={{
+                  role: 'assistant',
+                  content: currentResponse,
+                  timestamp: new Date().toISOString()
+                }}
+                isTyping={true}
+              />
+            </motion.div>
+          )}
 
-            {isLoading && currentResponse && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <ChatMessage
-                  message={{
-                    role: 'assistant',
-                    content: currentResponse,
-                    timestamp: new Date().toISOString()
-                  }}
-                  isTyping={true}
-                />
-              </motion.div>
-            )}
+          {isLoading && !currentResponse && <TypingIndicator />}
+        </AnimatePresence>
 
-            {isLoading && !currentResponse && <TypingIndicator />}
-          </AnimatePresence>
-
-          <div ref={messagesEndRef} className="h-2" />
-        </div>
+        <div ref={messagesEndRef} className="h-2" />
       </div>
 
       {/* Smart Suggestions - Context-aware */}
@@ -339,59 +328,64 @@ export default function ChatWindow() {
         )}
       </AnimatePresence>
 
-      {/* Input Area - Compact Premium Glassmorphism */}
-      <div className="shrink-0 p-3 sm:p-4 mb-4 bg-transparent relative z-40 pb-safe-area-inset-bottom">
-        <form onSubmit={handleSubmit} className="max-w-4xl lg:max-w-5xl mx-auto relative">
-          <div className="flex items-center bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
-            {/* Text Input */}
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={message}
-              onChange={handleInput}
-              onKeyDown={handleKeyDown}
-              placeholder="Message ChronosAI..."
-              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2.5 sm:py-3 px-3 sm:px-4 resize-none min-h-[40px] sm:min-h-[44px] max-h-[100px] font-medium outline-none"
-              style={{ scrollbarWidth: 'none' }}
-            />
+      {/* Input Area - Fixed at Bottom with Gradient Fade */}
+      <div className="shrink-0 relative">
+        {/* Gradient Fade Above Input */}
+        <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-transparent to-white pointer-events-none z-10" />
+        
+        <div className="bg-white border-t border-gray-200 px-4 py-4">
+          <form onSubmit={handleSubmit} className="max-w-4xl mx-auto relative">
+            <div className="flex items-end gap-3 bg-white border border-gray-200 rounded-2xl shadow-sm focus-within:border-blue-500 focus-within:shadow-md transition-all duration-200">
+              {/* Text Input */}
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={message}
+                onChange={handleInput}
+                onKeyDown={handleKeyDown}
+                placeholder="Message ChronosAI..."
+                className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-gray-900 placeholder:text-gray-400 text-sm leading-relaxed py-3 px-4 resize-none min-h-[44px] max-h-[200px] font-normal outline-none"
+                style={{ scrollbarWidth: 'none' }}
+              />
+              
+              {/* Send Button */}
+              <div className="flex items-center pr-2 pb-1">
+                {isLoading ? (
+                  <div className="flex items-center gap-2 px-2">
+                    <OptimizedSpinner size="sm" variant="dots" className="text-blue-500" />
+                    <span className="text-xs text-gray-500 hidden sm:inline">ChronosAI is thinking...</span>
+                  </div>
+                ) : (
+                  <motion.button
+                    type="submit"
+                    whileTap={{ scale: 0.95 }}
+                    disabled={!message.trim()}
+                    className={`p-2 rounded-lg transition-all duration-200 min-h-[32px] touch-manipulation ${
+                      message.trim()
+                        ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <SendHorizontal className="h-4 w-4" />
+                  </motion.button>
+                )}
+              </div>
+            </div>
             
-            {/* Loading State or Send Button */}
-            <div className="flex items-center pr-2 pl-1 min-h-[40px]">
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <OptimizedSpinner size="sm" variant="dots" className="text-blue-400" />
-                  <span className="text-xs text-slate-400 hidden sm:inline">AI is thinking...</span>
+            {/* Helper Text */}
+            <div className="flex items-center justify-between mt-2 px-2">
+              <p className="text-xs text-gray-500">
+                {isTyping ? 'Typing...' : 'Press Enter to send • Shift + Enter for new line'}
+              </p>
+              {isLlmOnline && (
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-xs text-gray-500">AI Ready</span>
                 </div>
-              ) : (
-                <motion.button
-                  type="submit"
-                  whileTap={{ scale: 0.95 }}
-                  disabled={!message.trim()}
-                  className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 min-h-[36px] touch-manipulation ${
-                    message.trim()
-                      ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/30'
-                      : 'bg-white/10 text-slate-500 cursor-not-allowed'
-                  }`}
-                >
-                  <SendHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                </motion.button>
               )}
             </div>
-          </div>
-          
-          {/* Helper Text */}
-          <div className="flex items-center justify-between mt-1.5 sm:mt-2 px-2">
-            <p className="text-[9px] sm:text-[10px] text-slate-500 font-medium">
-              {isTyping ? 'Typing...' : 'Press Enter to send • Shift + Enter for new line'}
-            </p>
-            {isLlmOnline && (
-              <div className="flex items-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[9px] sm:text-[10px] text-slate-500">AI Ready</span>
-              </div>
-            )}
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );
