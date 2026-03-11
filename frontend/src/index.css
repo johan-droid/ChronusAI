@@ -611,29 +611,135 @@ a:focus-visible {
   transform: translateX(4px);
 }
 
-/* Chat Message Styles */
+/* ═══════════════════════════════════════════════════════
+   CLAUDE-INSPIRED CHAT UI STYLES
+   ═══════════════════════════════════════════════════════ */
+
+/* AI Message — clean, spacious, no heavy border */
 .chat-message-ai {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: transparent;
+  border: none;
 }
 
+/* User Message — warm accent pill */
+.claude-msg-user {
+  background: rgba(180, 130, 90, 0.18);
+  border: 1px solid rgba(180, 130, 90, 0.12);
+  color: #e8ddd4;
+}
+
+/* Thinking shimmer */
 .chat-shimmer {
   background: linear-gradient(
     110deg,
-    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.03) 0%,
     rgba(255, 255, 255, 0.06) 40%,
-    rgba(255, 255, 255, 0.04) 60%
+    rgba(255, 255, 255, 0.03) 60%
   );
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @keyframes shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+/* Claude-style input container */
+.claude-chat-input {
+  background: rgba(60, 55, 50, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.claude-chat-input:focus-within {
+  border-color: rgba(200, 170, 130, 0.25);
+  background: rgba(60, 55, 50, 0.55);
+  box-shadow: 0 0 0 3px rgba(200, 170, 130, 0.06), 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+/* Quick-action pill buttons */
+.claude-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.claude-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+}
+
+.claude-pill:active {
+  transform: translateY(0);
+}
+
+/* Chat greeting animation */
+@keyframes greeting-fade {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.claude-greeting {
+  animation: greeting-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.claude-greeting-delay-1 {
+  animation: greeting-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards;
+  opacity: 0;
+}
+
+.claude-greeting-delay-2 {
+  animation: greeting-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+  opacity: 0;
+}
+
+/* Rich data card — warmer tone */
+.claude-data-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.25s ease;
+}
+
+.claude-data-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Smart suggestion chip */
+.claude-suggestion {
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.claude-suggestion:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* Dashboard Typewriter Cursor */

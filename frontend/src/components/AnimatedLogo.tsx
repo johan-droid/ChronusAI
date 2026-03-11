@@ -8,21 +8,21 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
-        style={{ filter: 'drop-shadow(0 0 6px rgba(180, 200, 220, 0.35))' }}
+        style={{ filter: 'drop-shadow(0 0 8px rgba(200, 220, 255, 0.5))' }}
       >
         <defs>
-          {/* Thread gradient — silvery blue from the user's hourglass image */}
+          {/* Thread gradient — brighter silvery blue */}
           <linearGradient id="threadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#d0dcea" />
-            <stop offset="40%" stopColor="#b0c4d8" />
-            <stop offset="100%" stopColor="#8899aa" />
+            <stop offset="0%" stopColor="#e8f0ff" />
+            <stop offset="40%" stopColor="#c8d8f0" />
+            <stop offset="100%" stopColor="#a0b8d0" />
           </linearGradient>
 
-          {/* Glow gradient for the animated stroke */}
+          {/* Glow gradient for the animated stroke — brighter */}
           <linearGradient id="threadGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#e8f0f8" />
-            <stop offset="50%" stopColor="#c8d8e8" />
-            <stop offset="100%" stopColor="#90a8ba" />
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="50%" stopColor="#dce8f8" />
+            <stop offset="100%" stopColor="#b0c4de" />
           </linearGradient>
 
           {/* Subtle shimmer filter */}
@@ -40,7 +40,7 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
           strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity="0.25"
+          opacity="0.7"
         />
         {/* Animated thread draw — outer frame */}
         <path
@@ -64,7 +64,7 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
           />
           <animate
             attributeName="opacity"
-            values="0.3;1;0.85;1;0.3"
+            values="0.5;1;0.9;1;0.5"
             dur="2.5s"
             repeatCount="indefinite"
           />
@@ -79,7 +79,7 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          opacity="0.15"
+          opacity="0.5"
         />
         {/* Animated thread draw — inner curves */}
         <path
@@ -104,7 +104,7 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
           />
           <animate
             attributeName="opacity"
-            values="0;0.9;1;0.9;0"
+            values="0.2;1;0.9;1;0.2"
             dur="2s"
             begin="0.6s"
             repeatCount="indefinite"
@@ -119,7 +119,7 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
           strokeLinecap="round"
           strokeDasharray="20"
           strokeDashoffset="20"
-          opacity="0.6"
+          opacity="0.8"
         >
           <animate
             attributeName="stroke-dashoffset"
@@ -132,7 +132,7 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
           />
           <animate
             attributeName="opacity"
-            values="0;0.7;0.4;0.7;0"
+            values="0.2;0.9;0.6;0.9;0.2"
             dur="1.5s"
             begin="1s"
             repeatCount="indefinite"
