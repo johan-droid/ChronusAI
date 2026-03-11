@@ -1,4 +1,4 @@
-import { useEffect, useState, memo, useMemo } from 'react';
+import { useEffect, useState, memo, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -17,7 +17,6 @@ import NavigationBar from '../components/NavigationBar';
 import StatsCard from '../components/StatsCard';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
-import { useTimezone } from '../hooks/useTimezone';
 import { apiClient } from '../lib/api';
 import LogoutMenu from '../components/LogoutMenu';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -193,63 +192,95 @@ const TimeBreakdown = memo(({ stats }: {
 ));
 TimeBreakdown.displayName = 'TimeBreakdown';
 
+/* ── Greeting subtitles per time-of-day ── */
+const GREETING_SUBTITLES: Record<string, string[]> = {
+  morning: [
+    "Rise and shine — let's plan your day!",
+    "A fresh start awaits. What's on the agenda?",
+    "Good vibes and clear calendars ahead."
+  ],
+  afternoon: [
+    "Halfway through — let's stay on track!",
+    "Afternoon hustle. Need to reschedule anything?",
+    "Keep the momentum going!"
+  ],
+  evening: [
+    "Winding down — let's review tomorrow.",
+    "Great work today! Any last meetings to set?",
+    "Evening check-in — all caught up?"
+  ],
+  night: [
+    "Rest up — tomorrow's agenda is ready.",
+    "Night mode on. See you bright and early!",
+    "Sweet dreams. Your calendar's in good hands."
+  ],
+};
+
+function getTimePeriod(hour: number): string {
+  if (hour >= 5 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
+function getGreetingWord(period: string): string {
+  const map: Record<string, string> = { morning: 'Good Morning', afternoon: 'Good Afternoon', evening: 'Good Evening', night: 'Good Night' };
+  return map[period] || 'Hello';
+}
+
+/* ── Typewriter hook ── */
+function useTypewriter(text: string, speed = 38) {
+  const [displayed, setDisplayed] = useState('');
+  const [done, setDone] = useState(false);
+
+  useEffect(() => {
+    setDisplayed('');
+    setDone(false);
+    if (!text) return;
+    let i = 0;
+    const timer = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) {
+        setDone(true);
+        clearInterval(timer);
+      }
+    }, speed);
+    return () => clearInterval(timer);
+  }, [text, speed]);
+
+  return { displayed, done };
+}
+
 export default function StatsOverview() {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuthStore();
+  const { user } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
-  const { timezone, getLocalHour, detectTimezone, isIndian, culturalContext } = useTimezone();
   const [showLogout, setShowLogout] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [aiGreeting, setAiGreeting] = useState<string>('');
 
-  // Detect timezone and update greeting on mount
-  useEffect(() => {
-    const initTimezone = async () => {
-      // Detect timezone from backend (IP geolocation)
-      await detectTimezone();
-    };
-    initTimezone();
-  }, [detectTimezone, timezone]);
+  // Pure client-side greeting — no API call, no token cost
+  const getLocalHour = useCallback(() => {
+    const tz = user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const formatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: 'numeric', hour12: false });
+    return parseInt(formatter.format(new Date()), 10);
+  }, [user]);
 
-  useEffect(() => {
-    const fetchGreeting = async () => {
-      try {
-        // Use timezone from auth store (detected from backend IP)
-        const tz = timezone;
-        const response = await apiClient.getPersonalizedGreeting(tz);
+  const hour = getLocalHour();
+  const period = getTimePeriod(hour);
+  const greetingWord = getGreetingWord(period);
+  const firstName = user?.full_name?.split(' ')[0] || 'User';
 
-        // Use API greeting which is calculated correctly based on user's timezone and cultural context
-        setAiGreeting(response.greeting);
-
-        // Update store if backend detected different timezone or context
-        if (response.timezone !== timezone) {
-          updateUser({ timezone: response.timezone });
-        }
-
-        // Update Indian context if detected
-        if (response.is_indian !== isIndian) {
-          // Could update some state here if needed
-          console.log('Indian context detected:', response.is_indian);
-        }
-      } catch (err) {
-        console.error("Failed to fetch greeting", err);
-        // Use local greeting based on detected timezone
-        const hour = getLocalHour();
-        let greeting: string;
-        if (hour >= 5 && hour < 12) {
-          greeting = 'Good morning! Ready to conquer your schedule?';
-        } else if (hour >= 12 && hour < 17) {
-          greeting = 'Good afternoon! How are your meetings going?';
-        } else if (hour >= 17 && hour < 21) {
-          greeting = 'Good evening! Time to wrap up your day?';
-        } else {
-          greeting = 'Good night! Rest well for tomorrow.';
-        }
-        setAiGreeting(greeting);
-      }
-    };
-    if (user) fetchGreeting();
-  }, [user, timezone, getLocalHour, updateUser, isIndian, culturalContext]);
+  // Pick a deterministic subtitle based on the day-of-year so it feels fresh daily
+  const subtitleIndex = useMemo(() => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86400000);
+    const subs = GREETING_SUBTITLES[period];
+    return dayOfYear % subs.length;
+  }, [period]);
+  const subtitle = GREETING_SUBTITLES[period][subtitleIndex];
+  const { displayed: typedText, done: typingDone } = useTypewriter(subtitle, 35);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -309,7 +340,7 @@ export default function StatsOverview() {
   }, [meetings]);
 
   return (
-    <div key="dashboard-v4" className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
+    <div key="dashboard-v5" className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
       <NavigationBar
         user={user}
         mobileMenuOpen={mobileMenuOpen}
@@ -319,45 +350,18 @@ export default function StatsOverview() {
 
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto pb-12">
         <header className="mb-8 animate-fade-in relative">
-          <div className="bg-white/[0.02] border border-white/10 backdrop-blur-md p-6 rounded-xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2 opacity-20" />
+          <div className="bg-white/[0.02] border border-white/10 backdrop-blur-md p-6 sm:p-8 rounded-xl relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
 
             <div className="relative z-10 space-y-3">
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-[1.1]">
-                {(() => {
-                  // Use timezone from auth store (detected from backend IP)
-                  const hour = getLocalHour();
-
-                  // Determine greeting based on local hour
-                  let greeting: string;
-                  if (hour >= 5 && hour < 12) {
-                    greeting = 'Good Morning';
-                  } else if (hour >= 12 && hour < 17) {
-                    greeting = 'Good Afternoon';
-                  } else if (hour >= 17 && hour < 21) {
-                    greeting = 'Good Evening';
-                  } else {
-                    greeting = 'Good Night';
-                  }
-
-                  const firstName = user?.full_name?.split(' ')[0] || 'User';
-                  return <>{greeting}, <span className="text-blue-400">{firstName}</span> 👋</>;
-                })()}
+                {greetingWord}, <span className="text-blue-400">{firstName}</span> 👋
               </h1>
 
-              <div className="flex items-center gap-3">
-                <div className="h-1 w-1.5 rounded-full bg-primary animate-pulse" />
-                <p className="text-slate-400 text-sm lg:text-base font-medium">
-                  {aiGreeting ? (
-                    <span className="text-blue-300 inline-block">
-                      {aiGreeting}
-                    </span>
-                  ) : (
-                    "Loading your personalized insight..."
-                  )}
-                  {isIndian && culturalContext === 'indian' && (
-                    <span className="ml-2 text-xs text-orange-400">🇮🇳 Indian Context</span>
-                  )}
+              <div className="flex items-center gap-2">
+                <p className="text-slate-300 text-sm sm:text-base" style={{ fontFamily: "'Sacramento', cursive", fontSize: '1.25rem' }}>
+                  {typedText}
+                  {!typingDone && <span className="typewriter-cursor" />}
                 </p>
               </div>
             </div>

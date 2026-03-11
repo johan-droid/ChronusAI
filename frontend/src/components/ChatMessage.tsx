@@ -1,4 +1,4 @@
-import { User, Bot, Check, Calendar, Clock, Sparkles, ExternalLink } from 'lucide-react';
+import { User, Sparkles, Check, Calendar, Clock, ExternalLink, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
@@ -10,32 +10,14 @@ interface ChatMessageProps {
 export default function ChatMessage({ message, isTyping = false }: ChatMessageProps) {
   const isUser = message.role === 'user';
 
-  // Animation variants
-  const messageVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        duration: 0.3,
-        ease: [0.16, 1, 0.3, 1] as const
-      }
-    }
-  };
+  const isSuccess = message.content.toLowerCase().includes('scheduled') ||
+    message.content.toLowerCase().includes('created') ||
+    message.content.toLowerCase().includes('confirmed') ||
+    message.content.toLowerCase().includes('✅');
 
-  // Remove markdown and clean text
-  const cleanContent = message.content
-    .replace(/\*\*/g, '') // Remove bold
-    .replace(/\*/g, '')   // Remove italic
-    .replace(/#{1,6}\s/g, '') // Remove headers
-    .replace(/`{1,3}[^`]*`{1,3}/g, (match) => match.replace(/`/g, '')) // Remove code blocks
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1'); // Remove links, keep text
+  const isCanceled = message.content.toLowerCase().includes('canceled') ||
+    message.content.toLowerCase().includes('❌');
 
-  const isSuccess = cleanContent.toLowerCase().includes('scheduled') ||
-    cleanContent.toLowerCase().includes('created') ||
-    cleanContent.toLowerCase().includes('confirmed');
-
-  // Format meeting time
   const formatMeetingTime = (timeString: string) => {
     try {
       return new Date(timeString).toLocaleString([], {
@@ -50,194 +32,311 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
     }
   };
 
-  // Format availability slot
   const formatAvailabilitySlot = (start: string, end: string) => {
     try {
       const startDate = new Date(start);
       const endDate = new Date(end);
       const duration = Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60));
-      
       return {
         time: startDate.toLocaleString([], {
           weekday: 'short',
-          month: 'short', 
+          month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
         }),
+        endTime: endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         duration: `${duration} min`
       };
     } catch {
-      return { time: start, duration: 'Unknown' };
+      return { time: start, endTime: '', duration: '' };
     }
   };
 
+  // Typing indicator
+  if (isTyping && !message.content) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex gap-3 px-4 sm:px-6 py-4"
+      >
+        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/20">
+          <Sparkles className="h-4 w-4 text-white" />
+        </div>
+        <div className="chat-shimmer rounded-2xl px-5 py-3.5">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 bg-blue-400/80 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 bg-blue-400/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+            </div>
+            <span className="text-[13px] text-slate-400 ml-1">Thinking…</span>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className={`flex gap-3 w-full group py-4 px-4 border-b border-border hover:bg-card transition-colors ${
+      className={`flex gap-3 w-full py-3.5 px-4 sm:px-6 ${
         isUser ? 'justify-end' : 'justify-start'
       }`}
     >
-      {/* Avatar */}
-      <div className="flex-shrink-0">
-        {isUser ? (
-          <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center">
-            <User className="h-4 w-4 text-muted-foreground" />
+      {/* AI Avatar */}
+      {!isUser && (
+        <div className="flex-shrink-0 pt-0.5">
+          <div className="relative">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+              <Sparkles className="h-4 w-4 text-white" />
+            </div>
+            {/* Pulse ring */}
+            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border-2 border-[#0a0a14] shadow-[0_0_6px_rgba(52,211,153,0.5)]" />
           </div>
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-primary border border-primary flex items-center justify-center">
-            <Bot className="h-4 w-4 text-primary-foreground" />
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Message Content */}
-      <div className={`flex-1 min-w-0 ${isUser ? 'text-right' : 'text-left'}`}>
-        {/* Name Label */}
-        <div className="mb-1">
-          <span className="text-xs font-medium text-muted-foreground">
-            {isUser ? 'You' : 'ChronosAI'}
-          </span>
+      <div className={`flex flex-col max-w-[85%] sm:max-w-[75%] min-w-0 ${isUser ? 'items-end' : 'items-start'}`}>
+        {/* Sender label */}
+        <span className={`text-[11px] font-medium uppercase tracking-wider mb-1.5 ${
+          isUser ? 'text-slate-500' : 'text-blue-400/70'
+        }`}>
+          {isUser ? 'You' : 'ChronosAI'}
+        </span>
+
+        {/* Message bubble */}
+        <div className={`rounded-2xl px-4 py-3 ${
+          isUser
+            ? 'bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/15'
+            : 'chat-message-ai text-slate-100'
+        }`}>
+          {isTyping ? (
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+              <span className="text-slate-400 text-sm">Thinking…</span>
+            </div>
+          ) : (
+            <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+              {message.content}
+            </p>
+          )}
         </div>
 
-        {/* Message Text */}
-        <motion.div 
-          variants={messageVariants}
-          initial="hidden"
-          animate="visible"
-          className="text-sm leading-relaxed text-foreground whitespace-pre-wrap break-words"
-        >
-          <div>
-            {isTyping ? (
-              <div className="flex items-center gap-1">
-                <div className="flex gap-1">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="text-muted-foreground text-sm">ChronosAI is thinking...</span>
-              </div>
-            ) : (
-              <p className="prose prose-sm max-w-none">{cleanContent}</p>
-            )}
-          </div>
-        </motion.div>
+        {/* ===== Rich Data Cards ===== */}
 
-        {/* Meeting Card - if present */}
-        {!isUser && message.meeting?.meeting_url && (
-          <div className="mt-3 p-3 bg-primary/10 border border-primary/20 rounded-lg flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-primary font-bold text-xs">Z</span>
+        {/* Meeting Card — created/rescheduled event */}
+        {!isUser && message.meeting && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-2.5 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md p-4 space-y-3"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500/15 to-indigo-500/15 border border-blue-500/20 flex items-center justify-center shrink-0">
+                <Calendar className="h-4 w-4 text-blue-400" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">Zoom Meeting</p>
-                <p className="text-xs text-muted-foreground truncate">{message.meeting.meeting_url}</p>
-              </div>
-            </div>
-            <motion.a
-              href={message.meeting.meeting_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm rounded-lg transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>Join Meeting</span>
-            </motion.a>
-          </div>
-        )}
-
-        {/* Meetings List - if present */}
-        {!isUser && message.meetings && message.meetings.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-primary mb-2">
-              <Calendar className="h-4 w-4" />
-              <span>Upcoming Meetings</span>
-            </div>
-            {message.meetings.slice(0, 5).map((meeting, index) => (
-              <div key={meeting.id || index} className="p-3 bg-card border border-border rounded-lg">
-                <p className="text-sm font-medium text-foreground truncate">{meeting.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatMeetingTime(meeting.start_time)}
+              <div className="min-w-0 flex-1">
+                <p className="text-[14px] font-semibold text-white truncate">
+                  {message.meeting.title || 'Meeting'}
+                </p>
+                <p className="text-[12px] text-slate-400">
+                  {formatMeetingTime(message.meeting.start_time)}
                 </p>
               </div>
-            ))}
-            {message.meetings.length > 5 && (
-              <p className="text-xs text-muted-foreground text-center">
-                +{message.meetings.length - 5} more meetings
-              </p>
+              {/* Status badge */}
+              <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded-full border ${
+                message.meeting.status === 'scheduled'
+                  ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  : message.meeting.status === 'rescheduled'
+                  ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                  : message.meeting.status === 'canceled'
+                  ? 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                  : 'text-slate-400 bg-white/5 border-white/10'
+              }`}>
+                {message.meeting.status || 'scheduled'}
+              </span>
+            </div>
+
+            {message.meeting.meeting_url && (
+              <motion.a
+                href={message.meeting.meeting_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-[13px] font-medium transition-all shadow-lg shadow-blue-500/20"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Join Meeting
+              </motion.a>
             )}
-          </div>
+          </motion.div>
         )}
 
-        {/* Availability Slots - if present */}
-        {!isUser && message.availability && message.availability.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-green-600 mb-2">
-              <Clock className="h-4 w-4" />
-              <span>Available Time Slots</span>
+        {/* Meetings List — upcoming events */}
+        {!isUser && message.meetings && message.meetings.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-2.5 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md overflow-hidden"
+          >
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+              <Calendar className="h-3.5 w-3.5 text-blue-400" />
+              <span className="text-[12px] font-semibold text-blue-400 uppercase tracking-wider">
+                Upcoming Meetings
+              </span>
+              <span className="ml-auto text-[11px] text-slate-500">{message.meetings.length} events</span>
             </div>
-            {message.availability.slice(0, 3).map((slot, index) => {
-              const { time, duration } = formatAvailabilitySlot(slot.start, slot.end);
-              return (
-                <div key={index} className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm font-medium text-green-800">{time}</p>
-                  <p className="text-xs text-green-600">{duration}</p>
+            <div className="divide-y divide-white/5">
+              {message.meetings.slice(0, 5).map((meeting, index) => (
+                <div
+                  key={meeting.id || index}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="w-1 h-8 rounded-full bg-gradient-to-b from-blue-500 to-indigo-600 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[13px] font-medium text-white truncate">{meeting.title}</p>
+                    <p className="text-[11px] text-slate-400">{formatMeetingTime(meeting.start_time)}</p>
+                  </div>
                 </div>
-              );
-            })}
-            {message.availability.length > 3 && (
-              <p className="text-xs text-muted-foreground text-center">
-                +{message.availability.length - 3} more slots
-              </p>
+              ))}
+            </div>
+            {message.meetings.length > 5 && (
+              <div className="px-4 py-2.5 text-center text-[11px] text-slate-500 border-t border-white/5">
+                +{message.meetings.length - 5} more meetings
+              </div>
             )}
-          </div>
+          </motion.div>
         )}
 
-        {/* AI Suggestions - if present */}
-        {!isUser && message.suggestions && message.suggestions.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center gap-2 text-sm font-semibold text-purple-600 mb-2">
-              <Sparkles className="h-4 w-4" />
-              <span>AI Suggestions</span>
+        {/* Availability Slots */}
+        {!isUser && message.availability && message.availability.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-2.5 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md overflow-hidden"
+          >
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+              <Clock className="h-3.5 w-3.5 text-emerald-400" />
+              <span className="text-[12px] font-semibold text-emerald-400 uppercase tracking-wider">
+                Available Slots
+              </span>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="p-3 space-y-2">
+              {message.availability.slice(0, 4).map((slot, index) => {
+                const { time, endTime, duration } = formatAvailabilitySlot(slot.start, slot.end);
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-emerald-500/[0.06] border border-emerald-500/10 hover:bg-emerald-500/[0.1] transition-colors"
+                  >
+                    <div>
+                      <p className="text-[13px] font-medium text-emerald-300">{time}</p>
+                      {endTime && <p className="text-[11px] text-slate-400">until {endTime}</p>}
+                    </div>
+                    {duration && (
+                      <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full">
+                        {duration}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {message.availability.length > 4 && (
+              <div className="px-4 py-2.5 text-center text-[11px] text-slate-500 border-t border-white/5">
+                +{message.availability.length - 4} more slots
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* AI Suggestions */}
+        {!isUser && message.suggestions && message.suggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="mt-2.5 w-full rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-md overflow-hidden"
+          >
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
+              <Zap className="h-3.5 w-3.5 text-amber-400" />
+              <span className="text-[12px] font-semibold text-amber-400 uppercase tracking-wider">
+                Suggested Times
+              </span>
+            </div>
+            <div className="p-3 flex flex-wrap gap-2">
               {message.suggestions.slice(0, 4).map((suggestion, index) => (
                 <button
                   key={index}
-                  className="px-3 py-2 bg-purple-100 border border-purple-200 rounded-lg text-sm text-purple-700 hover:bg-purple-200 transition-colors touch-manipulation"
+                  className="px-3.5 py-2 rounded-lg bg-indigo-500/[0.08] border border-indigo-500/15 hover:bg-indigo-500/[0.15] hover:border-indigo-500/25 transition-all text-left group"
                   onClick={() => {
                     const input = document.querySelector('textarea[placeholder*="Message ChronosAI"]') as HTMLTextAreaElement;
                     if (input) {
-                      input.value = suggestion.time;
+                      const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+                      if (nativeInputValueSetter) {
+                        nativeInputValueSetter.call(input, suggestion.time);
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                      }
                       input.focus();
                     }
                   }}
                 >
-                  {suggestion.time}
+                  <p className="text-[13px] font-medium text-indigo-300 group-hover:text-indigo-200 transition-colors">
+                    {formatMeetingTime(suggestion.time)}
+                  </p>
+                  {suggestion.reason && (
+                    <p className="text-[11px] text-slate-500 mt-0.5">{suggestion.reason}</p>
+                  )}
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {/* Success Indicator */}
-        {!isUser && isSuccess && (
-          <div className={`mt-2 pt-2 border-t border-border flex items-center gap-2 text-xs ${
-            message.meeting?.meeting_url ? 'text-primary' : 'text-green-600'
-          }`}>
+        {/* Success / Cancel Indicator */}
+        {!isUser && (isSuccess || isCanceled) && !isTyping && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className={`mt-2 flex items-center gap-1.5 text-[11px] font-medium ${
+              isSuccess ? 'text-emerald-400' : 'text-rose-400'
+            }`}
+          >
             <Check className="h-3 w-3" />
-            <span className="font-medium">
-              {message.meeting?.meeting_url ? 'Meeting created' : 'Done'}
-            </span>
-          </div>
+            <span>{isSuccess ? (message.meeting?.meeting_url ? 'Meeting created with link' : 'Action completed') : 'Event canceled'}</span>
+          </motion.div>
+        )}
+
+        {/* Timestamp */}
+        {message.timestamp && (
+          <span className="text-[10px] text-slate-600 mt-1.5">
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
         )}
       </div>
+
+      {/* User Avatar */}
+      {isUser && (
+        <div className="flex-shrink-0 pt-0.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-slate-700 to-slate-800 border border-white/10 flex items-center justify-center">
+            <User className="h-4 w-4 text-slate-300" />
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }
