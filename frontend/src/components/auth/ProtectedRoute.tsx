@@ -20,7 +20,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
-import { authApi } from '@/lib/axios';
+import { authApi } from '../../lib/axios';
 
 const ProtectedRoute: React.FC = () => {
   const { isAuthenticated, isLoading, accessToken, setAuth, setLoading } =
