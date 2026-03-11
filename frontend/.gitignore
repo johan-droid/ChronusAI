@@ -1,15 +1,33 @@
-# Production
+# Production builds
 /dist
 /dist-ssr
+storybook-static/
 
-# Environment
+# Vite cache
+.vite/
+
+# Environment variables (NEVER commit)
 .env
 .env.local
 .env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Build Caches
+# TypeScript build info
+*.tsbuildinfo
+
+# Build caches
 .eslintcache
 .stylelintcache
+.parcel-cache/
+.rpt2_cache/
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Dependencies
 node_modules/
 
 # IDE
@@ -20,3 +38,10 @@ node_modules/
 
 # OS
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*

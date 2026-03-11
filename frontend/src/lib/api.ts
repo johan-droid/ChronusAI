@@ -78,19 +78,14 @@ class ApiClient {
           isRefreshing = true;
 
           try {
-            const { refreshToken, updateAccessToken, updateRefreshToken } = useAuthStore.getState();
-            if (refreshToken) {
-              const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
-                headers: { Authorization: `Bearer ${refreshToken}` }
-              });
+            const { updateAccessToken } = useAuthStore.getState();
+            // Refresh token is in HttpOnly cookie — no need to pass it manually.
+            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
+              withCredentials: true
+            });
 
-              const { access_token, refresh_token: new_refresh_token } = response.data;
+              const { access_token } = response.data;
               updateAccessToken(access_token);
-              
-              // Update refresh token if rotation is enabled
-              if (new_refresh_token) {
-                updateRefreshToken(new_refresh_token);
-              }
 
               isRefreshing = false;
               onRefreshed(access_token);
@@ -98,9 +93,6 @@ class ApiClient {
               // Retry original request with new token
               originalRequest.headers.Authorization = `Bearer ${access_token}`;
               return this.client(originalRequest);
-            } else {
-               throw new Error("No refresh token");
-            }
           } catch (refreshError) {
             // Refresh failed, logout user
             isRefreshing = false;
@@ -242,10 +234,8 @@ class ApiClient {
 
   // Auth methods
   async logout(): Promise<{ message: string; logout_url?: string; provider?: string }> {
-    const { refreshToken } = useAuthStore.getState();
-    const response = await this.client.post('auth/logout', {}, {
-      headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {}
-    });
+    // Refresh token is in HttpOnly cookie — backend reads it automatically.
+    const response = await this.client.post('auth/logout', {});
     return response.data;
   }
 

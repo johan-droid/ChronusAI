@@ -1,131 +1,131 @@
+/**
+ * authStore — User-domain state only.
+ *
+ * Security model
+ * ──────────────
+ * • Access token is held purely in Zustand memory (no localStorage, no
+ *   sessionStorage).  It starts as null on every page load and is repopulated
+ *   by the silent-refresh interceptor in axios.ts.
+ * • Refresh token lives in an HttpOnly cookie set by the backend — JS never
+ *   reads or writes it directly.
+ * • Only non-sensitive profile data (id, email, full_name, timezone) is
+ *   persisted to localStorage so the UI can render without a round-trip.
+ *
+ * Organization data lives in organizationStore.ts (strictly separate).
+ */
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '../types';
 
-interface AuthState {
-  user: User | null;
+// ── Types ─────────────────────────────────────────────────────────────────────
+
+export interface AuthState {
+  /** Short-lived access token — in memory only, NEVER persisted. */
   accessToken: string | null;
-  refreshToken: string | null;
+  /** Authenticated user's profile — safe to persist. */
+  user: User | null;
   isAuthenticated: boolean;
+  /** True while the initial silent-refresh check is in progress. */
   isLoading: boolean;
+  /** Convenience alias pulled from user.timezone. */
   timezone: string;
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+
+  // ── Actions ────────────────────────────────────────────────────────────────
+  /** Called after a successful login / register / token refresh. */
+  setAuth: (user: User, accessToken: string) => void;
+  /** Update just the access token (token rotation). */
   updateAccessToken: (accessToken: string) => void;
-  updateRefreshToken: (refreshToken: string) => void;
-  updateUser: (user: Partial<User>) => void;
-  setTimezone: (timezone: string) => void;
-  logout: () => void;
+  /** Merge partial user profile updates. */
+  updateUser: (updates: Partial<User>) => void;
+  setTimezone: (tz: string) => void;
   setLoading: (loading: boolean) => void;
+  logout: () => void;
+}
+
+// ── Store ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Persisted slice — only stable, non-sensitive fields.
+ * The access token is intentionally excluded.
+ */
+interface PersistedSlice {
+  user: User | null;
+  timezone: string;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
+      accessToken: null,       // ← NEVER persisted
       user: null,
-      accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
-      isLoading: true, // Start with true to check initial auth state
+      isLoading: true,
       timezone: 'UTC',
-      setAuth: (user, accessToken, refreshToken) => set({ 
-        user, 
-        accessToken, 
-        refreshToken,
-        timezone: user.timezone || 'UTC',
-        isAuthenticated: true, 
-        isLoading: false 
-      }),
-      updateAccessToken: (accessToken) => set((state) => ({
-        ...state,
-        accessToken
-      })),
-      updateRefreshToken: (refreshToken) => set((state) => ({
-        ...state,
-        refreshToken
-      })),
-      updateUser: (userData) => set((state) => ({
-        ...state,
-        user: state.user ? { ...state.user, ...userData } : null,
-        timezone: userData.timezone || state.timezone
-      })),
-      setTimezone: (timezone) => set((state) => ({
-        ...state,
-        timezone,
-        user: state.user ? { ...state.user, timezone } : null
-      })),
+
+      setAuth: (user, accessToken) =>
+        set({
+          user,
+          accessToken,
+          timezone: user.timezone ?? 'UTC',
+          isAuthenticated: true,
+          isLoading: false,
+        }),
+
+      updateAccessToken: (accessToken) => set({ accessToken }),
+
+      updateUser: (updates) =>
+        set((s) => ({
+          user: s.user ? { ...s.user, ...updates } : null,
+          timezone: updates.timezone ?? s.timezone,
+        })),
+
+      setTimezone: (tz) =>
+        set((s) => ({
+          timezone: tz,
+          user: s.user ? { ...s.user, timezone: tz } : null,
+        })),
+
+      setLoading: (loading) => set({ isLoading: loading }),
+
       logout: () => {
-        // Clear auth state
-        set({ 
-          user: null, 
-          accessToken: null, 
-          refreshToken: null,
-          isAuthenticated: false, 
-          isLoading: false 
+        set({
+          user: null,
+          accessToken: null,
+          isAuthenticated: false,
+          isLoading: false,
+          timezone: 'UTC',
         });
 
-        // Clear browser storage
+        // Clear persisted user profile from localStorage.
         if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth-storage');
+          localStorage.removeItem('chronos-auth');
           sessionStorage.clear();
-          
-          // Clear browser history to prevent back button navigation issues
-          // Replace current history entry with login page
+
+          // Replace history so the user cannot navigate back to protected pages.
           window.history.replaceState({}, document.title, '/login');
-          
-          // Push a new history entry for login to prevent going back to OAuth URLs
-          window.history.pushState({}, document.title, '/login');
-          
-          // Force redirect to login page
           window.location.href = '/login';
         }
       },
-      setLoading: (loading) => set({ isLoading: loading }),
     }),
+
     {
-      name: 'auth-storage',
-      partialize: (state) => ({ 
-        user: state.user, 
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated,
-        timezone: state.timezone
+      name: 'chronos-auth',
+      storage: createJSONStorage(() => localStorage),
+      // ↓ Persist ONLY safe, non-sensitive fields.
+      partialize: (state): PersistedSlice => ({
+        user: state.user,
+        timezone: state.timezone,
       }),
+      // Rehydrate: mark as unauthenticated until a silent refresh confirms validity.
       onRehydrateStorage: () => (state) => {
-        // Set loading to false after rehydration, while verifying exp claims
         if (state) {
-          let isValid = false;
-          if (state.accessToken) {
-            try {
-              const payload = JSON.parse(atob(state.accessToken.split('.')[1]));
-              if (payload.exp && payload.exp * 1000 > Date.now()) {
-                isValid = true;
-              }
-            } catch (e) {
-              isValid = false;
-            }
-          }
-          if (!isValid) {
-            state.user = null;
-            state.accessToken = null;
-            state.isAuthenticated = false;
-          }
-          state.isLoading = false;
+          // Access token was wiped — require a silent refresh before acting.
+          state.accessToken = null;
+          state.isAuthenticated = false;
+          state.isLoading = true;
         }
       },
-    }
-  )
+    },
+  ),
 );
 
-// Listen for logout-all broadcast
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'logout-all' && e.newValue) {
-      useAuthStore.getState().logout();
-      
-      // Additional history clearing for cross-tab logout
-      window.history.replaceState({}, document.title, '/login');
-      window.history.pushState({}, document.title, '/login');
-      window.location.href = '/login';
-    }
-  });
-}

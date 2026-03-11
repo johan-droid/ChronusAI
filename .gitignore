@@ -25,8 +25,8 @@ tokens.txt
 config/secrets.json
 config/local.json
 config/production.json
-*.config.js
-*.config.ts
+# NOTE: *.config.js / *.config.ts intentionally NOT ignored —
+# vite.config.ts, tailwind.config.ts, postcss.config.js etc. must be committed
 
 # Render-specific secrets
 render-env.txt
@@ -80,19 +80,17 @@ MANIFEST
 htmlcov/
 .tox/
 .nox/
-.pytest_cache/
 cache/
 nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
-.pytest_cache/
 
-# Test files
-test_*.py
-*_test.py
-tests/
+# Test files output
+# NOTE: test source files (test_*.py, *_test.py, tests/) should be committed
+# Only ignore generated test output artifacts here
 test-results/
+test-reports/
 
 # Python development tools
 .dmypy.json
@@ -150,6 +148,12 @@ jspm_packages/
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Vite cache
+.vite/
+
+# Style linting cache
+.stylelintcache
 
 # Optional npm cache directory
 .npm
@@ -348,8 +352,9 @@ tmp/
 *.swo
 *~
 
-# Lock files
-*.lock
+# Generic lock files
+# NOTE: package manager locks (yarn.lock, poetry.lock, Pipfile.lock) should be committed
+# for reproducible builds — only ignore binary/temp lock files here
 *.lck
 
 # ===========================================

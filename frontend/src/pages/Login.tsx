@@ -42,19 +42,8 @@ export default function Login() {
 
       (async () => {
         try {
-          useAuthStore.getState().setAuth(
-            {
-              id: '',
-              email: '',
-              full_name: '',
-              timezone: 'UTC',
-              provider: 'google',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            accessToken,
-            refreshToken
-          );
+          // Store access token temporarily so getCurrentUser call is authenticated.
+          useAuthStore.getState().updateAccessToken(accessToken);
 
           const userData = await apiClient.getCurrentUser();
           if (!userData || !userData.id || !userData.email) {
@@ -67,13 +56,13 @@ export default function Login() {
             full_name: (userData as { full_name?: string; name?: string }).full_name ?? (userData as { full_name?: string; name?: string }).name ?? userData.email,
           };
 
-          useAuthStore.getState().setAuth(user, accessToken, refreshToken);
+          useAuthStore.getState().setAuth(user, accessToken);
           navigate('/dashboard', { replace: true });
         } catch (error) {
           console.error('Authentication failed:', error);
-          useAuthStore.setState({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false });
+          useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
           if (typeof window !== 'undefined') {
-            localStorage.removeItem('auth-storage');
+            localStorage.removeItem('chronos-auth');
             sessionStorage.clear();
           }
           clearAllCache();
@@ -94,9 +83,9 @@ export default function Login() {
       setIsLoading(true);
       setError('');
       // Clear auth state and storage without redirecting (logout() would redirect and prevent Google from opening)
-      useAuthStore.setState({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false });
+      useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth-storage');
+        localStorage.removeItem('chronos-auth');
         sessionStorage.clear();
       }
       clearAllCache();
@@ -143,8 +132,8 @@ export default function Login() {
         });
       }
 
-      const { user, access_token, refresh_token } = response;
-      useAuthStore.getState().setAuth(user, access_token, refresh_token);
+      const { user, access_token } = response;
+      useAuthStore.getState().setAuth(user, access_token);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Email auth error:', error);

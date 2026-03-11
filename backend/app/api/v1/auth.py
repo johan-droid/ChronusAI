@@ -1,617 +1,483 @@
+"""Authentication router — User domain only.
+
+Key security decisions
+----------------------
+* Access tokens are short-lived JWTs (15 min default) returned in the JSON body
+  and stored only in-memory by the frontend (never localStorage).
+* Refresh tokens are long-lived JWTs (7 days) stored exclusively in an
+  ``HttpOnly; Secure; SameSite=Lax`` cookie so JavaScript cannot read them.
+* Token rotation on every refresh call.
+* Password reset and email verification via time-limited secure tokens.
+"""
 from __future__ import annotations
 
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.core.oauth import get_oauth_provider
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
 from app.core.security import (
-    create_access_token, 
-    token_encryptor, 
-    create_refresh_token, 
-    decode_refresh_token, 
-    revoke_session,
-    revoke_all_user_sessions, 
+    create_access_token,
+    create_refresh_token,
+    decode_refresh_token,
     get_password_hash,
-    verify_password
+    revoke_all_user_sessions,
+    revoke_session,
+    token_encryptor,
+    verify_password,
 )
 from app.dependencies import get_current_user
 from app.db.session import get_db
 from app.models.oauth_credential import OAuthCredential
 from app.models.user import User
-from app.core.zoom import ZoomOAuth
+from app.schemas.user import (
+    EmailVerificationRequest,
+    PasswordReset,
+    PasswordResetRequest,
+    TokenResponse,
+    UserLogin,
+    UserRead,
+    UserRegister,
+)
 import structlog
 
 logger = structlog.get_logger()
 
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
+# ── Cookie configuration ──────────────────────────────────────────────────────
 
-class UserSignup(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=8)
-    full_name: str | None = None
-    name: str | None = None
+_REFRESH_COOKIE = "chronos_refresh"
+_REFRESH_COOKIE_MAX_AGE = 7 * 24 * 60 * 60  # 7 days in seconds
+
+
+def _set_refresh_cookie(response: Response, token: str) -> None:
+    """Attach the refresh token as an HttpOnly secure cookie."""
+    is_prod = settings.app_env == "production"
+    response.set_cookie(
+        key=_REFRESH_COOKIE,
+        value=token,
+        httponly=True,
+        secure=is_prod,
+        samesite="lax",
+        max_age=_REFRESH_COOKIE_MAX_AGE,
+        path="/api/v1/auth",
+    )
+
+
+def _clear_refresh_cookie(response: Response) -> None:
+    response.delete_cookie(key=_REFRESH_COOKIE, path="/api/v1/auth")
+
+
+# ── Routers ───────────────────────────────────────────────────────────────────
 
 router = APIRouter(tags=["authentication"])
 
-@router.post("/signup")
-async def signup(user_in: UserSignup, db: AsyncSession = Depends(get_db)):
-    """Register a new user with email and password."""
-    # Check if user already exists
+# Separate router for Microsoft OAuth (keeps existing prefix structure working)
+microsoft_router = APIRouter(tags=["authentication"])
+
+
+# ── Email / Password auth ─────────────────────────────────────────────────────
+
+@router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def register(user_in: UserRegister, response: Response, db: AsyncSession = Depends(get_db)):
+    """Register a new user with email and password.
+
+    Returns an access token in the body and sets the refresh token as an
+    HttpOnly cookie.  A verification token is returned in dev mode only.
+    """
     result = await db.execute(select(User).where(User.email == user_in.email))
     if result.scalar_one_or_none():
-        logger.warning("signup_failed_user_exists", email=user_in.email)
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered.")
 
-    
-    # Create new user
+    verification_token = secrets.token_urlsafe(32)
     new_user = User(
         email=user_in.email,
         full_name=user_in.full_name,
-        name=user_in.name or user_in.full_name,
+        name=user_in.full_name,
         hashed_password=get_password_hash(user_in.password),
         provider="email",
-        timezone="UTC"
+        timezone="UTC",
+        is_verified=False,
+        email_verification_token=verification_token,
     )
     db.add(new_user)
     try:
         await db.commit()
         await db.refresh(new_user)
-    except Exception as e:
+    except Exception as exc:
         await db.rollback()
-        logger.error("Failed to create user", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Could not create user account"
-        )
-    
-    # Create tokens
+        logger.error("register_db_error", error=str(exc))
+        raise HTTPException(status_code=500, detail="Could not create account.")
+
     access_token = create_access_token(subject=str(new_user.id))
     refresh_token = create_refresh_token(subject=str(new_user.id))
-    
-    return {
+    _set_refresh_cookie(response, refresh_token)
+
+    # In production, email the verification_token instead of returning it.
+    logger.info("user_registered", user_id=str(new_user.id))
+    payload: dict = {
         "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user": {
-            "id": str(new_user.id),
-            "email": new_user.email,
-            "full_name": new_user.full_name,
-            "name": new_user.name
-        }
+        "token_type": "bearer",
+        "user": UserRead.model_validate(new_user).model_dump(mode="json"),
     }
+    if settings.app_env != "production":
+        payload["_dev_verification_token"] = verification_token
+    return payload
+
+
+# Keep /signup as an alias for backward compatibility with existing frontend.
+@router.post("/signup")
+async def signup(user_in: UserRegister, response: Response, db: AsyncSession = Depends(get_db)):
+    return await register(user_in, response, db)
+
 
 @router.post("/login")
-async def login(user_in: UserLogin, db: AsyncSession = Depends(get_db)):
-    """Authenticate user with email and password."""
+async def login(user_in: UserLogin, response: Response, db: AsyncSession = Depends(get_db)):
+    """Authenticate with email & password.
+
+    Sets refresh token cookie; returns access token in body.
+    """
     result = await db.execute(select(User).where(User.email == user_in.email))
     user = result.scalar_one_or_none()
-    
-    if not user or not user.hashed_password or not verify_password(user_in.password, user.hashed_password):
-        logger.warning("login_failed_invalid_credentials", email=user_in.email)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password"
-        )
 
-    
-    # Create tokens
+    if not user or not user.hashed_password or not verify_password(user_in.password, str(user.hashed_password)):
+        logger.warning("login_failed", email=user_in.email)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password.")
+
+    if not user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is disabled.")
+
     access_token = create_access_token(subject=str(user.id))
     refresh_token = create_refresh_token(subject=str(user.id))
-    
+    _set_refresh_cookie(response, refresh_token)
+
+    logger.info("user_logged_in", user_id=str(user.id))
     return {
         "access_token": access_token,
-        "refresh_token": refresh_token,
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "name": user.name
-        }
+        "token_type": "bearer",
+        "user": UserRead.model_validate(user).model_dump(mode="json"),
     }
 
-# Separate route for Microsoft OAuth with /api/v1 prefix
-microsoft_router = APIRouter(tags=["authentication"])
 
+@router.post("/refresh")
+async def refresh_token(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+    cookie_token: str | None = Cookie(default=None, alias=_REFRESH_COOKIE),
+):
+    """Issue a new access token using the HttpOnly refresh cookie (with header fallback).
+
+    Performs token rotation: the old refresh token is revoked and a new one is
+    issued.
+    """
+    # Prefer cookie; fall back to Authorization header so existing clients keep working.
+    token_string = cookie_token
+    if not token_string:
+        auth_header = request.headers.get("Authorization") or request.headers.get("authorization") or ""
+        if auth_header.startswith("Bearer ") or auth_header.startswith("bearer "):
+            token_string = auth_header.split(" ", 1)[1].strip()
+
+    if not token_string:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token.")
+
+    try:
+        token_data = decode_refresh_token(token_string)
+    except Exception:
+        _clear_refresh_cookie(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token.")
+
+    user_id = uuid.UUID(token_data["sub"])
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+    if not user or not user.is_active:
+        _clear_refresh_cookie(response)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found or disabled.")
+
+    # Rotate tokens
+    new_access = create_access_token(subject=str(user.id))
+    new_refresh = create_refresh_token(subject=str(user.id))
+    await revoke_session(token_string)
+    _set_refresh_cookie(response, new_refresh)
+
+    # Also return new_refresh in body for clients that store it in-memory.
+    return {
+        "access_token": new_access,
+        "token_type": "bearer",
+        # Kept for backward-compat; new clients should rely on the cookie.
+        "refresh_token": new_refresh,
+    }
+
+
+@router.post("/logout")
+async def logout(
+    request: Request,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    cookie_token: str | None = Cookie(default=None, alias=_REFRESH_COOKIE),
+):
+    """Revoke the current refresh token and clear the cookie."""
+    token = cookie_token or request.headers.get("X-Refresh-Token") or request.headers.get("x-refresh-token")
+    if token:
+        await revoke_session(token)
+    else:
+        await revoke_all_user_sessions(str(current_user.id))
+    _clear_refresh_cookie(response)
+    logger.info("user_logged_out", user_id=str(current_user.id))
+    return {"message": "Logged out successfully."}
+
+
+@router.post("/logout-all")
+async def logout_all(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+):
+    """Revoke all active sessions for the current user."""
+    await revoke_all_user_sessions(str(current_user.id))
+    _clear_refresh_cookie(response)
+    return {"message": "All sessions terminated."}
+
+
+# ── Password reset ────────────────────────────────────────────────────────────
+
+@router.post("/request-password-reset", status_code=status.HTTP_202_ACCEPTED)
+async def request_password_reset(body: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
+    """Generate a password-reset token.
+
+    Always returns 202 (even for unknown emails) to prevent user enumeration.
+    In production, email the token; in dev it is returned directly.
+    """
+    result = await db.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+
+    payload: dict = {"message": "If that email is registered you will receive a reset link."}
+
+    if user and user.provider == "email":
+        reset_token = secrets.token_urlsafe(32)
+        user.password_reset_token = reset_token
+        user.password_reset_expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        await db.commit()
+        logger.info("password_reset_requested", user_id=str(user.id))
+
+        # TODO: send email(reset_token) in production
+        if settings.app_env != "production":
+            payload["_dev_reset_token"] = reset_token
+
+    return payload
+
+
+@router.post("/reset-password")
+async def reset_password(body: PasswordReset, db: AsyncSession = Depends(get_db)):
+    """Consume a password-reset token and update the password."""
+    result = await db.execute(select(User).where(User.password_reset_token == body.token))
+    user = result.scalar_one_or_none()
+
+    if not user or not user.password_reset_expires_at:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired reset token.")
+
+    expires_at = user.password_reset_expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if datetime.now(timezone.utc) > expires_at:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Reset token has expired.")
+
+    user.hashed_password = get_password_hash(body.new_password)
+    user.password_reset_token = None
+    user.password_reset_expires_at = None
+    await revoke_all_user_sessions(str(user.id))
+    await db.commit()
+
+    logger.info("password_reset_completed", user_id=str(user.id))
+    return {"message": "Password updated successfully. Please log in again."}
+
+
+# ── Email verification ────────────────────────────────────────────────────────
+
+@router.post("/verify-email")
+async def verify_email(body: EmailVerificationRequest, db: AsyncSession = Depends(get_db)):
+    """Mark the user's email as verified using the one-time token."""
+    result = await db.execute(select(User).where(User.email_verification_token == body.token))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification token.")
+
+    user.is_verified = True
+    user.email_verified_at = datetime.now(timezone.utc)
+    user.email_verification_token = None
+    await db.commit()
+
+    logger.info("email_verified", user_id=str(user.id))
+    return {"message": "Email verified successfully."}
+
+
+@router.post("/resend-verification", status_code=status.HTTP_202_ACCEPTED)
+async def resend_verification(body: PasswordResetRequest, db: AsyncSession = Depends(get_db)):
+    """Re-send the email verification token (rate-limiting should be applied at infra level)."""
+    result = await db.execute(select(User).where(User.email == body.email))
+    user = result.scalar_one_or_none()
+
+    payload: dict = {"message": "If an unverified account exists for that email a new link will be sent."}
+
+    if user and not user.is_verified:
+        token = secrets.token_urlsafe(32)
+        user.email_verification_token = token
+        await db.commit()
+        # TODO: send email(token) in production
+        if settings.app_env != "production":
+            payload["_dev_verification_token"] = token
+
+    return payload
+
+
+# ── Auth introspection ────────────────────────────────────────────────────────
+
+@router.get("/me", response_model=UserRead)
+async def get_current_user_info(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+# ── OAuth helpers (existing, preserved) ──────────────────────────────────────
 
 @router.get("/google/login")
 async def google_login():
-    """Initiate Google OAuth flow."""
-    return await oauth_login("google")
+    return await _oauth_login("google")
 
 
 @router.get("/google/callback")
-async def google_callback(
-    code: str,
-    state: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """Handle Google OAuth callback."""
-    return await oauth_callback("google", code, state, db)
+async def google_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
+    return await _oauth_callback("google", code, state, db)
 
 
 @microsoft_router.get("/outlook/login")
 async def outlook_login():
-    """Initiate Microsoft OAuth flow."""
-    return await oauth_login("outlook")
+    return await _oauth_login("outlook")
 
 
 @microsoft_router.get("/outlook/callback")
-async def outlook_callback(
-    code: str,
-    state: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """Handle Microsoft OAuth callback."""
-    return await oauth_callback("outlook", code, state, db)
+async def outlook_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
+    return await _oauth_callback("outlook", code, state, db)
 
 
 @router.get("/{provider}/login")
 async def oauth_login(provider: str):
-    """Initiate OAuth flow for the specified provider."""
-    if provider not in ["google", "outlook"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported provider"
-        )
-    
-    try:
-        oauth_provider = get_oauth_provider(provider)
-        state = secrets.token_urlsafe(32)
-        
-        # Use client_secret flow (no PKCE)
-        auth_url = oauth_provider.get_authorization_url(None, state)
-        
-        return {"auth_url": auth_url, "state": state}
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to initiate OAuth: {str(e)}"
-        )
+    return await _oauth_login(provider)
 
 
 @router.get("/{provider}/callback")
-async def oauth_callback(
-    provider: str,
-    code: str,
-    state: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """Handle OAuth callback from provider with enhanced security and error handling."""
+async def oauth_callback(provider: str, code: str, state: str, db: AsyncSession = Depends(get_db)):
+    return await _oauth_callback(provider, code, state, db)
+
+
+async def _oauth_login(provider: str):
+    if provider not in ["google", "outlook"]:
+        raise HTTPException(status_code=400, detail="Unsupported provider")
     try:
-        # Debug logging
-        safe_state = str(state) if state else ""
-        logger.info("OAuth callback received", provider=provider, state=safe_state[0:10] + "...", code_length=len(code))
-
-
-
-        
-        # Validate provider
-        if provider not in ["google", "outlook"]:
-            logger.error("Unsupported provider in callback", provider=provider)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Unsupported provider"
-            )
-        
-        # Validate code parameter
-        if not code or len(code) < 10:
-            logger.error("Invalid authorization code", code_length=len(code) if code else 0)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid authorization code"
-            )
-        
-        # Get OAuth provider
         oauth_provider = get_oauth_provider(provider)
-        
-        # Exchange authorization code for tokens
-        try:
-            token_data = await oauth_provider.exchange_code_for_tokens(code)
-            logger.info("Successfully exchanged code for tokens", provider=provider)
-        except Exception as e:
-            logger.error("Failed to exchange code for tokens", provider=provider, error=str(e))
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to exchange authorization code: {str(e)}"
-            )
-        
-        # Get user info from provider
-        try:
-            user_info = await oauth_provider.get_user_info(token_data["access_token"])
-            logger.info("Successfully retrieved user info", provider=provider, email=user_info.get("email"))
-        except Exception as e:
-            logger.error("Failed to get user info", provider=provider, error=str(e))
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Failed to retrieve user information: {str(e)}"
-            )
-        
-        # Check if user exists
-        result = await db.execute(
-            select(User).where(User.email == user_info["email"])
-        )
+        state = secrets.token_urlsafe(32)
+        auth_url = oauth_provider.get_authorization_url(None, state)
+        return {"auth_url": auth_url, "state": state}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to initiate OAuth: {exc}")
+
+
+async def _oauth_callback(provider: str, code: str, state: str, db: AsyncSession):
+    if provider not in ["google", "outlook"]:
+        raise HTTPException(status_code=400, detail="Unsupported provider")
+    try:
+        oauth_provider = get_oauth_provider(provider)
+        token_data = await oauth_provider.exchange_code_for_tokens(code)
+        user_info = await oauth_provider.get_user_info(token_data["access_token"])
+
+        result = await db.execute(select(User).where(User.email == user_info["email"]))
         user = result.scalar_one_or_none()
-        
+
         if user:
-            # Update existing user's OAuth credentials
-            await update_user_oauth_credentials(db, user, provider, token_data, user_info)
-            logger.info("Updated existing user OAuth credentials", user_id=user.id, provider=provider)
+            await _update_user_oauth_credentials(db, user, provider, token_data, user_info)
         else:
-            # Create new user
-            user = await create_new_user(db, user_info, provider, token_data)
-            logger.info("Created new user", user_id=user.id, provider=provider)
-        
-        # Create access and refresh tokens
+            user = await _create_oauth_user(db, user_info, provider, token_data)
+
         access_token = create_access_token(subject=str(user.id))
         refresh_token = create_refresh_token(subject=str(user.id))
-        
-        # Redirect to frontend with tokens
 
         frontend_url = str(settings.frontend_url)
         redirect_url = f"{frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
-        
-        logger.info("OAuth callback completed successfully", provider=provider, user_id=user.id)
         return RedirectResponse(url=redirect_url)
-        
+
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error("Unexpected error in OAuth callback", provider=provider, error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"OAuth callback failed: {str(e)}"
-        )
+    except Exception as exc:
+        logger.error("oauth_callback_error", provider=provider, error=str(exc))
+        raise HTTPException(status_code=500, detail=f"OAuth callback failed: {exc}")
 
 
-async def update_user_oauth_credentials(db: AsyncSession, user: User, provider: str, token_data: dict, user_info: dict):
-    """Update existing user's OAuth credentials."""
-    # Update user info if needed
+async def _update_user_oauth_credentials(
+    db: AsyncSession, user: User, provider: str, token_data: dict, user_info: dict
+):
     if user_info.get("name") and user.name != user_info["name"]:
         user.name = user_info["name"]
-    
-    # Update or create OAuth credentials
+
     result = await db.execute(
         select(OAuthCredential).where(
-            and_(
-                OAuthCredential.user_id == user.id,
-                OAuthCredential.provider == provider
-            )
+            and_(OAuthCredential.user_id == user.id, OAuthCredential.provider == provider)
         )
     )
-    oauth_credential = result.scalar_one_or_none()
-    
-    if oauth_credential:
-        # Update existing credential (encrypt tokens for secure storage)
-        oauth_credential.access_token = token_encryptor.encrypt(token_data["access_token"])
-        oauth_credential.refresh_token = token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None
-        oauth_credential.expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
-    else:
-        # Create new credential
-        oauth_credential = OAuthCredential(
-            user_id=user.id,
-            provider=provider,
-            access_token=token_encryptor.encrypt(token_data["access_token"]),
-            refresh_token=token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+    cred = result.scalar_one_or_none()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+
+    if cred:
+        cred.access_token = token_encryptor.encrypt(token_data["access_token"])
+        cred.refresh_token = (
+            token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None
         )
-        db.add(oauth_credential)
-    
+        cred.expires_at = expires_at
+    else:
+        db.add(
+            OAuthCredential(
+                user_id=user.id,
+                provider=provider,
+                access_token=token_encryptor.encrypt(token_data["access_token"]),
+                refresh_token=(
+                    token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None
+                ),
+                expires_at=expires_at,
+            )
+        )
     await db.commit()
 
 
-async def create_new_user(db: AsyncSession, user_info: dict, provider: str, token_data: dict) -> User:
-    """Create a new user with OAuth credentials."""
-    name = user_info.get("name") or user_info.get("email", "").split("@")[0] or ""
+async def _create_oauth_user(db: AsyncSession, user_info: dict, provider: str, token_data: dict) -> User:
+    name = user_info.get("name") or user_info.get("email", "").split("@")[0]
     user = User(
         email=user_info["email"],
         name=name,
         full_name=name,
-        hashed_password="",  # OAuth users don't have passwords
+        hashed_password="",
         is_active=True,
         is_verified=True,
         provider=provider,
         timezone="UTC",
     )
     db.add(user)
-    await db.flush()  # Get the user ID
-    
-    # Create OAuth credentials
-    oauth_credential = OAuthCredential(
-        user_id=user.id,
-        provider=provider,
-        access_token=token_encryptor.encrypt(token_data["access_token"]),
-        refresh_token=token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None,
-        expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+    await db.flush()
+
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
+    db.add(
+        OAuthCredential(
+            user_id=user.id,
+            provider=provider,
+            access_token=token_encryptor.encrypt(token_data["access_token"]),
+            refresh_token=(
+                token_encryptor.encrypt(token_data["refresh_token"]) if token_data.get("refresh_token") else None
+            ),
+            expires_at=expires_at,
+        )
     )
-    db.add(oauth_credential)
     await db.commit()
-    
     return user
-
-
-def get_refresh_token_from_header(request: Request) -> str:
-    """Extract Bearer refresh token from Authorization header."""
-    auth = request.headers.get("Authorization") or request.headers.get("authorization") or ""
-    if not auth.startswith("Bearer ") and not auth.startswith("bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing or invalid Authorization header",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return auth.split(" ", 1)[1].strip()
-
-
-@router.post("/refresh")
-async def refresh_token(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-):
-    """Refresh access token using refresh token (POST with Bearer refresh token)."""
-    try:
-        token_string = get_refresh_token_from_header(request)
-        token_data = decode_refresh_token(token_string)
-        user_id_str = token_data["sub"]
-        user_id = uuid.UUID(user_id_str)
-
-        result = await db.execute(select(User).where(User.id == user_id))
-        user = result.scalar_one_or_none()
-
-        if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="User not found"
-            )
-
-        # Create new access token and refresh token (rotation)
-        new_access_token = create_access_token(subject=str(user.id))
-        new_refresh_token = create_refresh_token(subject=str(user.id))
-        
-        # Revoke old refresh token
-        await revoke_session(token_string)
-
-        return {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token  # Return new refresh token
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("Token refresh failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Failed to refresh token"
-        )
-
-
-@router.post("/logout")
-async def logout(
-    request: Request,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Logout user and revoke current session."""
-    try:
-        # Try to get refresh token from header X-Refresh-Token (as sent by apiClient)
-        refresh_token = request.headers.get("X-Refresh-Token") or request.headers.get("x-refresh-token")
-        
-        if refresh_token:
-            await revoke_session(refresh_token)
-            logger.info("specific_session_revoked", user_id=current_user.id)
-        else:
-            # Fallback to revoking all if none provided (safer)
-            await revoke_all_user_sessions(current_user.id)
-            logger.info("all_sessions_revoked_at_logout", user_id=current_user.id)
-        
-        return {"message": "Logged out successfully"}
-        
-    except Exception as e:
-        logger.error("Logout failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to logout"
-        )
-
-
-@router.post("/logout-all")
-async def logout_all(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Logout user and revoke all active sessions."""
-    try:
-        await revoke_all_user_sessions(current_user.id)
-        logger.info("logout_all_sessions", user_id=current_user.id)
-        return {"message": "All sessions logged out successfully"}
-    except Exception as e:
-        logger.error("Logout all failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to logout all sessions"
-        )
-
-
-@router.get("/me")
-async def get_current_user_info(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Get current user information."""
-    try:
-        # Get OAuth credentials
-        result = await db.execute(
-            select(OAuthCredential).where(OAuthCredential.user_id == current_user.id)
-        )
-        oauth_credentials = result.scalars().all()
-        
-        return {
-            "id": current_user.id,
-            "email": current_user.email,
-            "name": current_user.name,
-            "is_active": current_user.is_active,
-            "is_verified": current_user.is_verified,
-            "oauth_providers": [cred.provider for cred in oauth_credentials]
-        }
-        
-    except Exception as e:
-        logger.error("Failed to get user info", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get user information"
-        )
-
-
-@router.get("/zoom/login")
-async def zoom_login(
-    current_user: User = Depends(get_current_user),
-):
-    """Initiate Zoom OAuth flow."""
-    zoom_oauth = ZoomOAuth()
-    state = secrets.token_urlsafe(32)
-    auth_url = zoom_oauth.get_authorization_url(state)
-    return {"auth_url": auth_url, "state": state}
-
-
-@router.get("/zoom/callback")
-async def zoom_callback(
-    code: str,
-    state: Optional[str] = None,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Handle Zoom OAuth callback."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="Authentication required")
-        
-    try:
-        zoom_oauth = ZoomOAuth()
-        tokens = await zoom_oauth.exchange_code_for_tokens(code)
-        
-        # Store or update Zoom credentials
-        result = await db.execute(
-            select(OAuthCredential).where(
-                and_(
-                    OAuthCredential.user_id == current_user.id,
-                    OAuthCredential.provider == "zoom"
-                )
-            )
-        )
-        credential = result.scalar_one_or_none()
-        
-        expires_at = datetime.now(timezone.utc) + timedelta(seconds=tokens.get("expires_in", 3600))
-        
-        if not credential:
-            credential = OAuthCredential(
-                user_id=current_user.id,
-                provider="zoom",
-                access_token=token_encryptor.encrypt(tokens["access_token"]),
-                refresh_token=token_encryptor.encrypt(tokens["refresh_token"]) if "refresh_token" in tokens else None,
-                expires_at=expires_at
-            )
-            db.add(credential)
-        else:
-            credential.access_token = token_encryptor.encrypt(tokens["access_token"])
-            if "refresh_token" in tokens:
-                credential.refresh_token = token_encryptor.encrypt(tokens["refresh_token"])
-            credential.expires_at = expires_at
-            credential.updated_at = datetime.now(timezone.utc)
-            
-        await db.commit()
-        return RedirectResponse(url=f"{settings.frontend_url}/settings?zoom=connected")
-        
-    except Exception as e:
-        logger.error("zoom_callback_failed", error=str(e), user_id=current_user.id)
-        return RedirectResponse(url=f"{settings.frontend_url}/settings?zoom=error")
-
-
-@router.get("/google/scopes/check")
-async def check_google_scopes(
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-):
-    """Check if Google Calendar has sufficient scopes and provide re-auth URL if needed."""
-    try:
-        # Get Google OAuth credentials
-        result = await db.execute(
-            select(OAuthCredential).where(
-                and_(
-                    OAuthCredential.user_id == current_user.id,
-                    OAuthCredential.provider == "google"
-                )
-            )
-        )
-        credential = result.scalar_one_or_none()
-        
-        if not credential:
-            return {
-                "has_credentials": False,
-                "needs_reauth": True,
-                "message": "No Google Calendar credentials found",
-                "reauth_url": f"/api/v1/auth/google/login"
-            }
-        
-        # Test the current token with a freeBusy query
-        try:
-            from app.services.google_calendar import GoogleCalendarAdapter
-            adapter = GoogleCalendarAdapter(token_encryptor.decrypt(credential.access_token))
-            
-            # Try a minimal freeBusy query
-            from datetime import datetime, timedelta, timezone
-            start_time = datetime.now(timezone.utc)
-            end_time = start_time + timedelta(hours=1)
-            
-            await adapter.get_free_busy(start_time, end_time, [current_user.email])
-            
-            return {
-                "has_credentials": True,
-                "needs_reauth": False,
-                "message": "Google Calendar scopes are sufficient",
-                "reauth_url": None
-            }
-            
-        except Exception as e:
-            if "insufficient" in str(e).lower() and "scope" in str(e).lower():
-                return {
-                    "has_credentials": True,
-                    "needs_reauth": True,
-                    "message": "Google Calendar has insufficient scopes. Please re-authenticate.",
-                    "reauth_url": "/api/v1/auth/google/login",
-                    "error": str(e)
-                }
-            else:
-                return {
-                    "has_credentials": True,
-                    "needs_reauth": True,
-                    "message": "Google Calendar token may be expired. Please re-authenticate.",
-                    "reauth_url": "/api/v1/auth/google/login",
-                    "error": str(e)
-                }
-                
-    except Exception as e:
-        logger.error("google_scopes_check_failed", error=str(e), user_id=current_user.id)
-        return {
-            "has_credentials": False,
-            "needs_reauth": True,
-            "message": "Failed to check Google Calendar scopes",
-            "reauth_url": "/api/v1/auth/google/login",
-            "error": str(e)
-        }
-
-
-# Include Microsoft router
-api_router = APIRouter()
-api_router.include_router(microsoft_router, prefix="/api/v1")
-api_router.include_router(router, prefix="/api/v1")

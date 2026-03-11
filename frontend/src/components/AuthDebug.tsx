@@ -1,7 +1,7 @@
 import { useAuthStore } from '../store/authStore';
 
 export default function AuthDebug() {
-  const { user, accessToken, refreshToken, isAuthenticated, isLoading } = useAuthStore();
+  const { user, accessToken, isAuthenticated, isLoading } = useAuthStore();
 
   if (import.meta.env.PROD) {
     return null; // Don't show in production
@@ -15,7 +15,7 @@ export default function AuthDebug() {
         <div>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</div>
         <div>User: {user ? user.email : 'None'}</div>
         <div>Access Token: {accessToken ? 'Present' : 'None'}</div>
-        <div>Refresh Token: {refreshToken ? 'Present' : 'None'}</div>
+        <div>Refresh Token: HttpOnly cookie (not readable by JS)</div>
         <div>URL: {window.location.href}</div>
       </div>
       <button
