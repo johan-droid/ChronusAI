@@ -326,6 +326,31 @@ npm run test:e2e
 
 ## 🚀 Deployment
 
+### Deployment Options
+
+| Platform | Type | Documentation |
+|----------|------|---------------|
+| **DigitalOcean** | App Platform / Droplet | [Guide](docs/DIGITALOCEAN_DEPLOYMENT.md) |
+| **Render** | Managed PaaS | [Guide](#production-deployment-with-render) |
+| **Docker** | Self-hosted | [Guide](#docker-deployment) |
+| **Kubernetes** | Container Orchestration | [Guide](#kubernetes-deployment) |
+
+### DigitalOcean App Platform (Recommended)
+
+```bash
+# Install DigitalOcean CLI
+# macOS: brew install doctl
+# Windows: scoop install doctl
+
+# Authenticate
+doctl auth init
+
+# Deploy (update repo in do-app-spec.yaml first)
+doctl apps create --spec do-app-spec.yaml
+```
+
+See [DigitalOcean Deployment Guide](docs/DIGITALOCEAN_DEPLOYMENT.md) for detailed instructions.
+
 ### Production Deployment with Render
 
 1. **Prepare for deployment**
