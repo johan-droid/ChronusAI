@@ -30,6 +30,8 @@ class Settings(BaseSettings):
         url = self.database_url
         if url.startswith("postgresql://"):
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if url.startswith("postgres://"):
+            return url.replace("postgres://", "postgresql+asyncpg://", 1)
         return url
 
     # Google Gemini 3 Flash Preview (Native SDK)
@@ -79,16 +81,34 @@ class Settings(BaseSettings):
             print("🎫 Generated JWT_SECRET_KEY")
         
         # Override redirect URIs in production environment
-        is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or self.app_env == "production"
+        is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or \
+                        os.getenv("DIGITALOCEAN") is not None or self.app_env == "production"
+        
         if is_production:
-            if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
-                self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
-            if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
-                self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
-            if not self.zoom_redirect_uri or "localhost" in str(self.zoom_redirect_uri):
-                self.zoom_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/zoom/callback")
-            if "localhost" in str(self.frontend_url):
-                self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
+            # Domain provided by DO App Platform or custom domain
+            app_url = os.getenv("APP_URL") or os.getenv("BASE_URL")
+            
+            if app_url:
+                app_url_str = str(app_url).rstrip("/")
+                if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
+                    self.google_redirect_uri = AnyHttpUrl(f"{app_url_str}/api/v1/auth/google/callback")
+                if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
+                    self.microsoft_redirect_uri = AnyHttpUrl(f"{app_url_str}/api/v1/auth/outlook/callback")
+                if not self.zoom_redirect_uri or "localhost" in str(self.zoom_redirect_uri):
+                    self.zoom_redirect_uri = AnyHttpUrl(f"{app_url_str}/api/v1/auth/zoom/callback")
+                
+                if "localhost" in str(self.frontend_url):
+                    self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or app_url_str)
+            else:
+                # Fallback to Render URLs if no APP_URL is provided, for backwards compatibility
+                if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
+                    self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
+                if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
+                    self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
+                if not self.zoom_redirect_uri or "localhost" in str(self.zoom_redirect_uri):
+                    self.zoom_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/zoom/callback")
+                if "localhost" in str(self.frontend_url):
+                    self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
         
         # Ensure CORS includes frontend URLs
         if self.frontend_url and str(self.frontend_url) not in self.cors_origins:

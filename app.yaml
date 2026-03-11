@@ -1,0 +1,76 @@
+name: chronusai
+region: nyc
+services:
+  - name: backend
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    dockerfile_path: backend/Dockerfile
+    source_dir: backend
+    envs:
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        value: ${db.DATABASE_URL}
+      - key: APP_URL
+        scope: RUN_TIME
+        value: ${APP_DOMAIN}
+      - key: DIGITALOCEAN
+        scope: RUN_TIME
+        value: "true"
+      - key: PORT
+        scope: RUN_TIME
+        value: "8000"
+      - key: GEMINI_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: GOOGLE_CLIENT_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: GOOGLE_CLIENT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: MICROSOFT_CLIENT_ID
+        scope: RUN_TIME
+        type: SECRET
+      - key: MICROSOFT_CLIENT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: JWT_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: ENCRYPTION_KEY
+        scope: RUN_TIME
+        type: SECRET
+    http_port: 8000
+    routes:
+      - path: /api
+    health_check:
+      http_path: /api/v1/health
+      initial_delay_seconds: 10
+      period_seconds: 30
+
+  - name: frontend
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    dockerfile_path: frontend/Dockerfile
+    source_dir: frontend
+    envs:
+      - key: BACKEND_URL
+        scope: RUN_TIME
+        value: http://backend:8000
+      - key: PORT
+        scope: RUN_TIME
+        value: "80"
+    http_port: 80
+    routes:
+      - path: /
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 5
+      period_seconds: 30
+
+databases:
+  - name: db
+    engine: PG
+    version: "15"
+    size_slug: db-s-dev-database
+    num_nodes: 1
