@@ -33,7 +33,7 @@ class Settings(BaseSettings):
         return url
 
     # Google Gemini 3 Flash Preview (Native SDK)
-    openai_api_key: str
+    gemini_api_key: str
     llm_model_name: str = "gemini-3-flash-preview"
 
     # Google OAuth

@@ -12,7 +12,7 @@ from app.schemas.chat import ParsedIntent
 class LLMService:
     def __init__(self):
         # Google Gemini 3 Flash Preview using native SDK
-        self.client = genai.Client(api_key=settings.openai_api_key)
+        self.client = genai.Client(api_key=settings.gemini_api_key)
         self.model = getattr(settings, "llm_model_name", "gemini-3-flash-preview")
 
     async def parse_intent(
@@ -150,20 +150,21 @@ class LLMService:
         """
 
         try:
-            # Convert history to Gemini format
-            contents = [{"role": "user", "parts": [{"text": system_instructions}]}]
+            # Convert history to Gemini format with proper role mapping
+            contents = [{"role": "user", "parts": [{"text": message}]}]
             
-            # Add conversation history
+            # Add conversation history with role mapping (assistant -> model)
             for msg in history:
-                contents.append({"role": msg["role"], "parts": [{"text": msg["content"]}]})
-            
-            # Add current message
-            contents.append({"role": "user", "parts": [{"text": message}]})
+                role = "model" if msg["role"] == "assistant" else "user"
+                contents.append({"role": role, "parts": [{"text": msg["content"]}]})
             
             response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=contents,
-                config={"temperature": 0.1}
+                config={
+                    "system_instruction": system_instructions,
+                    "temperature": 0.1
+                }
             )
             
             content = response.text
@@ -207,15 +208,16 @@ class LLMService:
             You have full access to their Google Calendar and can help with scheduling, rescheduling, and managing meetings.
             Be conversational, helpful, and proactive. If you can help with scheduling, offer specific suggestions."""
             
-            contents = [
-                {"role": "user", "parts": [{"text": system_prompt}]},
-                {"role": "user", "parts": [{"text": message}]}
-            ]
+            contents = [{"role": "user", "parts": [{"text": message}]}]
             
             response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=contents,
-                config={"temperature": 0.7, "max_output_tokens": 500}
+                config={
+                    "system_instruction": system_prompt,
+                    "temperature": 0.7,
+                    "max_output_tokens": 500
+                }
             )
             
             return response.text or "I'm here to help with your calendar and scheduling needs!"
@@ -263,17 +265,21 @@ class LLMService:
             "backend_outcome": action_result,
         }
 
-        contents = [
-            {"role": "user", "parts": [{"text": system_prompt}]},
-            # Add recent context from history
-            *[{"role": msg["role"], "parts": [{"text": msg["content"]}]} for msg in history[-3:]],
-            {"role": "user", "parts": [{"text": f"Result of action: {json.dumps(execution_context)}"}]}
-        ]
+        contents = [{"role": "user", "parts": [{"text": f"Result of action: {json.dumps(execution_context)}"}]}]
+        
+        # Add recent context from history with role mapping (assistant -> model)
+        for msg in history[-3:]:
+            role = "model" if msg["role"] == "assistant" else "user"
+            contents.insert(-1, {"role": role, "parts": [{"text": msg["content"]}]})
 
         response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=contents,
-            config={"temperature": 0.7, "max_output_tokens": 500}
+            config={
+                "system_instruction": system_prompt,
+                "temperature": 0.7,
+                "max_output_tokens": 500
+            }
         )
 
         return response.text
