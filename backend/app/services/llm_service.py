@@ -3,8 +3,7 @@ import json
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
-import google.generativeai as genai
-
+import google.genai as genai
 from app.config import settings
 from app.schemas.chat import ParsedIntent
 
@@ -12,7 +11,7 @@ from app.schemas.chat import ParsedIntent
 class LLMService:
     def __init__(self):
         # Google Gemini 3 Flash Preview using native SDK
-        genai.configure(api_key=settings.gemini_api_key)
+        self.client = genai.Client(api_key=settings.gemini_api_key)
         self.model = getattr(settings, "llm_model_name", "gemini-3-flash-preview")
 
     async def parse_intent(
@@ -157,9 +156,11 @@ class LLMService:
             for msg in history:
                 role = "model" if msg["role"] == "assistant" else "user"
                 contents.append({"role": role, "parts": [{"text": msg["content"]}]})
-            
-            model = genai.GenerativeModel(self.model)
-            response = await model.generate_content(
+
+
+            # Update API calls to use new client approach
+            response = await self.client.models.generate_content(
+                model=self.model,
                 contents=contents,
                 config=genai.GenerationConfig(
                     system_instruction=system_instructions,
@@ -205,25 +206,21 @@ class LLMService:
         """Generate helpful AI response for general queries."""
         try:
             system_prompt = f"""You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name} ({user_email}). 
-            You have full access to their Google Calendar and can help with scheduling, rescheduling, and managing meetings.
-            Be conversational, helpful, and proactive. If you can help with scheduling, offer specific suggestions."""
-            
-            contents = [{"role": "user", "parts": [{"text": message}]}]
-            
-            model = genai.GenerativeModel(self.model)
-            response = await model.generate_content(
-                contents=contents,
-                config=genai.GenerationConfig(
-                    system_instruction=system_prompt,
-                    temperature=0.7,
-                    max_output_tokens=500
-                )
-            )
-            
-            return response.text or "I'm here to help with your calendar and scheduling needs!"
-        except Exception:
-            return "I'm here to help with your calendar and scheduling needs. Try asking me to 'schedule a meeting' or 'check my availability'!"
 
+    TASK:
+    Convert user's message into following json schema:
+    {{
+        "intent": "schedule" | "cancel" | "reschedule" | "check_availability" | "list_meetings" | "chat" | "find_time" | "suggest_times" | "unknown",
+        "title": "string or null",
+        "start_time": "ISO 8601 string or null",
+        "end_time": "ISO 8601 string or null",
+        "event_id": "The exact ID from LIVE CALENDAR STATE if referencing an existing event",
+        "attendees": ["list of emails"],
+        "response": "Brief acknowledgment or clarification question",
+        "requires_clarification": true/false,
+        "meeting_type": "meeting|call|review|presentation|null",
+        "description": "string or null"
+    }}
     async def generate_action_response(
         self,
         user_message: str,

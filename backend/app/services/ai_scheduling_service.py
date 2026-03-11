@@ -4,19 +4,17 @@ import json
 from datetime import datetime, timezone
 from typing import Any, List, Dict, Tuple
 
-from openai import AsyncOpenAI
-
+import google.genai as genai
+from google.genai.models import Models
 from app.config import settings
 
 
 class AISchedulingService:
-    """Advanced AI-powered scheduling service with Google Calendar integration."""
+    """Advanced AI-powered service with Google Calendar integration."""
     
     def __init__(self) -> None:
-        self._client = AsyncOpenAI(
-            api_key=settings.openai_api_key,
-            base_url=settings.openai_base_url,
-        )
+        self.client = genai.Client(api_key=settings.gemini_api_key)
+        self.model_name = settings.llm_model_name
 
     @staticmethod
     def _scheduling_intelligence_prompt() -> str:
@@ -103,14 +101,16 @@ class AISchedulingService:
                 }
             ]
             
-            response = await self._client.chat.completions.create(
-                model=settings.openai_model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=1500,
+            response = await self.client.models.generate_content(
+                model=self.model_name,
+                contents=messages,
+                config=genai.GenerationConfig(
+                    temperature=0.3,
+                    max_output_tokens=1500
+                )
             )
             
-            content = response.choices[0].message.content
+            content = response.text
             if content:
                 try:
                     return json.loads(content)
@@ -161,14 +161,16 @@ class AISchedulingService:
                 }
             ]
             
-            response = await self._client.chat.completions.create(
-                model=settings.openai_model,
-                messages=messages,
-                temperature=0.4,
-                max_tokens=1000,
+            response = await self.client.models.generate_content(
+                model=self.model_name,
+                contents=messages,
+                config=genai.GenerationConfig(
+                    temperature=0.4,
+                    max_output_tokens=1000
+                )
             )
             
-            content = response.choices[0].message.content
+            content = response.text
             if content:
                 try:
                     return json.loads(content)
@@ -211,14 +213,16 @@ class AISchedulingService:
                 }
             ]
             
-            response = await self._client.chat.completions.create(
-                model=settings.openai_model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=1200,
+            response = await self.client.models.generate_content(
+                model=self.model_name,
+                contents=messages,
+                config=genai.GenerationConfig(
+                    temperature=0.3,
+                    max_output_tokens=1200
+                )
             )
             
-            content = response.choices[0].message.content
+            content = response.text
             if content:
                 try:
                     return json.loads(content)
@@ -261,14 +265,16 @@ class AISchedulingService:
                 }
             ]
             
-            response = await self._client.chat.completions.create(
-                model=settings.openai_model,
-                messages=messages,
-                temperature=0.3,
-                max_tokens=1500,
+            response = await self.client.models.generate_content(
+                model=self.model_name,
+                contents=messages,
+                config=genai.GenerationConfig(
+                    temperature=0.3,
+                    max_output_tokens=1500
+                )
             )
             
-            content = response.choices[0].message.content
+            content = response.text
             if content:
                 try:
                     return json.loads(content)

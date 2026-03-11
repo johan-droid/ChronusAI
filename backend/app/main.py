@@ -176,11 +176,11 @@ async def root():
 async def llm_health_check():
     """Verify LLM service connectivity."""
     try:
-        # Check if settings.openai_api_key is present as a basic health check
-        is_configured = bool(settings.openai_api_key)
+        # Check if settings.gemini_api_key is present as a basic health check
+        is_configured = bool(settings.gemini_api_key)
         return {
             "status": "online" if is_configured else "offline",
-            "service": "DeepSeek",
+            "service": "Gemini",
             "configured": is_configured,
             "timestamp": time.time()
         }
