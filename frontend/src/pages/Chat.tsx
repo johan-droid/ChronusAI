@@ -67,8 +67,8 @@ export default function Chat() {
             </div>
           </div>
 
-          {/* Chat Window Container - Centered with max-w-4xl */}
-          <div className="flex-1 flex flex-col min-h-0 relative max-w-4xl mx-auto w-full">
+          {/* Chat Window Container - Optimized Width */}
+          <div className="flex-1 flex flex-col min-h-0 relative max-w-6xl lg:max-w-7xl mx-auto w-full">
             <ChatWindow />
           </div>
         </div>

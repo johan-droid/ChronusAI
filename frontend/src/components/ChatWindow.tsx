@@ -74,22 +74,24 @@ const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="px-2 sm:px-3 py-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-t border-white/5"
+      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-blue-500/5 to-purple-500/5 border-t border-white/5"
     >
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x">
-        {suggestions.map((suggestion, i) => (
-          <motion.button
-            key={i}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: i * 0.05 }}
-            onClick={() => onSuggestionClick(suggestion)}
-            className="flex-shrink-0 snap-start px-3 sm:px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 rounded-full text-xs text-slate-300 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 touch-manipulation min-h-[36px] sm:min-h-[40px]"
-          >
-            <span className="truncate max-w-[120px] sm:max-w-none">{suggestion}</span>
-            <ArrowRight className="h-3 w-3 opacity-50 flex-shrink-0" />
-          </motion.button>
-        ))}
+      <div className="max-w-4xl lg:max-w-5xl mx-auto">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide snap-x justify-center sm:justify-start">
+          {suggestions.map((suggestion, i) => (
+            <motion.button
+              key={i}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05 }}
+              onClick={() => onSuggestionClick(suggestion)}
+              className="flex-shrink-0 snap-start px-3 py-2 bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.15] hover:border-blue-500/30 rounded-full text-xs text-slate-300 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5 touch-manipulation min-h-[32px] sm:min-h-[36px]"
+            >
+              <span className="truncate max-w-[120px] sm:max-w-none">{suggestion}</span>
+              <ArrowRight className="h-3 w-3 opacity-50 flex-shrink-0" />
+            </motion.button>
+          ))}
+        </div>
       </div>
     </motion.div>
   );
@@ -285,9 +287,9 @@ export default function ChatWindow() {
     <div className="flex flex-col h-full min-h-0 w-full relative overflow-hidden">
       <StatusBar isOnline={isLlmOnline} />
 
-      {/* Messages Area - Constrained Width */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-3 md:px-5 py-3 sm:py-4 md:py-6 space-y-3 sm:space-y-4 md:space-y-5 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
-        <div className="max-w-3xl mx-auto w-full">
+      {/* Messages Area - Optimized Width */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-3 sm:px-4 py-2 sm:py-3 space-y-2 sm:space-y-3 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
+        <div className="max-w-4xl lg:max-w-5xl mx-auto w-full">
           <AnimatePresence>
             {messages.length === 0 && (
               <EmptyState onQuickPrompt={handleQuickPrompt} />
@@ -337,10 +339,10 @@ export default function ChatWindow() {
         )}
       </AnimatePresence>
 
-      {/* Input Area - Premium Glassmorphism Floating Bar */}
-      <div className="shrink-0 p-4 sm:p-6 mb-6 bg-transparent relative z-40 pb-safe-area-inset-bottom">
-        <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
-          <div className="flex items-center bg-white/[0.03] backdrop-blur-2xl rounded-3xl border border-white/10 shadow-2xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
+      {/* Input Area - Compact Premium Glassmorphism */}
+      <div className="shrink-0 p-3 sm:p-4 mb-4 bg-transparent relative z-40 pb-safe-area-inset-bottom">
+        <form onSubmit={handleSubmit} className="max-w-4xl lg:max-w-5xl mx-auto relative">
+          <div className="flex items-center bg-white/[0.03] backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
             {/* Text Input */}
             <textarea
               ref={textareaRef}
@@ -349,12 +351,12 @@ export default function ChatWindow() {
               onChange={handleInput}
               onKeyDown={handleKeyDown}
               placeholder="Message ChronosAI..."
-              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-base sm:text-base md:text-lg py-3 sm:py-3.5 md:py-4 px-4 sm:px-5 md:px-6 resize-none min-h-[44px] sm:min-h-[48px] md:min-h-[52px] max-h-[120px] font-medium outline-none"
+              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 text-slate-100 placeholder:text-slate-500 text-sm sm:text-base py-2.5 sm:py-3 px-3 sm:px-4 resize-none min-h-[40px] sm:min-h-[44px] max-h-[100px] font-medium outline-none"
               style={{ scrollbarWidth: 'none' }}
             />
             
             {/* Loading State or Send Button */}
-            <div className="flex items-center pr-2 pl-1 min-h-[44px]">
+            <div className="flex items-center pr-2 pl-1 min-h-[40px]">
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <OptimizedSpinner size="sm" variant="dots" className="text-blue-400" />
@@ -365,27 +367,27 @@ export default function ChatWindow() {
                   type="submit"
                   whileTap={{ scale: 0.95 }}
                   disabled={!message.trim()}
-                  className={`p-3 sm:p-3.5 rounded-full transition-all duration-200 min-h-[44px] touch-manipulation ${
+                  className={`p-2 sm:p-2.5 rounded-full transition-all duration-200 min-h-[36px] touch-manipulation ${
                     message.trim()
                       ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg hover:shadow-blue-500/30'
                       : 'bg-white/10 text-slate-500 cursor-not-allowed'
                   }`}
                 >
-                  <SendHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <SendHorizontal className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </motion.button>
               )}
             </div>
           </div>
           
           {/* Helper Text */}
-          <div className="flex items-center justify-between mt-2 sm:mt-3 px-2">
-            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium">
+          <div className="flex items-center justify-between mt-1.5 sm:mt-2 px-2">
+            <p className="text-[9px] sm:text-[10px] text-slate-500 font-medium">
               {isTyping ? 'Typing...' : 'Press Enter to send • Shift + Enter for new line'}
             </p>
             {isLlmOnline && (
               <div className="flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] sm:text-[11px] text-slate-500">AI Ready</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-500">AI Ready</span>
               </div>
             )}
           </div>
