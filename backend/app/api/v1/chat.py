@@ -876,12 +876,17 @@ async def handle_find_optimal_time(intent: ParsedIntent, user: User, calendar_pr
 async def handle_ai_suggestions(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession) -> ChatResponse:
     """Handle AI-powered scheduling suggestions."""
     try:
-        # Get user's recent meetings for analysis
+        # Strictly limit to recent data (last 7 days) for analysis
+        retention_limit = datetime.now(timezone.utc) - timedelta(days=7)
         result = await db.execute(
             select(Meeting)
-            .where(Meeting.user_id == user.id)
+            .where(
+                and_(
+                    Meeting.user_id == user.id,
+                    Meeting.start_time >= retention_limit
+                )
+            )
             .order_by(Meeting.start_time.desc())
-            .limit(20)
         )
         recent_meetings = result.scalars().all()
         
@@ -896,9 +901,9 @@ async def handle_ai_suggestions(intent: ParsedIntent, user: User, calendar_provi
                 "status": meeting.status
             })
         
-        # Get AI analysis and recommendations
+        # Date range for pattern analysis: Last 7 days to Now
         date_range = (
-            datetime.now(timezone.utc) - timedelta(days=30),
+            datetime.now(timezone.utc) - timedelta(days=7),
             datetime.now(timezone.utc)
         )
         

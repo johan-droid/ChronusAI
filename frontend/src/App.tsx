@@ -4,19 +4,10 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import React, { lazy, Suspense, memo, useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
-import Footer from './components/Footer';
+import Layout from './components/Layout';
 import Toast from './components/Toast';
 import './index.css';
-
-// Hide footer on authenticated app pages
-const AUTHENTICATED_PATHS = ['/dashboard', '/chat', '/availability', '/history', '/settings'];
-const ConditionalFooter = () => {
-  const location = useLocation();
-  const currentPath = location.pathname.replace(/\/$/, '') || '/';
-  if (AUTHENTICATED_PATHS.includes(currentPath)) return null;
-  return <Footer />;
-};
-
+import './styles/mobile.css';
 
 // Lazy load components for better performance
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -39,31 +30,21 @@ const queryClient = new QueryClient({
   },
 });
 
-// Android Mobile Detection
-const isAndroidDevice = () => {
-  return /Android/i.test(navigator.userAgent) || /android/i.test(navigator.userAgent);
-};
+/* ── Media-query based mobile detection (replaces userAgent) ── */
+const getIsMobile = () =>
+  typeof window !== 'undefined' && window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
 
-const isMobileDevice = () => {
-  return /Mobi|Android/i.test(navigator.userAgent);
-};
-
-// Optimized Background Component
+/* ── Optimized Background ── */
 const OptimizedBackground = memo(() => {
-  const [isMobile] = useState(() => isMobileDevice());
+  const [isMobile] = useState(getIsMobile);
 
   if (isMobile) {
-    return (
-      <div className="galaxy-bg opacity-30" />
-    );
+    return <div className="galaxy-bg opacity-30" />;
   }
 
   return (
     <>
-      {/* Galaxy Background */}
       <div className="galaxy-bg" />
-
-      {/* Optimized Stars - Reduced count for better performance */}
       <div className="stars">
         <div className="star" />
         <div className="star" />
@@ -71,42 +52,34 @@ const OptimizedBackground = memo(() => {
         <div className="star" />
         <div className="star" />
       </div>
-
-      {/* Shooting Stars - Reduced for mobile */}
       <div className="shooting-star" />
       <div className="shooting-star" />
-
-      {/* Planets - Hidden on mobile for performance */}
       <div className="planet planet-1" />
       <div className="planet planet-2" />
     </>
   );
 });
-
 OptimizedBackground.displayName = 'OptimizedBackground';
 
-// Loading Component with Android optimizations
+/* ── Page Loader ── */
 const PageLoader = () => (
-  <div className="min-h-screen flex items-center justify-center">
+  <div className="min-h-screen-dynamic flex items-center justify-center">
     <div className="text-center space-y-4">
-      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary/30 border-t-transparent animate-spin rounded-full"></div>
+      <div className="w-12 h-12 md:w-16 md:h-16 border-4 border-primary/30 border-t-transparent animate-spin rounded-full" />
       <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
     </div>
   </div>
 );
 
-
-
-
-// OAuth Callback Guard Component
-function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
+/* ── Unified Auth Guard (merged OAuthCallbackGuard + ProtectedRoute) ── */
+function AuthGuard({ children, requireAuth = false }: { children: React.ReactNode; requireAuth?: boolean }) {
   const location = useLocation();
   const { isAuthenticated, isLoading } = useAuthStore();
 
-  // Login page with tokens in URL = success callback; let Login component handle it
+  // Login page with tokens in URL = success callback
   const isLoginWithTokens = location.pathname === '/login' && location.search.includes('access_token=');
 
-  // Other OAuth callback URLs (e.g. /auth/..., code= without access_token yet)
+  // Other OAuth callback URLs
   const isOAuthCallback = !isLoginWithTokens && (
     location.pathname.includes('/auth/') ||
     location.pathname.includes('/callback') ||
@@ -121,17 +94,20 @@ function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
     }
   }, [isAuthenticated, isLoading, isOAuthCallback, isLoginWithTokens, location.search]);
 
-  // When on /login?access_token=..., always render children so Login can process the callback
-  if (isLoginWithTokens) {
-    return <>{children}</>;
-  }
-  if (!isLoading && !isAuthenticated && isOAuthCallback) {
-    return <PageLoader />;
+  // OAuth callback in progress
+  if (isLoginWithTokens) return <>{children}</>;
+  if (!isLoading && !isAuthenticated && isOAuthCallback) return <PageLoader />;
+
+  // Protected route logic
+  if (requireAuth) {
+    if (isLoading) return <PageLoader />;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;
 }
 
+/* ── Error Boundary ── */
 class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
   constructor(props: {children: React.ReactNode}) {
     super(props);
@@ -143,7 +119,7 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+        <div className="min-h-screen-dynamic flex flex-col items-center justify-center space-y-4">
           <p className="text-xl text-white">Something went wrong loading the component.</p>
           <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 rounded text-white font-medium">Reload Page</button>
         </div>
@@ -153,121 +129,37 @@ class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasErr
   }
 }
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuthStore();
-
-  useEffect(() => {
-    // Clear any OAuth remnants and redirect safely outside render cycle
-    if (!isLoading && !isAuthenticated) {
-      sessionStorage.clear();
-      localStorage.removeItem('auth-storage');
-    }
-  }, [isLoading, isAuthenticated]);
-
-  // Show loading indicator while checking authentication
-  if (isLoading) {
-    return <PageLoader />;
-  }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <>{children}</>;
-}
-
+/* ── App ── */
 function App() {
-  const [isMobile] = useState(() => isMobileDevice());
-
-  useEffect(() => {
-    // Add Android-specific optimizations
-    if (isAndroidDevice()) {
-      // Prevent zoom on input focus
-      const handleTouchStart = (e: TouchEvent) => {
-        if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-          e.target.style.fontSize = '16px';
-        }
-      };
-
-      document.addEventListener('touchstart', handleTouchStart);
-
-      // Add viewport meta tag for Android
-      const viewport = document.querySelector('meta[name="viewport"]');
-      if (viewport) {
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-      }
-
-      return () => {
-        document.removeEventListener('touchstart', handleTouchStart);
-      };
-    }
-  }, []);
+  const [isMobile] = useState(getIsMobile);
 
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <div className="min-h-screen bg-background relative flex flex-col">
+        <div className="min-h-screen-dynamic bg-background relative flex flex-col">
           <OptimizedBackground />
 
-          {/* Mobile Navigation handled by individual pages */}
-
-          <main className="flex-1 relative z-5 overflow-y-auto">
-            <OAuthCallbackGuard>
-              <ErrorBoundary>
-                <Suspense fallback={<PageLoader />}>
+          <AuthGuard>
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Layout>
                   <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/login" element={<Login />} />
-                    <Route
-                      path="/dashboard"
-                      element={
-                        <ProtectedRoute>
-                          <StatsOverview />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/chat"
-                      element={
-                        <ProtectedRoute>
-                          <Chat />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/availability"
-                      element={
-                        <ProtectedRoute>
-                          <Availability />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/history"
-                      element={
-                        <ProtectedRoute>
-                          <History />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/settings"
-                      element={
-                        <ProtectedRoute>
-                          <Settings />
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="/dashboard" element={<AuthGuard requireAuth><StatsOverview /></AuthGuard>} />
+                    <Route path="/chat" element={<AuthGuard requireAuth><Chat /></AuthGuard>} />
+                    <Route path="/availability" element={<AuthGuard requireAuth><Availability /></AuthGuard>} />
+                    <Route path="/history" element={<AuthGuard requireAuth><History /></AuthGuard>} />
+                    <Route path="/settings" element={<AuthGuard requireAuth><Settings /></AuthGuard>} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-of-service" element={<TermsOfService />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
-                </Suspense>
-              </ErrorBoundary>
-            </OAuthCallbackGuard>
-          </main>
+                </Layout>
+              </Suspense>
+            </ErrorBoundary>
+          </AuthGuard>
 
-          <ConditionalFooter />
           <Toast />
         </div>
       </Router>
@@ -280,6 +172,7 @@ function App() {
             backdropFilter: 'blur(12px)',
             border: '1px solid rgba(255, 140, 0, 0.2)',
             color: 'white',
+            zIndex: 70,
             ...(isMobile && {
               bottom: '20px',
               left: '50%',

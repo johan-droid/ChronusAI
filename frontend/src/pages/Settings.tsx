@@ -4,14 +4,10 @@ import { Trash2, AlertTriangle, Loader2, Shield, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
-import NavigationBar from '../components/NavigationBar';
-import LogoutMenu from '../components/LogoutMenu';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [showLogout, setShowLogout] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -57,13 +53,6 @@ export default function Settings() {
     <div className="flex flex-col min-h-screen bg-[#050510] relative overflow-x-hidden">
       <div className="page-bg" />
       <div className="page-grid-overlay" />
-
-      <NavigationBar
-        user={user}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        setShowLogout={setShowLogout}
-      />
 
       <main className="flex-1 relative z-10 p-4 sm:p-6 mb-20 lg:mb-0 w-full max-w-full overflow-hidden">
         <div className="max-w-2xl mx-auto w-full space-y-6">
@@ -257,8 +246,6 @@ export default function Settings() {
           </section>
         </div>
       </main>
-
-      <LogoutMenu isOpen={showLogout} onClose={() => setShowLogout(false)} />
     </div>
   );
 }

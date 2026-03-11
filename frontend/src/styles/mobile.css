@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════════════════
+   mobile.css — PWA / Android / iOS Responsiveness
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Prevent auto-zoom on input focus (iOS/Android) ── */
+input,
+textarea,
+select,
+button {
+  font-size: 16px;
+}
+
+/* ── Dynamic Viewport Units ── */
+.h-screen-dynamic {
+  height: 100dvh;
+}
+
+.min-h-screen-dynamic {
+  min-height: 100dvh;
+}
+
+/* ── Touch Target Compliance (WCAG 2.5.5 — 44×44 CSS px) ── */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* ── Safe Area Insets (notch / gesture bar) ── */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-area-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* ── Performance: Simplify expensive filters on mobile ── */
+@media (max-width: 768px) {
+  .glass,
+  .glass-dark,
+  .premium-glass {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  /* Reduce animation complexity */
+  .shooting-star,
+  .planet {
+    display: none !important;
+  }
+
+  /* Reduce blur on mobile for GPU savings */
+  .galaxy-bg {
+    opacity: 0.2 !important;
+  }
+}
+
+/* ── Reduced Motion: Honor OS-level preference ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .glass,
+  .glass-dark {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .shooting-star,
+  .stars,
+  .planet {
+    display: none !important;
+  }
+}
+
+/* ── PWA Standalone Mode ── */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Prevent pull-to-refresh in PWA */
+  html {
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* ── Mobile-specific scrollbar hiding ── */
+@media (max-width: 768px) {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect, memo, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, memo, useCallback } from 'react';
 import { SendHorizontal, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';
-import { useAuthStore } from '../store/authStore';
+import { useUserSession, useLlmStatus } from '../hooks/useUserSession';
 import ChatMessage from './ChatMessage';
 import OptimizedSpinner from './OptimizedSpinner';
 
@@ -24,16 +24,7 @@ const getContextualSuggestions = (lastMessage: string): string[] => {
   return ["Schedule a meeting", "Check availability", "Show my calendar"];
 };
 
-/* ───── Greeting Helper ───── */
-const getGreeting = (): { text: string; emoji: string } => {
-  const hour = new Date().getHours();
-  if (hour < 12) return { text: "Good morning", emoji: "☀️" };
-  if (hour < 17) return { text: "Good afternoon", emoji: "🌤️" };
-  if (hour < 21) return { text: "Good evening", emoji: "🌅" };
-  return { text: "Good night", emoji: "🌙" };
-};
-
-/* ───── Smart Suggestions ───── */
+/* ───── Smart Suggestions (touch-target compliant) ───── */
 const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: { onSuggestionClick: (text: string) => void; suggestions: string[] }) => {
   if (!suggestions.length) return null;
   return (
@@ -48,7 +39,7 @@ const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: { onSuggestio
           <button
             key={i}
             onClick={() => onSuggestionClick(suggestion)}
-            className="claude-suggestion shrink-0 flex items-center gap-1.5 group"
+            className="claude-suggestion shrink-0 flex items-center gap-1.5 group touch-target"
           >
             {suggestion}
             <ArrowRight className="h-3 w-3 opacity-40 group-hover:opacity-70 group-hover:translate-x-0.5 transition-all" />
@@ -81,33 +72,16 @@ TypingIndicator.displayName = 'TypingIndicator';
 
 export default function ChatWindow() {
   const [message, setMessage] = useState('');
-  const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
   const { messages, isLoading, currentResponse, clearMessages } = useChatStore();
-  const { user } = useAuthStore();
+  const { greeting, firstName } = useUserSession();
+  const { isLlmOnline } = useLlmStatus();
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const greeting = useMemo(() => getGreeting(), []);
-  const firstName = useMemo(() => {
-    const name = user?.full_name || user?.email || 'there';
-    return name.split(' ')[0].split('@')[0];
-  }, [user]);
-
+  // Cleanup on unmount
   useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/health/llm`);
-        const data = await response.json();
-        setIsLlmOnline(data.status === 'online');
-      } catch {
-        setIsLlmOnline(false);
-      }
-    };
-    checkStatus();
-    const interval = setInterval(checkStatus, 30000);
     return () => {
-      clearInterval(interval);
       clearMessages();
     };
   }, [clearMessages]);
@@ -148,7 +122,8 @@ export default function ChatWindow() {
     setMessage(e.target.value);
   }, []);
 
-  useEffect(() => {
+  // useLayoutEffect prevents flickering during textarea resize
+  useLayoutEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 150) + 'px';
@@ -172,12 +147,13 @@ export default function ChatWindow() {
             {!hasMessages && (
               <div className="flex flex-col items-center justify-center h-full min-h-[60vh] px-5">
                 {/* Greeting */}
-                <div className="text-center mb-10 claude-greeting">
-                  <h1 className="text-3xl sm:text-4xl font-semibold text-white/90 tracking-tight">
-                    <span className="mr-2">{greeting.emoji}</span>
+                {/* Greeting Tile */}
+                <div className="text-center mb-10 claude-greeting bg-white/[0.03] backdrop-blur-md border border-white/10 rounded-3xl p-8 sm:p-10 shadow-2xl">
+                  <h1 className="text-3xl sm:text-4xl font-bold text-white/90 tracking-tight flex items-center justify-center gap-3">
+                    <span className="text-4xl sm:text-5xl">{greeting.emoji}</span>
                     {greeting.text}, {firstName}
                   </h1>
-                  <p className="text-[15px] text-slate-500 mt-3 claude-greeting-delay-1">
+                  <p className="text-[16px] text-slate-400 mt-4 claude-greeting-delay-1 font-medium">
                     How can I help you today?
                   </p>
                 </div>
@@ -215,7 +191,7 @@ export default function ChatWindow() {
                             <button
                               type="submit"
                               disabled={!message.trim()}
-                              className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                              className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 touch-target ${
                                 message.trim()
                                   ? 'bg-white/10 text-white hover:bg-white/15 active:scale-95'
                                   : 'text-slate-700 cursor-not-allowed'
@@ -229,13 +205,13 @@ export default function ChatWindow() {
                     </div>
                   </form>
 
-                  {/* Quick Prompt Grid - Refined 2x2 layout */}
+                  {/* Quick Prompt Grid - Refined 2x2 layout with touch targets */}
                   <div className="grid grid-cols-2 gap-3 mt-8 max-w-lg mx-auto claude-greeting-delay-2">
                     {QUICK_PROMPTS.slice(0, 4).map((prompt, i) => (
                       <button
                         key={i}
                         onClick={() => handleQuickPrompt(prompt.text)}
-                        className="claude-pill flex flex-col items-start text-left p-4 h-auto"
+                        className="claude-pill flex flex-col items-start text-left p-4 h-auto touch-target"
                         disabled={isLoading}
                       >
                         <span className="text-lg mb-2">{prompt.emoji}</span>
@@ -277,7 +253,7 @@ export default function ChatWindow() {
 
       {/* Persistent Input Area — shown when there are messages */}
       {hasMessages && (
-        <div className="shrink-0 px-4 sm:px-6 py-4 w-full z-30">
+        <div className="shrink-0 px-4 sm:px-6 py-4 w-full" style={{ zIndex: 'var(--z-backdrop, 30)' }}>
           <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
             <div className="claude-chat-input rounded-2xl p-1.5">
               <textarea
@@ -308,7 +284,7 @@ export default function ChatWindow() {
                     <button
                       type="submit"
                       disabled={!message.trim()}
-                      className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 mb-0.5 ${
+                      className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 mb-0.5 touch-target ${
                         message.trim()
                           ? 'bg-white/10 text-white hover:bg-white/15 active:scale-95'
                           : 'text-slate-700 cursor-not-allowed'

@@ -13,12 +13,10 @@ import {
   Sparkles,
   ArrowRight,
 } from 'lucide-react';
-import NavigationBar from '../components/NavigationBar';
 import StatsCard from '../components/StatsCard';
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-import LogoutMenu from '../components/LogoutMenu';
 import LoadingSpinner from '../components/LoadingSpinner';
 import type { Meeting } from '../types';
 
@@ -256,8 +254,6 @@ export default function StatsOverview() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
-  const [showLogout, setShowLogout] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Pure client-side greeting — no API call, no token cost
   const getLocalHour = useCallback(() => {
@@ -341,12 +337,6 @@ export default function StatsOverview() {
 
   return (
     <div key="dashboard-v5" className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
-      <NavigationBar
-        user={user}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        setShowLogout={setShowLogout}
-      />
 
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 overflow-y-auto pb-12">
         <header className="mb-8 animate-fade-in relative">
@@ -408,8 +398,6 @@ export default function StatsOverview() {
           </div>
         )}
       </main>
-
-      <LogoutMenu isOpen={showLogout} onClose={() => setShowLogout(false)} />
     </div>
   );
 }

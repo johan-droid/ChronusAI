@@ -4,15 +4,10 @@ import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown } fr
 import { useMeetings } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-import LogoutMenu from '../components/LogoutMenu';
-import NavigationBar from '../components/NavigationBar';
 
 export default function History() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
   const { data: meetings, isLoading } = useMeetings();
-  const [showLogout, setShowLogout] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -62,16 +57,9 @@ export default function History() {
   };
 
   return (
-    <div className="page-shell">
+    <div className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
       <div className="page-bg" />
       <div className="page-grid-overlay" />
-
-      <NavigationBar
-        user={user}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        setShowLogout={setShowLogout}
-      />
 
       <main className="saas-main px-3 sm:px-4 lg:px-6 overflow-y-auto pb-12">
         {/* Page Header */}
@@ -142,7 +130,7 @@ export default function History() {
               return (
                 <div 
                   key={meeting.id} 
-                  className="bg-white/[0.03] hover:bg-white/[0.05] border border-white/10 rounded-2xl p-4 transition-all active:scale-[0.98] touch-manipulation"
+                  className="bg-white/[0.03] backdrop-blur-md hover:bg-white/[0.06] border border-white/10 rounded-2xl p-5 transition-all active:scale-[0.99] touch-manipulation shadow-lg group"
                   style={{ animationDelay: `${0.05 * index}s` }}
                 >
                   {/* Modern Mobile Card Layout */}
@@ -216,8 +204,6 @@ export default function History() {
           </div>
         )}
       </main>
-
-      <LogoutMenu isOpen={showLogout} onClose={() => setShowLogout(false)} />
     </div>
   );
 }

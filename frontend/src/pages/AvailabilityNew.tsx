@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, XCircle, CheckCircle, Clock, Sunrise, Sunset } from 'lucide-react';
-import NavigationBar from '../components/NavigationBar';
-import LogoutMenu from '../components/LogoutMenu';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 
@@ -17,8 +15,6 @@ interface TimeSlot {
 export default function Availability() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const [showLogout, setShowLogout] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Get local date string in YYYY-MM-DD format
   const getLocalDateString = (date = new Date()) => {
     // This handles the local timezone offset correctly for the input field
@@ -157,16 +153,9 @@ export default function Availability() {
   );
 
   return (
-    <div className="page-shell">
+    <div className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
       <div className="page-bg" />
       <div className="page-grid-overlay" />
-
-      <NavigationBar
-        user={user}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-        setShowLogout={setShowLogout}
-      />
 
       {/* Main Content */}
       <main className="saas-main px-3 sm:px-4 lg:px-6">
@@ -241,34 +230,34 @@ export default function Availability() {
           <div className="avail-layout fade-in-up">
             {/* Summary Cards */}
             <div className="avail-summary">
-              <div className="avail-summary-card avail-summary-card--green">
-                <div className="avail-summary-icon">
+              <div className="avail-summary-card avail-summary-card--green bg-emerald-500/5 border-emerald-500/20 shadow-lg backdrop-blur-md">
+                <div className="avail-summary-icon bg-emerald-500/20 text-emerald-400">
                   <CheckCircle className="h-5 w-5" />
                 </div>
                 <div className="avail-summary-info">
-                  <p className="avail-summary-value">{availableCount}</p>
-                  <p className="avail-summary-label">Available Slots</p>
+                  <p className="avail-summary-value text-emerald-400">{availableCount}</p>
+                  <p className="avail-summary-label text-emerald-500/60">Available Slots</p>
                 </div>
               </div>
-              <div className="avail-summary-card avail-summary-card--red">
-                <div className="avail-summary-icon">
+              <div className="avail-summary-card avail-summary-card--red bg-rose-500/5 border-rose-500/20 shadow-lg backdrop-blur-md">
+                <div className="avail-summary-icon bg-rose-500/20 text-rose-400">
                   <XCircle className="h-5 w-5" />
                 </div>
                 <div className="avail-summary-info">
-                  <p className="avail-summary-value">{busyCount}</p>
-                  <p className="avail-summary-label">Busy Slots</p>
+                  <p className="avail-summary-value text-rose-400">{busyCount}</p>
+                  <p className="avail-summary-label text-rose-500/60">Busy Slots</p>
                 </div>
               </div>
-              <div className="avail-summary-card avail-summary-card--blue">
-                <div className="avail-summary-icon">
+              <div className="avail-summary-card avail-summary-card--blue bg-blue-500/5 border-blue-500/20 shadow-lg backdrop-blur-md">
+                <div className="avail-summary-icon bg-blue-500/20 text-blue-400">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div className="avail-summary-info">
-                  <p className="avail-summary-value">{availPercent}%</p>
-                  <p className="avail-summary-label">Availability</p>
+                  <p className="avail-summary-value text-blue-400">{availPercent}%</p>
+                  <p className="avail-summary-label text-blue-500/60">Availability</p>
                 </div>
-                <div className="avail-progress">
-                  <div className="avail-progress-fill" style={{ width: `${availPercent}%` }} />
+                <div className="avail-progress bg-blue-500/10">
+                  <div className="avail-progress-fill bg-blue-500" style={{ width: `${availPercent}%` }} />
                 </div>
               </div>
             </div>
@@ -304,8 +293,6 @@ export default function Availability() {
           </div>
         )}
       </main>
-
-      <LogoutMenu isOpen={showLogout} onClose={() => setShowLogout(false)} />
     </div>
   );
 }
