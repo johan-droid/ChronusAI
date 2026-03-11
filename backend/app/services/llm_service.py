@@ -160,7 +160,7 @@ class LLMService:
 
 
             # Update API calls to use new client approach
-            response = await self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=contents,
                 config=types.GenerateContentConfig(
@@ -212,7 +212,7 @@ class LLMService:
 
             contents = [{"role": "user", "parts": [{"text": message}]}]
             
-            response = await self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=contents,
                 config=types.GenerateContentConfig(
@@ -275,7 +275,7 @@ class LLMService:
             role = "model" if msg["role"] == "assistant" else "user"
             contents.insert(-1, {"role": role, "parts": [{"text": msg["content"]}]})
 
-        response = await self.client.models.generate_content(
+        response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=contents,
             config=types.GenerateContentConfig(
@@ -292,7 +292,7 @@ class LLMService:
         try:
             contents = [{"role": "user", "parts": [{"text": prompt}]}]
             
-            response = await self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
                 contents=contents,
                 config=types.GenerateContentConfig(
