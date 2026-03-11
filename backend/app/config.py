@@ -32,10 +32,9 @@ class Settings(BaseSettings):
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
-    # Google Gemini 2.0 Flash (OpenAI-compatible)
+    # Google Gemini 3 Flash Preview (Native SDK)
     openai_api_key: str
-    llm_model_name: str = "gemini-2.0-flash"
-    openai_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
+    llm_model_name: str = "gemini-3-flash-preview"
 
     # Google OAuth
     google_client_id: Optional[str] = None

@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
-from openai import AsyncOpenAI
+from google import genai
 
 from app.config import settings
 from app.schemas.chat import ParsedIntent
@@ -11,12 +11,9 @@ from app.schemas.chat import ParsedIntent
 
 class LLMService:
     def __init__(self):
-        # Google Gemini 2.0 Flash via OpenAI-compatible endpoint
-        self.client = AsyncOpenAI(
-            api_key=settings.openai_api_key,  # Use existing config
-            base_url=settings.openai_base_url,  # Use existing config
-        )
-        self.model = getattr(settings, "llm_model_name", "gemini-2.0-flash")
+        # Google Gemini 3 Flash Preview using native SDK
+        self.client = genai.Client(api_key=settings.openai_api_key)
+        self.model = getattr(settings, "llm_model_name", "gemini-3-flash-preview")
 
     async def parse_intent(
         self, 
@@ -29,7 +26,7 @@ class LLMService:
     ) -> ParsedIntent:
         """
         Parses user natural language into a structured ParsedIntent JSON.
-        Optimized for Google Gemini 2.0 Flash with enhanced GoogleCalendarService integration.
+        Optimized for Google Gemini 3 Flash Preview with enhanced GoogleCalendarService integration.
         """
         
         system_instructions = f"""
@@ -50,7 +47,7 @@ class LLMService:
             "title": "string or null",
             "start_time": "ISO 8601 string or null",
             "end_time": "ISO 8601 string or null",
-            "event_id": "The exact ID from Live Calendar State if referencing an existing event",
+            "event_id": "The exact ID from LIVE CALENDAR STATE if referencing an existing event",
             "attendees": ["list of emails"],
             "response": "Brief acknowledgment or clarification question",
             "requires_clarification": true/false,
@@ -153,22 +150,27 @@ class LLMService:
         """
 
         try:
-            response = await self.client.chat.completions.create(
+            # Convert history to Gemini format
+            contents = [{"role": "user", "parts": [{"text": system_instructions}]}]
+            
+            # Add conversation history
+            for msg in history:
+                contents.append({"role": msg["role"], "parts": [{"text": msg["content"]}]})
+            
+            # Add current message
+            contents.append({"role": "user", "parts": [{"text": message}]})
+            
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": system_instructions},
-                    *history,
-                    {"role": "user", "content": message}
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.1
+                contents=contents,
+                config={"temperature": 0.1}
             )
             
-            content = response.choices[0].message.content
+            content = response.text
             if not content:
                 raise ValueError("Empty response from Gemini")
                 
-            # Parse JSON response (Gemini with JSON mode should return clean JSON)
+            # Parse JSON response (Gemini should return clean JSON)
             parsed_data = json.loads(content.strip())
             return ParsedIntent(**parsed_data)
             
@@ -205,17 +207,18 @@ class LLMService:
             You have full access to their Google Calendar and can help with scheduling, rescheduling, and managing meetings.
             Be conversational, helpful, and proactive. If you can help with scheduling, offer specific suggestions."""
             
-            response = await self.client.chat.completions.create(
+            contents = [
+                {"role": "user", "parts": [{"text": system_prompt}]},
+                {"role": "user", "parts": [{"text": message}]}
+            ]
+            
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": message}
-                ],
-                temperature=0.7,
-                max_tokens=500,
+                contents=contents,
+                config={"temperature": 0.7, "max_output_tokens": 500}
             )
             
-            return response.choices[0].message.content or "I'm here to help with your calendar and scheduling needs!"
+            return response.text or "I'm here to help with your calendar and scheduling needs!"
         except Exception:
             return "I'm here to help with your calendar and scheduling needs. Try asking me to 'schedule a meeting' or 'check my availability'!"
 
@@ -249,7 +252,6 @@ class LLMService:
         Success: "✅ I've scheduled 'Team Sync' for tomorrow at 2:00 PM. I've invited john@example.com and jane@example.com."
         Conflict: "⚠️ That time slot conflicts with an existing meeting. Here are some alternatives: [suggested times]"
         Cancelled: "🗑️ I've successfully cancelled 'Weekly Standup'."
-        Failed: "❌ I couldn't reschedule that meeting due to a calendar connection issue. Please try again in a moment."
 
         IMPORTANT: Only explain what actually happened in the backend. Don't make up information.
         """
@@ -261,31 +263,32 @@ class LLMService:
             "backend_outcome": action_result,
         }
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            *history[-3:],  # Recent context only
-            {"role": "user", "content": f"Result of action: {json.dumps(execution_context)}"}
+        contents = [
+            {"role": "user", "parts": [{"text": system_prompt}]},
+            # Add recent context from history
+            *[{"role": msg["role"], "parts": [{"text": msg["content"]}]} for msg in history[-3:]],
+            {"role": "user", "parts": [{"text": f"Result of action: {json.dumps(execution_context)}"}]}
         ]
 
-        response = await self.client.chat.completions.create(
+        response = await self.client.aio.models.generate_content(
             model=self.model,
-            messages=messages,
-            temperature=0.7,  # Higher temperature for more natural speech
-            max_tokens=500,
+            contents=contents,
+            config={"temperature": 0.7, "max_output_tokens": 500}
         )
 
-        return response.choices[0].message.content
+        return response.text
 
     async def generate_completion(self, prompt: str) -> str:
         """Generate simple completion for given prompt."""
         try:
-            response = await self._client.chat.completions.create(
+            contents = [{"role": "user", "parts": [{"text": prompt}]}]
+            
+            response = await self.client.aio.models.generate_content(
                 model=self.model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.8,
-                max_tokens=100,
+                contents=contents,
+                config={"temperature": 0.8, "max_output_tokens": 100}
             )
-            return response.choices[0].message.content or ""
+            return response.text or ""
         except Exception:
             return ""
 
