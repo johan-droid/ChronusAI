@@ -266,7 +266,7 @@ class LLMService:
             "backend_outcome": action_result,
         }
 
-        contents = [{"role": "user", "parts": [{"text": f"Result of action: {json.dumps(execution_context)}"}]}]
+        contents = [{"role": "user", "parts": [{"text": f"Result of action: {json.dumps(execution_context, default=str)}"}]}]
         
         # Add recent context from history with role mapping (assistant -> model)
         # pyre-ignore[16]
