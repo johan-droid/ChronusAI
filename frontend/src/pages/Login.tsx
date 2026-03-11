@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
+import ChronosLogo from '../components/ChronosLogo';
 import AuthDebug from '../components/AuthDebug';
 import { Loader2, Shield, Sparkles, Zap, Lock, Mail, Key, User as UserIcon, ArrowRight } from 'lucide-react';
 import { apiClient } from '../lib/api';
@@ -185,6 +186,7 @@ export default function Login() {
           <div className="flex items-center gap-2">
             <AnimatedLogo className="h-8 w-8" />
             <span className="text-lg font-bold gradient-text">ChronosAI</span>
+            <ChronosLogo className="h-6 w-6" />
           </div>
         </div>
 
