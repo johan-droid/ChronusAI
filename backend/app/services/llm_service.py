@@ -206,21 +206,25 @@ class LLMService:
         """Generate helpful AI response for general queries."""
         try:
             system_prompt = f"""You are ChronosAI, a friendly and intelligent meeting assistant helping {user_name} ({user_email}). 
+            Your goal is to provide helpful, concise, and friendly responses to general user queries while subtly 
+            reminding them of your capabilities like scheduling, checking availability, and managing meetings."""
 
-    TASK:
-    Convert user's message into following json schema:
-    {{
-        "intent": "schedule" | "cancel" | "reschedule" | "check_availability" | "list_meetings" | "chat" | "find_time" | "suggest_times" | "unknown",
-        "title": "string or null",
-        "start_time": "ISO 8601 string or null",
-        "end_time": "ISO 8601 string or null",
-        "event_id": "The exact ID from LIVE CALENDAR STATE if referencing an existing event",
-        "attendees": ["list of emails"],
-        "response": "Brief acknowledgment or clarification question",
-        "requires_clarification": true/false,
-        "meeting_type": "meeting|call|review|presentation|null",
-        "description": "string or null"
-    }}
+            contents = [{"role": "user", "parts": [{"text": message}]}]
+            
+            response = await self.client.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=genai.GenerationConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.7,
+                    max_output_tokens=500
+                )
+            )
+            return response.text or "I'm here to help with your calendar. What can I do for you today?"
+        except Exception as e:
+            print(f"Error in generate_helpful_response: {e}")
+            return "I'm here to help with your calendar. What can I do for you today?"
+
     async def generate_action_response(
         self,
         user_message: str,
