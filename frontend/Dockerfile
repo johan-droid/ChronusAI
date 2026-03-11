@@ -18,23 +18,29 @@ RUN npm run build
 # Stage 2: Production
 FROM nginx:alpine as production
 
-# Add curl for health checks
-RUN apk add --no-cache curl
+# Add curl and gettext for envsubst
+RUN apk add --no-cache curl gettext
 
 # Copy build artifacts from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy custom nginx config as template
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 # Create non-root user (nginx group already exists in Alpine)
 RUN adduser -S nginx -u 1001 -G nginx || true
 
-# Health check
+# Health check (Use the runtime PORT if needed, otherwise rely on orchestrator)
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:80/health || exit 1
+    CMD curl -f http://localhost:${PORT:-80}/health || exit 1
 
 EXPOSE 80
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Use exec form for better signal handling
 CMD ["nginx", "-g", "daemon off;"]
