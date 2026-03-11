@@ -211,7 +211,6 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
                     key={index}
                     className="px-3 py-2 bg-purple-100 border border-purple-200 rounded-lg text-sm text-purple-700 hover:bg-purple-200 transition-colors touch-manipulation"
                     onClick={() => {
-                      // This would trigger a new message with the suggestion
                       const input = document.querySelector('textarea[placeholder*="Message ChronosAI"]') as HTMLTextAreaElement;
                       if (input) {
                         input.value = suggestion.time;
