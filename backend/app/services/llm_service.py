@@ -3,7 +3,7 @@ import json
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 
-from google import genai
+import google.generativeai as genai
 
 from app.config import settings
 from app.schemas.chat import ParsedIntent
@@ -12,7 +12,7 @@ from app.schemas.chat import ParsedIntent
 class LLMService:
     def __init__(self):
         # Google Gemini 3 Flash Preview using native SDK
-        self.client = genai.Client(api_key=settings.gemini_api_key)
+        genai.configure(api_key=settings.gemini_api_key)
         self.model = getattr(settings, "llm_model_name", "gemini-3-flash-preview")
 
     async def parse_intent(
@@ -158,13 +158,13 @@ class LLMService:
                 role = "model" if msg["role"] == "assistant" else "user"
                 contents.append({"role": role, "parts": [{"text": msg["content"]}]})
             
-            response = await self.client.aio.models.generate_content(
-                model=self.model,
+            model = genai.GenerativeModel(self.model)
+            response = await model.generate_content(
                 contents=contents,
-                config={
-                    "system_instruction": system_instructions,
-                    "temperature": 0.1
-                }
+                config=genai.GenerationConfig(
+                    system_instruction=system_instructions,
+                    temperature=0.1
+                )
             )
             
             content = response.text
@@ -210,14 +210,14 @@ class LLMService:
             
             contents = [{"role": "user", "parts": [{"text": message}]}]
             
-            response = await self.client.aio.models.generate_content(
-                model=self.model,
+            model = genai.GenerativeModel(self.model)
+            response = await model.generate_content(
                 contents=contents,
-                config={
-                    "system_instruction": system_prompt,
-                    "temperature": 0.7,
-                    "max_output_tokens": 500
-                }
+                config=genai.GenerationConfig(
+                    system_instruction=system_prompt,
+                    temperature=0.7,
+                    max_output_tokens=500
+                )
             )
             
             return response.text or "I'm here to help with your calendar and scheduling needs!"
@@ -253,7 +253,6 @@ class LLMService:
         RESPONSE EXAMPLES:
         Success: "✅ I've scheduled 'Team Sync' for tomorrow at 2:00 PM. I've invited john@example.com and jane@example.com."
         Conflict: "⚠️ That time slot conflicts with an existing meeting. Here are some alternatives: [suggested times]"
-        Cancelled: "🗑️ I've successfully cancelled 'Weekly Standup'."
 
         IMPORTANT: Only explain what actually happened in the backend. Don't make up information.
         """
@@ -272,14 +271,14 @@ class LLMService:
             role = "model" if msg["role"] == "assistant" else "user"
             contents.insert(-1, {"role": role, "parts": [{"text": msg["content"]}]})
 
-        response = await self.client.aio.models.generate_content(
-            model=self.model,
+        model = genai.GenerativeModel(self.model)
+        response = await model.generate_content(
             contents=contents,
-            config={
-                "system_instruction": system_prompt,
-                "temperature": 0.7,
-                "max_output_tokens": 500
-            }
+            config=genai.GenerationConfig(
+                system_instruction=system_prompt,
+                temperature=0.7,
+                max_output_tokens=500
+            )
         )
 
         return response.text
@@ -289,10 +288,13 @@ class LLMService:
         try:
             contents = [{"role": "user", "parts": [{"text": prompt}]}]
             
-            response = await self.client.aio.models.generate_content(
-                model=self.model,
+            model = genai.GenerativeModel(self.model)
+            response = await model.generate_content(
                 contents=contents,
-                config={"temperature": 0.8, "max_output_tokens": 100}
+                config=genai.GenerationConfig(
+                    temperature=0.8,
+                    max_output_tokens=100
+                )
             )
             return response.text or ""
         except Exception:

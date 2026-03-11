@@ -16,7 +16,7 @@ pydantic-settings
 python-dotenv
 
 openai
-google-genai
+google-generativeai
 
 python-jose[cryptography]
 cryptography
