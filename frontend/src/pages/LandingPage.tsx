@@ -378,7 +378,17 @@ export default function LandingPage() {
 
   return (
 
-    <div className="min-h-screen bg-[#030303] text-foreground relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#09090B] text-foreground relative overflow-hidden font-sans">
+
+      {/* Ambient background meshes */}
+
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary/20 blur-[120px] rounded-full pointer-events-none opacity-20" />
+
+      <div className="absolute top-[40%] left-[-10%] w-[600px] h-[500px] bg-purple-600/20 blur-[150px] rounded-full pointer-events-none opacity-20" />
+
+      <div className="absolute top-[70%] right-[-10%] w-[700px] h-[600px] bg-blue-600/20 blur-[160px] rounded-full pointer-events-none opacity-20" />
+
+
 
       {/* Dynamic ColorBends Background - Full Page Coverage */}
 
@@ -410,7 +420,7 @@ export default function LandingPage() {
 
         />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/0 via-[#030303]/40 to-[#030303]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#09090B]/0 via-[#09090B]/60 to-[#09090B]" />
 
       </div>
 
@@ -524,11 +534,11 @@ export default function LandingPage() {
 
 
 
-              <h1 className="text-5xl lg:text-8xl font-bold text-foreground tracking-tight leading-[1.12] font-heading">
+              <h1 className="text-5xl lg:text-8xl font-bold text-zinc-50 tracking-tight leading-[1.12] font-heading drop-shadow-sm">
 
                 Schedule meetings with
 
-                <span className="gradient-text pb-1 block">natural language</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 pb-1 block">natural language</span>
 
               </h1>
 
@@ -542,7 +552,7 @@ export default function LandingPage() {
 
                 transition={{ delay: 0.4, duration: 1 }}
 
-                className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+                className="text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed font-medium"
 
               >
 
@@ -570,7 +580,7 @@ export default function LandingPage() {
 
                 onClick={() => navigate('/login')}
 
-                className="group relative overflow-hidden premium-glass px-8 py-4 rounded-xl border border-primary/20 hover:border-primary/40 transition-all duration-300 shadow-lg shadow-primary/5"
+                className="group relative overflow-hidden premium-glass px-8 py-4 rounded-xl border border-white/10 hover:border-white/20 hover:scale-[1.02] active:scale-95 transition-all duration-300 ease-in-out shadow-lg shadow-primary/10"
 
               >
 
@@ -654,11 +664,11 @@ export default function LandingPage() {
 
             </div>
 
-            <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading max-w-4xl mx-auto leading-[1.1]">
+            <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading max-w-4xl mx-auto leading-[1.1]">
 
               With us, appointment scheduling is
 
-              <span className="gradient-text block">actually easy</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block pb-1">actually easy</span>
 
             </h2>
 
@@ -684,7 +694,7 @@ export default function LandingPage() {
 
                 whileHover={{ y: -8 }}
 
-                className="premium-glass rounded-3xl flex flex-col overflow-hidden group border border-white/5 hover:border-primary/30 transition-all duration-500 shadow-2xl shadow-black/40"
+                className="premium-glass rounded-3xl flex flex-col overflow-hidden group bg-zinc-900/50 backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] hover:bg-white/[0.04] hover:border-white/20 hover:shadow-[0_0_30px_-10px_rgba(120,119,198,0.2)] transition-all duration-300 ease-in-out"
 
               >
 
@@ -696,9 +706,9 @@ export default function LandingPage() {
 
                   </div>
 
-                  <h3 className="text-2xl font-bold text-foreground font-heading">{item.title}</h3>
+                  <h3 className="text-2xl font-bold text-zinc-50 font-heading">{item.title}</h3>
 
-                  <p className="text-muted-foreground/80 leading-relaxed text-sm font-medium">
+                  <p className="text-zinc-400 leading-relaxed text-sm font-medium">
 
                     {item.description}
 
@@ -730,7 +740,7 @@ export default function LandingPage() {
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
-          <div className="glass-card p-12 rounded-[2.5rem] border-white/5 bg-white/[0.01] flex flex-col lg:flex-row items-center gap-16">
+          <div className="glass-card p-12 rounded-[2.5rem] border-white/10 bg-zinc-900/50 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] flex flex-col lg:flex-row items-center gap-16 transition-all duration-300">
 
             <div className="flex-1 space-y-8">
 
@@ -742,15 +752,15 @@ export default function LandingPage() {
 
               </div>
 
-              <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading leading-[1.1]">
+              <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading leading-[1.1]">
 
                 All your key tools in-sync
 
-                <span className="block text-muted-foreground/40">with your meetings</span>
+                <span className="block text-zinc-500/80">with your meetings</span>
 
               </h2>
 
-              <p className="text-xl text-muted-foreground leading-relaxed font-sans max-w-xl">
+              <p className="text-xl text-zinc-400 leading-relaxed font-sans max-w-xl font-medium">
 
                 ChronosAI works with all apps already in your flow ensuring everything works perfectly together.
 
@@ -762,7 +772,7 @@ export default function LandingPage() {
 
                   onClick={() => navigate('/login')}
 
-                  className="bg-foreground text-background px-8 py-3.5 rounded-xl font-bold hover:opacity-90 transition-all flex items-center gap-2 group"
+                  className="bg-zinc-50 text-zinc-950 px-8 py-3.5 rounded-xl font-bold hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 flex items-center gap-2 group"
 
                 >
 
@@ -812,7 +822,7 @@ export default function LandingPage() {
 
                     whileHover={{ scale: 1.1, rotate: 5 }}
 
-                    className="aspect-square premium-glass rounded-2xl flex items-center justify-center border-white/5 bg-white/[0.02] group hover:border-primary/40 transition-all duration-500 shadow-xl shadow-black/50"
+                    className="aspect-square premium-glass rounded-2xl flex items-center justify-center border-white/10 bg-zinc-900/40 backdrop-blur-md group hover:bg-white/[0.06] hover:border-white/20 hover:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1),0_0_30px_-10px_rgba(120,119,198,0.25)] transition-all duration-500 shadow-xl shadow-black/50"
 
                   >
 
@@ -868,15 +878,15 @@ export default function LandingPage() {
 
             </div>
 
-            <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading">
+            <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading">
 
               See why our users love
 
-              <span className="gradient-text"> ChronosAI</span>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400"> ChronosAI</span>
 
             </h2>
 
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-zinc-400 max-w-2xl mx-auto font-medium">
 
               Read the impact we've had from those who matter most - our customers.
 
@@ -904,7 +914,7 @@ export default function LandingPage() {
 
                 whileHover={{ y: -5 }}
 
-                className={`premium-glass p-5 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] space-y-4 sm:space-y-6 hover:border-primary/30 transition-all duration-300 shadow-xl shadow-black/20 ${
+                className={`premium-glass p-5 sm:p-6 lg:p-8 rounded-2xl sm:rounded-[2rem] space-y-4 sm:space-y-6 bg-zinc-900/50 backdrop-blur-xl border border-white/10 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] hover:bg-white/[0.04] hover:border-white/20 hover:shadow-[0_0_30px_-10px_rgba(120,119,198,0.2)] transition-all duration-300 ease-in-out ${
 
                   testimonial.height === 'tall' ? 'md:row-span-2' : ''
 
@@ -938,9 +948,9 @@ export default function LandingPage() {
 
                   <div className="min-w-0 flex-1">
 
-                    <div className="font-bold text-foreground text-sm sm:text-base truncate">{testimonial.name}</div>
+                    <div className="font-bold text-zinc-50 text-sm sm:text-base truncate">{testimonial.name}</div>
 
-                    <div className="text-xs sm:text-sm text-primary/60 font-medium">{testimonial.handle || testimonial.username}</div>
+                    <div className="text-xs sm:text-sm text-zinc-400 font-medium">{testimonial.handle || testimonial.username}</div>
 
                   </div>
 
@@ -950,7 +960,7 @@ export default function LandingPage() {
 
 
 
-                <p className="text-sm sm:text-base text-foreground/90 leading-relaxed">
+                <p className="text-sm sm:text-base text-zinc-300 leading-relaxed">
 
                   "{testimonial.content.split('@').map((part, i) =>
 
@@ -998,21 +1008,21 @@ export default function LandingPage() {
 
             transition={{ duration: 0.8 }}
 
-            className="premium-glass p-16 rounded-[3rem] space-y-10 border border-white/5 shadow-3xl shadow-primary/5"
+            className="premium-glass p-16 rounded-[3rem] space-y-10 border border-white/10 bg-zinc-900/40 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]"
 
           >
 
             <div className="space-y-6">
 
-              <h2 className="text-4xl lg:text-6xl font-bold text-foreground font-heading tracking-tight">
+              <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading tracking-tight">
 
                 Ready to transform your
 
-                <span className="gradient-text-vibrant block">scheduling workflow?</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 block">scheduling workflow?</span>
 
               </h2>
 
-              <p className="text-xl text-muted-foreground/80 font-medium max-w-2xl mx-auto lead-relaxed">
+              <p className="text-xl text-zinc-400 font-medium max-w-2xl mx-auto lead-relaxed">
 
                 Join thousands of teams already using ChronosAI to save time and eliminate scheduling conflicts.
 
@@ -1028,7 +1038,7 @@ export default function LandingPage() {
 
                 onClick={() => navigate('/login')}
 
-                className="group relative overflow-hidden bg-primary text-white px-10 py-5 rounded-2xl font-bold hover:shadow-[0_0_30px_rgba(59,130,246,0.3)] transition-all duration-300"
+                className="group relative overflow-hidden bg-zinc-50 text-zinc-950 px-10 py-5 rounded-2xl font-bold hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300"
 
               >
 

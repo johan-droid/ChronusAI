@@ -98,12 +98,12 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
         <div 
           className={`relative px-4 py-4 sm:px-4 sm:py-4 md:px-5 md:py-4 rounded-2xl transition-all duration-200 shadow-sm ${
             isUser
-              ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-tr-none'
-              : 'bg-white/10 backdrop-blur-sm border border-white/20 text-slate-100 rounded-tl-none'
+              ? 'bg-white/5 backdrop-blur-sm border border-white/10 text-slate-200 rounded-tr-none hover:bg-white/8'
+              : 'bg-transparent text-slate-200 rounded-tl-none'
           } ${isTyping ? 'animate-pulse' : ''}`}
         >
           {/* Message Content */}
-          <div className="text-[13px] sm:text-[14px] md:text-[15px] leading-[1.5] font-normal whitespace-pre-wrap break-words">
+          <div className="text-[13px] sm:text-[14px] md:text-[15px] leading-relaxed font-normal whitespace-pre-wrap break-words">
             <div className="pr-8">
               {isTyping ? (
                 <div className="flex items-center gap-1">

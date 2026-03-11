@@ -30,9 +30,9 @@ export default function Chat() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col h-[100dvh] max-h-[100dvh] bg-[#050510] relative overflow-hidden">
-      {/* ColorBends Background Effect */}
-      <div className="absolute inset-0 opacity-30">
+    <div className="flex flex-col h-[100dvh] max-h-[100dvh] bg-[#09090B] relative overflow-hidden">
+      {/* Heavily reduced opacity ColorBends Background Effect */}
+      <div className="absolute inset-0 opacity-5">
         <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
         <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
@@ -48,7 +48,6 @@ export default function Chat() {
         setMobileMenuOpen={setMobileMenuOpen}
         setShowLogout={setShowLogout}
       />
-
 
       <main className="flex-1 relative z-10 w-full flex flex-col min-h-0 overflow-hidden">
         <div className="flex-1 flex flex-col min-h-0 bg-slate-900/10 backdrop-blur-2xl border-x border-white/5 shadow-3xl overflow-hidden relative">

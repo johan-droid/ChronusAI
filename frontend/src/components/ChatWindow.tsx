@@ -285,44 +285,46 @@ export default function ChatWindow() {
     <div className="flex flex-col h-full min-h-0 w-full relative overflow-hidden">
       <StatusBar isOnline={isLlmOnline} />
 
-      {/* Messages Area */}
+      {/* Messages Area - Constrained Width */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 sm:px-3 md:px-5 py-3 sm:py-4 md:py-6 space-y-3 sm:space-y-4 md:space-y-5 overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.05),transparent)]">
-        <AnimatePresence>
-          {messages.length === 0 && (
-            <EmptyState onQuickPrompt={handleQuickPrompt} />
-          )}
+        <div className="max-w-3xl mx-auto w-full">
+          <AnimatePresence>
+            {messages.length === 0 && (
+              <EmptyState onQuickPrompt={handleQuickPrompt} />
+            )}
 
-          {messages.map((msg, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ChatMessage message={msg} />
-            </motion.div>
-          ))}
+            {messages.map((msg, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ChatMessage message={msg} />
+              </motion.div>
+            ))}
 
-          {isLoading && currentResponse && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <ChatMessage
-                message={{
-                  role: 'assistant',
-                  content: currentResponse,
-                  timestamp: new Date().toISOString()
-                }}
-                isTyping={true}
-              />
-            </motion.div>
-          )}
+            {isLoading && currentResponse && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                <ChatMessage
+                  message={{
+                    role: 'assistant',
+                    content: currentResponse,
+                    timestamp: new Date().toISOString()
+                  }}
+                  isTyping={true}
+                />
+              </motion.div>
+            )}
 
-          {isLoading && !currentResponse && <TypingIndicator />}
-        </AnimatePresence>
+            {isLoading && !currentResponse && <TypingIndicator />}
+          </AnimatePresence>
 
-        <div ref={messagesEndRef} className="h-2" />
+          <div ref={messagesEndRef} className="h-2" />
+        </div>
       </div>
 
       {/* Smart Suggestions - Context-aware */}
@@ -335,10 +337,10 @@ export default function ChatWindow() {
         )}
       </AnimatePresence>
 
-      {/* Input Area - Floating Bar Design */}
+      {/* Input Area - Premium Glassmorphism Floating Bar */}
       <div className="shrink-0 p-4 sm:p-6 mb-6 bg-transparent relative z-40 pb-safe-area-inset-bottom">
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto relative">
-          <div className="flex items-center bg-white/[0.08] backdrop-blur-xl rounded-full border border-white/20 shadow-xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
+          <div className="flex items-center bg-white/[0.03] backdrop-blur-2xl rounded-3xl border border-white/10 shadow-2xl focus-within:border-blue-500/50 focus-within:shadow-blue-500/25 transition-all duration-300">
             {/* Text Input */}
             <textarea
               ref={textareaRef}
