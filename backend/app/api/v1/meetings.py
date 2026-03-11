@@ -143,18 +143,32 @@ async def get_meetings(
         # First, sync meetings from Calendar with timezone awareness
         await sync_google_calendar_meetings(current_user, calendar_integration, db)
         
-        # Then get meetings from database
+        # Then get meetings from database - strictly filter for recent data (last 7 days)
+        retention_limit = datetime.now(timezone.utc) - timedelta(days=7)
         result = await db.execute(
             select(Meeting)
-            .where(and_(Meeting.user_id == current_user.id, Meeting.status != "canceled"))
+            .where(
+                and_(
+                    Meeting.user_id == current_user.id, 
+                    Meeting.status != "canceled",
+                    Meeting.start_time >= retention_limit
+                )
+            )
             .order_by(Meeting.start_time)
         )
         return list(result.scalars().all())
     except Exception:
-        # If sync fails, still return cached meetings from database
+        # If sync fails, still return cached meetings from database with strict filtering
+        retention_limit = datetime.now(timezone.utc) - timedelta(days=7)
         result = await db.execute(
             select(Meeting)
-            .where(and_(Meeting.user_id == current_user.id, Meeting.status != "canceled"))
+            .where(
+                and_(
+                    Meeting.user_id == current_user.id, 
+                    Meeting.status != "canceled",
+                    Meeting.start_time >= retention_limit
+                )
+            )
             .order_by(Meeting.start_time)
         )
         return list(result.scalars().all())

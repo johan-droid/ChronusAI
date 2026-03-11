@@ -14,6 +14,8 @@ from app.api.v1.router import api_router
 from app.core.rate_limit import limiter
 from app.core.middleware import TokenRefreshMiddleware, SecurityValidationMiddleware
 from app.core.self_ping import SelfPinger
+from app.services.cleanup_service import run_cleanup_task
+import asyncio
 
 # Configure structured logging
 structlog.configure(
@@ -55,6 +57,10 @@ async def lifespan(app: FastAPI):
     self_pinger = SelfPinger(url=render_url, interval=30)  # Aggressive 30-second pings
     self_pinger.start()
     logger.info("Aggressive self-ping service started", url=render_url)
+    
+    # Start database cleanup task (runs every 24 hours)
+    cleanup_task = asyncio.create_task(run_cleanup_task(interval_hours=24))
+    logger.info("Database cleanup background task started")
     
     yield
     

@@ -29,7 +29,7 @@ export default function Chat() {
   }, [navigate]);
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#1a1915] overflow-hidden relative">
+    <div className="flex flex-col h-[100dvh] w-full bg-[#09090B] overflow-hidden relative">
 
       {/* Navigation */}
       <NavigationBar
