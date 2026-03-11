@@ -50,19 +50,8 @@ def upgrade() -> None:
     )
 
     # ── Create OrgRole enum ───────────────────────────────────────────────────
-    try:
-        org_role_enum = postgresql.ENUM("owner", "admin", "member", name="org_role_enum")
-        org_role_enum.create(op.get_bind(), checkfirst=True)
-    except Exception as e:
-        # Enum might already exist, check if it does
-        conn = op.get_bind()
-        inspector = sa.inspect(conn)
-        existing_enums = [row['typname'] for row in inspector.execute(
-            "SELECT typname FROM pg_type WHERE typname = 'org_role_enum'"
-        ).fetchall()]
-        
-        if 'org_role_enum' not in existing_enums:
-            raise e
+    org_role_enum = postgresql.ENUM("owner", "admin", "member", name="org_role_enum")
+    org_role_enum.create(op.get_bind(), checkfirst=True)
 
     # ── Create organizations table ────────────────────────────────────────────
     op.create_table(
@@ -122,7 +111,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "role",
-            sa.Enum("owner", "admin", "member", name="org_role_enum"),
+            sa.Enum("owner", "admin", "member", name="org_role_enum", create_type=False),
             nullable=False,
             server_default="member",
         ),
