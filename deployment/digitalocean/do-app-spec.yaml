@@ -19,7 +19,7 @@ services:
   # Backend API Service
   - name: backend
     github:
-      repo: your-username/calendar-scheduler
+      repo: johan-droid/ChronosAI
       branch: main
       deploy_on_push: true
     source_dir: backend
@@ -90,7 +90,7 @@ services:
   # Frontend Static Site
   - name: frontend
     github:
-      repo: your-username/calendar-scheduler
+      repo: johan-droid/ChronosAI
       branch: main
       deploy_on_push: true
     source_dir: frontend
@@ -113,7 +113,7 @@ services:
 jobs:
   - name: db-migrate
     github:
-      repo: your-username/calendar-scheduler
+      repo: johan-droid/ChronosAI
       branch: main
     source_dir: backend
     dockerfile_path: Dockerfile

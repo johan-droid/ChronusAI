@@ -1,0 +1,28 @@
+{
+  "name": "ChronosAI Frontend",
+  "description": "AI-Powered Meeting Scheduler - React Frontend",
+  "keywords": ["react", "vite", "typescript", "calendar", "scheduler"],
+  "website": "https://github.com/johan-droid/ChronosAI",
+  "repository": "https://github.com/johan-droid/ChronosAI",
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "npm run build"
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "env": {
+    "VITE_API_URL": {
+      "description": "Backend API URL (e.g. https://your-backend.herokuapp.com)",
+      "required": true
+    }
+  }
+}

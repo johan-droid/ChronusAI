@@ -492,7 +492,7 @@ export default function LandingPage() {
 
       {/* Hero Section */}
 
-      <section className="relative z-10 pt-20 pb-32">
+      <section className="relative z-10 pt-20 pb-20">
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
@@ -534,7 +534,7 @@ export default function LandingPage() {
 
 
 
-              <h1 className="text-5xl lg:text-8xl font-bold text-zinc-50 tracking-tight leading-[1.12] font-heading drop-shadow-sm">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-zinc-50 tracking-tight leading-[1.12] font-heading drop-shadow-sm">
 
                 Schedule meetings with
 
@@ -552,7 +552,7 @@ export default function LandingPage() {
 
                 transition={{ delay: 0.4, duration: 1 }}
 
-                className="text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed font-medium"
+                className="text-sm sm:text-base md:text-lg lg:text-xl text-zinc-400 max-w-3xl mx-auto leading-relaxed font-medium"
 
               >
 
@@ -610,17 +610,17 @@ export default function LandingPage() {
 
               transition={{ delay: 0.8, duration: 1 }}
 
-              className="grid grid-cols-2 lg:grid-cols-4 gap-8 pt-16"
+              className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8 pt-10 sm:pt-16"
 
             >
 
               {stats.map((stat, index) => (
 
-                <div key={index} className="text-center space-y-2">
+                <div key={index} className="text-center space-y-1 sm:space-y-2">
 
-                  <div className="text-3xl lg:text-4xl font-bold gradient-text">{stat.value}</div>
+                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold gradient-text">{stat.value}</div>
 
-                  <div className="text-sm text-muted-foreground/60 font-medium uppercase tracking-wider">{stat.label}</div>
+                  <div className="text-[10px] sm:text-xs text-muted-foreground/60 font-medium uppercase tracking-wider">{stat.label}</div>
 
                 </div>
 
@@ -634,11 +634,14 @@ export default function LandingPage() {
 
       </section>
 
-
+      {/* ── Section Divider ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+        <hr className="border-t-2 border-white/10" />
+      </div>
 
       {/* How It Works Section */}
 
-      <section id="features" className="relative z-10 py-32">
+      <section id="features" className="relative z-10 py-24">
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
@@ -664,7 +667,7 @@ export default function LandingPage() {
 
             </div>
 
-            <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading max-w-4xl mx-auto leading-[1.1]">
+            <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-zinc-50 font-heading max-w-4xl mx-auto leading-[1.1]">
 
               With us, appointment scheduling is
 
@@ -732,11 +735,14 @@ export default function LandingPage() {
 
       </section>
 
-
+      {/* ── Section Divider ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+        <hr className="border-t-2 border-white/10" />
+      </div>
 
       {/* Integration Store Section */}
 
-      <section id="workflow" className="relative z-10 py-32 overflow-hidden">
+      <section id="workflow" className="relative z-10 py-24 overflow-hidden">
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
@@ -752,7 +758,7 @@ export default function LandingPage() {
 
               </div>
 
-              <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading leading-[1.1]">
+              <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-zinc-50 font-heading leading-[1.1]">
 
                 All your key tools in-sync
 
@@ -760,7 +766,7 @@ export default function LandingPage() {
 
               </h2>
 
-              <p className="text-xl text-zinc-400 leading-relaxed font-sans max-w-xl font-medium">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-zinc-400 leading-relaxed font-sans max-w-xl font-medium">
 
                 ChronosAI works with all apps already in your flow ensuring everything works perfectly together.
 
@@ -860,11 +866,14 @@ export default function LandingPage() {
 
       </section>
 
-
+      {/* ── Section Divider ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+        <hr className="border-t-2 border-white/10" />
+      </div>
 
       {/* Wall of Love Section */}
 
-      <section id="testimonials" className="relative z-10 py-32">
+      <section id="testimonials" className="relative z-10 py-24">
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
 
@@ -878,7 +887,7 @@ export default function LandingPage() {
 
             </div>
 
-            <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading">
+            <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-zinc-50 font-heading">
 
               See why our users love
 
@@ -886,7 +895,7 @@ export default function LandingPage() {
 
             </h2>
 
-            <p className="text-xl text-zinc-400 max-w-2xl mx-auto font-medium">
+            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-zinc-400 max-w-2xl mx-auto font-medium">
 
               Read the impact we've had from those who matter most - our customers.
 
@@ -990,11 +999,14 @@ export default function LandingPage() {
 
       </section>
 
-
+      {/* ── Section Divider ── */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+        <hr className="border-t-2 border-white/10" />
+      </div>
 
       {/* CTA Section */}
 
-      <section className="relative z-10 py-32">
+      <section className="relative z-10 py-24">
 
         <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
 
@@ -1008,13 +1020,13 @@ export default function LandingPage() {
 
             transition={{ duration: 0.8 }}
 
-            className="premium-glass p-16 rounded-[3rem] space-y-10 border border-white/10 bg-zinc-900/40 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]"
+            className="premium-glass p-8 sm:p-12 md:p-16 rounded-[2rem] sm:rounded-[3rem] space-y-8 sm:space-y-10 border border-white/10 bg-zinc-900/40 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]"
 
           >
 
             <div className="space-y-6">
 
-              <h2 className="text-4xl lg:text-6xl font-bold text-zinc-50 font-heading tracking-tight">
+              <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-zinc-50 font-heading tracking-tight">
 
                 Ready to transform your
 
@@ -1022,7 +1034,7 @@ export default function LandingPage() {
 
               </h2>
 
-              <p className="text-xl text-zinc-400 font-medium max-w-2xl mx-auto lead-relaxed">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-zinc-400 font-medium max-w-2xl mx-auto lead-relaxed">
 
                 Join thousands of teams already using ChronosAI to save time and eliminate scheduling conflicts.
 
@@ -1094,7 +1106,7 @@ export default function LandingPage() {
 
       {/* Premium Multi-Column Footer */}
 
-      <footer className="relative z-10 border-t border-white/5 bg-gradient-to-b from-[#030303]/90 via-[#050510]/95 to-[#0a0a1a] backdrop-blur-xl overflow-hidden">
+      <footer className="relative z-10 border-t-2 border-white/10 bg-gradient-to-b from-[#030303]/90 via-[#050510]/95 to-[#0a0a1a] backdrop-blur-xl overflow-hidden">
 
 
 

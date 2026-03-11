@@ -1,0 +1,75 @@
+{
+  "name": "ChronosAI",
+  "description": "AI-Powered Meeting Scheduler - Backend API",
+  "keywords": ["fastapi", "python", "ai", "calendar", "scheduler"],
+  "website": "https://github.com/johan-droid/ChronosAI",
+  "repository": "https://github.com/johan-droid/ChronosAI",
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0",
+      "as": "DATABASE"
+    }
+  ],
+  "env": {
+    "APP_ENV": {
+      "description": "Application environment",
+      "value": "production"
+    },
+    "GEMINI_API_KEY": {
+      "description": "Google Gemini API key for AI functionality",
+      "required": true
+    },
+    "GOOGLE_CLIENT_ID": {
+      "description": "Google OAuth Client ID",
+      "required": false
+    },
+    "GOOGLE_CLIENT_SECRET": {
+      "description": "Google OAuth Client Secret",
+      "required": false
+    },
+    "GOOGLE_REDIRECT_URI": {
+      "description": "Google OAuth redirect URI (set to your Heroku app URL + /api/v1/auth/google/callback)",
+      "required": false
+    },
+    "MICROSOFT_CLIENT_ID": {
+      "description": "Microsoft OAuth Client ID",
+      "required": false
+    },
+    "MICROSOFT_CLIENT_SECRET": {
+      "description": "Microsoft OAuth Client Secret",
+      "required": false
+    },
+    "MICROSOFT_REDIRECT_URI": {
+      "description": "Microsoft OAuth redirect URI",
+      "required": false
+    },
+    "JWT_SECRET_KEY": {
+      "description": "Secret key for JWT token signing",
+      "generator": "secret"
+    },
+    "ENCRYPTION_KEY": {
+      "description": "Key for data encryption at rest",
+      "generator": "secret"
+    },
+    "SECRET_KEY": {
+      "description": "Application secret key",
+      "generator": "secret"
+    },
+    "FRONTEND_URL": {
+      "description": "URL of the frontend app (set after deploying frontend)",
+      "required": false
+    }
+  }
+}
