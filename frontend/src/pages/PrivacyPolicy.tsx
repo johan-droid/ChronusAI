@@ -1,15 +1,61 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield, Eye, Database, Users } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, Database, Users, Cpu, Mail, CheckCircle } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState('overview');
 
   const sections = [
-    { id: 'overview', title: 'Overview', icon: Shield },
-    { id: 'collection', title: 'Data Collection', icon: Database },
-    { id: 'usage', title: 'Data Usage', icon: Eye },
-    { id: 'sharing', title: 'Data Sharing', icon: Users },
+    { 
+      id: 'overview', 
+      title: 'Overview', 
+      icon: Shield 
+    },
+    { 
+      id: 'collection', 
+      title: 'Data Collection', 
+      icon: Database 
+    },
+    { 
+      id: 'usage', 
+      title: 'Data Usage', 
+      icon: Eye 
+    },
+    { 
+      id: 'sharing', 
+      title: 'Data Sharing', 
+      icon: Users 
+    },
+    { 
+      id: 'security', 
+      title: 'Security Measures', 
+      icon: Shield 
+    },
+    { 
+      id: 'rights', 
+      title: 'Your Rights', 
+      icon: Shield 
+    },
+    { 
+      id: 'ai-transparency', 
+      title: 'AI Transparency', 
+      icon: Cpu 
+    },
+    { 
+      id: 'cookies', 
+      title: 'Cookie Policy', 
+      icon: Database 
+    },
+    { 
+      id: 'compliance', 
+      title: 'Legal Compliance', 
+      icon: CheckCircle 
+    },
+    { 
+      id: 'contact', 
+      title: 'Contact & Questions', 
+      icon: Mail 
+    }
   ];
 
   return (
@@ -34,7 +80,7 @@ export default function PrivacyPolicy() {
 
           <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
           <p className="text-muted-foreground text-lg">
-            Last updated: March 8, 2026
+            Last updated: March 11, 2026
           </p>
         </div>
 
