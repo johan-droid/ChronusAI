@@ -49,9 +49,15 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # ── Create OrgRole enum ───────────────────────────────────────────────────
-    org_role_enum = postgresql.ENUM("owner", "admin", "member", name="org_role_enum")
-    org_role_enum.create(op.get_bind(), checkfirst=True)
+    # ── Create OrgRole enum (idempotent via PL/pgSQL exception handler) ───────
+    op.execute("""
+        DO $$
+        BEGIN
+            CREATE TYPE org_role_enum AS ENUM ('owner', 'admin', 'member');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+    """)
 
     # ── Create organizations table ────────────────────────────────────────────
     op.create_table(
