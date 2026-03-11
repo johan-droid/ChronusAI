@@ -11,12 +11,12 @@ from app.schemas.chat import ParsedIntent
 
 class LLMService:
     def __init__(self):
-        # DeepSeek uses the OpenAI SDK structure
+        # Google Gemini 2.0 Flash via OpenAI-compatible endpoint
         self.client = AsyncOpenAI(
             api_key=settings.openai_api_key,  # Use existing config
             base_url=settings.openai_base_url,  # Use existing config
         )
-        self.model = "deepseek-chat"
+        self.model = getattr(settings, "llm_model_name", "gemini-2.0-flash")
 
     async def parse_intent(
         self, 
@@ -29,7 +29,7 @@ class LLMService:
     ) -> ParsedIntent:
         """
         Parses user natural language into a structured ParsedIntent JSON.
-        Optimized for DeepSeek with enhanced GoogleCalendarService integration.
+        Optimized for Google Gemini 2.0 Flash with enhanced GoogleCalendarService integration.
         """
         
         system_instructions = f"""
@@ -166,9 +166,9 @@ class LLMService:
             
             content = response.choices[0].message.content
             if not content:
-                raise ValueError("Empty response from DeepSeek")
+                raise ValueError("Empty response from Gemini")
                 
-            # Parse JSON response (DeepSeek with JSON mode should return clean JSON)
+            # Parse JSON response (Gemini with JSON mode should return clean JSON)
             parsed_data = json.loads(content.strip())
             return ParsedIntent(**parsed_data)
             

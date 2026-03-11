@@ -32,10 +32,10 @@ class Settings(BaseSettings):
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
 
-    # DeepSeek AI (OpenAI-compatible)
+    # Google Gemini 2.0 Flash (OpenAI-compatible)
     openai_api_key: str
-    openai_model: str = "deepseek-chat"
-    openai_base_url: str = "https://api.deepseek.com"
+    llm_model_name: str = "gemini-2.0-flash"
+    openai_base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
     # Google OAuth
     google_client_id: Optional[str] = None

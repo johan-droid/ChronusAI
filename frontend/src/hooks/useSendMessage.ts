@@ -34,7 +34,7 @@ export const useSendMessage = () => {
         
         // Check for insufficient balance errors
         if (errorString.includes('insufficient_balance') || errorString.includes('402')) {
-          errorMessage = '💳 API credits exhausted. Please contact the administrator to top up the LLM provider balance.';
+          errorMessage = '💳 API credits exhausted or invalid key. Please verify your Google AI Studio API key in the backend environment.';
         } else if (errorString.includes('calendar connection') || errorString.includes('🔗')) {
           errorMessage = '🔗 Calendar connection issue. Please check your Google Calendar integration and try again.';
         } else if (errorString.includes('authentication') || errorString.includes('unauthorized')) {
