@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { SendHorizontal, Sparkles, Calendar, Clock, Zap, CheckCheck, ArrowRight } from 'lucide-react';
+import { SendHorizontal, Sparkles, Calendar, Clock, Zap, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';
@@ -113,7 +113,6 @@ TypingIndicator.displayName = 'TypingIndicator';
 export default function ChatWindow() {
   const [message, setMessage] = useState('');
   const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
-  const [isTyping, setIsTyping] = useState(false);
   const { messages, isLoading, currentResponse } = useChatStore();
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -147,7 +146,6 @@ export default function ChatWindow() {
     if (message.trim() && !isLoading) {
       sendMessage.mutate({ message: message.trim() });
       setMessage('');
-      setIsTyping(false);
       if (textareaRef.current) {
         textareaRef.current.style.height = '44px'; // Reset height on send
       }
@@ -169,7 +167,6 @@ export default function ChatWindow() {
 
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
-    setIsTyping(e.target.value.length > 0);
   }, []);
 
   useEffect(() => {
