@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
-import { lazy, Suspense, memo, useEffect, useState } from 'react';
+import React, { lazy, Suspense, memo, useEffect, useState } from 'react';
 import { useAuthStore } from './store/authStore';
 import Footer from './components/Footer';
 import Toast from './components/Toast';
@@ -132,8 +132,37 @@ function OAuthCallbackGuard({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+          <p className="text-xl text-white">Something went wrong loading the component.</p>
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 rounded text-white font-medium">Reload Page</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore();
+
+  useEffect(() => {
+    // Clear any OAuth remnants and redirect safely outside render cycle
+    if (!isLoading && !isAuthenticated) {
+      sessionStorage.clear();
+      localStorage.removeItem('auth-storage');
+    }
+  }, [isLoading, isAuthenticated]);
 
   // Show loading indicator while checking authentication
   if (isLoading) {
@@ -141,9 +170,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    // Clear any OAuth remnants and redirect
-    sessionStorage.clear();
-    localStorage.removeItem('auth-storage');
     return <Navigate to="/login" replace />;
   }
 
@@ -187,55 +213,57 @@ function App() {
 
           <main className="flex-1 relative z-5 overflow-y-auto">
             <OAuthCallbackGuard>
-              <Suspense fallback={<PageLoader />}>
-                <Routes>
-                  <Route path="/" element={<LandingPage />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <StatsOverview />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/chat"
-                    element={
-                      <ProtectedRoute>
-                        <Chat />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/availability"
-                    element={
-                      <ProtectedRoute>
-                        <Availability />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/history"
-                    element={
-                      <ProtectedRoute>
-                        <History />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <ProtectedRoute>
-                        <Settings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route path="/terms-of-service" element={<TermsOfService />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <StatsOverview />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/chat"
+                      element={
+                        <ProtectedRoute>
+                          <Chat />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/availability"
+                      element={
+                        <ProtectedRoute>
+                          <Availability />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/history"
+                      element={
+                        <ProtectedRoute>
+                          <History />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <ProtectedRoute>
+                          <Settings />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
+              </ErrorBoundary>
             </OAuthCallbackGuard>
           </main>
 

@@ -91,8 +91,24 @@ export const useAuthStore = create<AuthState>()(
         timezone: state.timezone
       }),
       onRehydrateStorage: () => (state) => {
-        // Set loading to false after rehydration
+        // Set loading to false after rehydration, while verifying exp claims
         if (state) {
+          let isValid = false;
+          if (state.accessToken) {
+            try {
+              const payload = JSON.parse(atob(state.accessToken.split('.')[1]));
+              if (payload.exp && payload.exp * 1000 > Date.now()) {
+                isValid = true;
+              }
+            } catch (e) {
+              isValid = false;
+            }
+          }
+          if (!isValid) {
+            state.user = null;
+            state.accessToken = null;
+            state.isAuthenticated = false;
+          }
           state.isLoading = false;
         }
       },

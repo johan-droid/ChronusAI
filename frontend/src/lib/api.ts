@@ -16,8 +16,19 @@ const getBaseUrl = () => {
   return url; // Return without trailing slash
 };
 
-
 const API_BASE_URL = getBaseUrl();
+
+let isRefreshing = false;
+let refreshSubscribers: ((token: string) => void)[] = [];
+
+const subscribeTokenRefresh = (cb: (token: string) => void) => {
+  refreshSubscribers.push(cb);
+};
+
+const onRefreshed = (token: string) => {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+};
 
 class ApiClient {
   private client: AxiosInstance;
@@ -52,10 +63,19 @@ class ApiClient {
       async (error) => {
         const originalRequest = error.config;
 
-        // Only attempt refresh once per request, and skip refresh endpoint itself
         const isRefreshRequest = originalRequest?.url?.includes('auth/refresh');
         if (error.response?.status === 401 && !originalRequest._retry && !isRefreshRequest) {
+          if (isRefreshing) {
+            return new Promise((resolve) => {
+              subscribeTokenRefresh((token: string) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(this.client(originalRequest));
+              });
+            });
+          }
+
           originalRequest._retry = true;
+          isRefreshing = true;
 
           try {
             const { refreshToken, updateAccessToken, updateRefreshToken } = useAuthStore.getState();
@@ -72,12 +92,19 @@ class ApiClient {
                 updateRefreshToken(new_refresh_token);
               }
 
+              isRefreshing = false;
+              onRefreshed(access_token);
+
               // Retry original request with new token
               originalRequest.headers.Authorization = `Bearer ${access_token}`;
               return this.client(originalRequest);
+            } else {
+               throw new Error("No refresh token");
             }
           } catch (refreshError) {
             // Refresh failed, logout user
+            isRefreshing = false;
+            refreshSubscribers = [];
             clearAuthCache();
             useAuthStore.getState().logout();
             return Promise.reject(refreshError);

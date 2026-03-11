@@ -60,7 +60,7 @@ export const useChatStore = create<ChatState>()(
     }),
     {
       name: 'chat-history',
-      partialize: (state) => ({ messages: state.messages }),
+      partialize: (state) => ({ messages: state.messages.slice(-50) }),
     }
   )
 );

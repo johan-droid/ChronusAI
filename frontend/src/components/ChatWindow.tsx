@@ -244,9 +244,6 @@ export default function ChatWindow() {
       sendMessage.mutate({ message: message.trim() });
       setMessage('');
       setIsTyping(false);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = 'auto';
-      }
     }
   }, [message, isLoading, sendMessage]);
 
@@ -269,9 +266,15 @@ export default function ChatWindow() {
   const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
     setIsTyping(e.target.value.length > 0);
-    e.target.style.height = 'auto';
-    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
   }, []);
+
+  // Handle dynamic textarea resizing efficiently
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+    }
+  }, [message]);
 
   // Get contextual suggestions based on last AI message
   const suggestions = messages.length > 0 && messages[messages.length - 1]?.role === 'assistant'
