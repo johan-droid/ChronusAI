@@ -8,7 +8,6 @@ const AnimatedLogo = memo(({ className = "h-8 w-8" }: { className?: string }) =>
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="w-full h-full"
-        style={{ filter: 'drop-shadow(0 0 8px rgba(200, 220, 255, 0.5))' }}
       >
         <defs>
           {/* Thread gradient — brighter silvery blue */}

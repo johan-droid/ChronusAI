@@ -197,9 +197,9 @@ export default function ChatWindow() {
                       <div className="flex items-center justify-between px-2 pb-1.5">
                         <button
                           type="button"
-                          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all"
+                          className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all"
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-5 w-5" />
                         </button>
 
                         <div className="flex items-center gap-3">
@@ -219,13 +219,13 @@ export default function ChatWindow() {
                             <button
                               type="submit"
                               disabled={!message.trim()}
-                              className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                              className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
                                 message.trim()
                                   ? 'bg-white/10 text-white hover:bg-white/15 active:scale-95'
                                   : 'text-slate-700 cursor-not-allowed'
                               }`}
                             >
-                              <SendHorizontal className="h-4 w-4" />
+                              <SendHorizontal className="h-5 w-5" />
                             </button>
                           )}
                         </div>
@@ -233,17 +233,20 @@ export default function ChatWindow() {
                     </div>
                   </form>
 
-                  {/* Quick Prompt Pills */}
-                  <div className="flex flex-wrap justify-center gap-2 mt-5 claude-greeting-delay-2">
-                    {QUICK_PROMPTS.map((prompt, i) => (
+                  {/* Quick Prompt Grid - Refined 2x2 layout */}
+                  <div className="grid grid-cols-2 gap-3 mt-8 max-w-lg mx-auto claude-greeting-delay-2">
+                    {QUICK_PROMPTS.slice(0, 4).map((prompt, i) => (
                       <button
                         key={i}
                         onClick={() => handleQuickPrompt(prompt.text)}
-                        className="claude-pill"
+                        className="claude-pill flex flex-col items-start text-left p-4 h-auto"
                         disabled={isLoading}
                       >
-                        <span>{prompt.emoji}</span>
-                        {prompt.label}
+                        <span className="text-lg mb-2">{prompt.emoji}</span>
+                        <span className="font-semibold text-[14px] text-white/80">{prompt.label}</span>
+                        <span className="text-[12px] text-slate-500 font-medium line-clamp-1 mt-0.5">
+                          {prompt.text}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -292,12 +295,12 @@ export default function ChatWindow() {
                 style={{ scrollbarWidth: 'none' }}
               />
 
-              <div className="flex items-center justify-between px-2 pb-1.5">
+              <div className="flex items-end justify-between px-2 pb-2">
                 <button
                   type="button"
-                  className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all"
+                  className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all mb-0.5"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-5 w-5" />
                 </button>
 
                 <div className="flex items-center gap-3">
@@ -316,13 +319,13 @@ export default function ChatWindow() {
                     <button
                       type="submit"
                       disabled={!message.trim()}
-                      className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                      className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 mb-0.5 ${
                         message.trim()
                           ? 'bg-white/10 text-white hover:bg-white/15 active:scale-95'
                           : 'text-slate-700 cursor-not-allowed'
                       }`}
                     >
-                      <SendHorizontal className="h-4 w-4" />
+                      <SendHorizontal className="h-5 w-5" />
                     </button>
                   )}
                 </div>

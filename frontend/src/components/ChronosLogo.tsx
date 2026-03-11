@@ -12,14 +12,9 @@ const ChronosLogo = memo(({ className = "h-8 w-8" }: { className?: string }) => 
         {/* Legacy Chronos Logo - Simple clock design */}
         <defs>
           <linearGradient id="chronosGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4F46E5" />
-            <stop offset="50%" stopColor="#7C3AED" />
-            <stop offset="100%" stopColor="#EC4899" />
+            <stop offset="0%" stopColor="#6366f1" />
+            <stop offset="100%" stopColor="#a855f7" />
           </linearGradient>
-          
-          <filter id="chronosGlow">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
-          </filter>
         </defs>
 
         {/* Clock outer circle */}
@@ -30,7 +25,6 @@ const ChronosLogo = memo(({ className = "h-8 w-8" }: { className?: string }) => 
           stroke="url(#chronosGrad)"
           strokeWidth="4"
           fill="none"
-          filter="url(#chronosGlow)"
         />
 
         {/* Clock inner circle */}
