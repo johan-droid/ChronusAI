@@ -96,8 +96,8 @@ def upgrade() -> None:
             nullable=False,
         ),
     )
-    op.create_index("ix_organizations_slug", "organizations", ["slug"], unique=True)
-    op.create_index("ix_organizations_owner_id", "organizations", ["owner_id"])
+    op.create_index("ix_organizations_slug", ["slug"], unique=True, table_name="organizations")
+    op.create_index("ix_organizations_owner_id", ["owner_id"], table_name="organizations")
 
     # ── Create org_members table ──────────────────────────────────────────────
     op.create_table(
@@ -140,8 +140,8 @@ def upgrade() -> None:
         ),
         sa.UniqueConstraint("org_id", "user_id", name="uq_org_members_org_user"),
     )
-    op.create_index("ix_org_members_org_id", "org_members", ["org_id"])
-    op.create_index("ix_org_members_user_id", "org_members", ["user_id"])
+    op.create_index("ix_org_members_org_id", ["org_id"], table_name="org_members")
+    op.create_index("ix_org_members_user_id", ["user_id"], table_name="org_members")
 
 
 def downgrade() -> None:
