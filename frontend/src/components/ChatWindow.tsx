@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, memo, useCallback, useMemo } from 'react';
-import { SendHorizontal, Plus, ArrowRight } from 'lucide-react';
+import { SendHorizontal, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';
@@ -82,7 +82,7 @@ TypingIndicator.displayName = 'TypingIndicator';
 export default function ChatWindow() {
   const [message, setMessage] = useState('');
   const [isLlmOnline, setIsLlmOnline] = useState<boolean | null>(null);
-  const { messages, isLoading, currentResponse } = useChatStore();
+  const { messages, isLoading, currentResponse, clearMessages } = useChatStore();
   const { user } = useAuthStore();
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -106,8 +106,11 @@ export default function ChatWindow() {
     };
     checkStatus();
     const interval = setInterval(checkStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      clearMessages();
+    };
+  }, [clearMessages]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -194,14 +197,7 @@ export default function ChatWindow() {
                         style={{ scrollbarWidth: 'none' }}
                       />
 
-                      <div className="flex items-center justify-between px-2 pb-1.5">
-                        <button
-                          type="button"
-                          className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all"
-                        >
-                          <Plus className="h-5 w-5" />
-                        </button>
-
+                      <div className="flex items-center justify-end px-2 pb-1.5">
                         <div className="flex items-center gap-3">
                           {/* Status indicator */}
                           <div className="flex items-center gap-1.5">
@@ -295,14 +291,7 @@ export default function ChatWindow() {
                 style={{ scrollbarWidth: 'none' }}
               />
 
-              <div className="flex items-end justify-between px-2 pb-2">
-                <button
-                  type="button"
-                  className="h-9 w-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-all mb-0.5"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
-
+              <div className="flex items-end justify-end px-2 pb-2">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-1.5">
                     <div className={`w-1.5 h-1.5 rounded-full ${

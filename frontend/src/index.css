@@ -648,18 +648,18 @@ a:focus-visible {
 
 /* Claude-style input container */
 .claude-chat-input {
-  background: rgba(45, 42, 38, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(15, 23, 42, 0.4); /* Darker slate/blue matching dashboard */
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .claude-chat-input:focus-within {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(50, 47, 42, 0.7);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 12px 40px rgba(0, 0, 0, 0.3);
+  border-color: rgba(59, 130, 246, 0.3); /* Neon blue border */
+  background: rgba(15, 23, 42, 0.6);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1), 0 12px 40px rgba(0, 0, 0, 0.3);
 }
 
 /* Quick-action pill buttons - Refined for 2x2 grid */
