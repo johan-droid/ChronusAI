@@ -38,7 +38,7 @@ const ProtectedRoute: React.FC = () => {
       hasTried.current = true;
       authApi
         .refresh()
-        .then(({ data }) => {
+        .then(({ data }: { data: { access_token: string } }) => {
           setAuth(user, data.access_token);
         })
         .catch(() => {
