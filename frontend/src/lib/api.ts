@@ -315,6 +315,11 @@ class ApiClient {
     return response.data;
   }
 
+  async forceCalendarSync(): Promise<{ status: string; message?: string }> {
+    const response = await this.client.post('meetings/sync-google');
+    return response.data;
+  }
+
   async getCalendarAvailability(params?: {
     calendar_ids?: string[];
     start_time?: string;

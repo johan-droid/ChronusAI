@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown, Bell, X, Check, Mail } from 'lucide-react';
 import { useMeetings, useUpdateMeeting } from '../hooks/useMeetings';
@@ -19,6 +20,8 @@ export default function History() {
   const navigate = useNavigate();
   const { data: meetings, isLoading } = useMeetings();
   const updateMeeting = useUpdateMeeting();
+  const [calendarEventsMap, setCalendarEventsMap] = useState<Record<string, { id: string; summary?: string }>>({});
+  const [isRefreshingCalendar, setIsRefreshingCalendar] = useState(false);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
@@ -59,6 +62,35 @@ export default function History() {
     );
   };
 
+  const fetchCalendarEventsForRange = async (start?: string, end?: string) => {
+    try {
+      setIsRefreshingCalendar(true);
+      let params: { start_time?: string; end_time?: string } = {};
+      if (start && end) params = { start_time: start, end_time: end };
+      else if (meetings && meetings.length > 0) {
+        const times = meetings.map(m => new Date(m.start_time).getTime());
+        const min = new Date(Math.min(...times));
+        const max = new Date(Math.max(...times));
+        params.start_time = new Date(min.getTime() - 24 * 60 * 60 * 1000).toISOString();
+        params.end_time = new Date(max.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      } else {
+        params.start_time = new Date().toISOString();
+        params.end_time = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      }
+
+      const resp = await apiClient.getCalendarEvents({ start_time: params.start_time, end_time: params.end_time, max_results: 250 });
+      const map: Record<string, { id: string; summary?: string }> = {};
+      (resp.events || []).forEach((e) => {
+        if (e && e.id) map[String(e.id)] = { id: String(e.id), summary: (e.summary as string) || undefined };
+      });
+      setCalendarEventsMap(map);
+    } catch (err) {
+      console.error('Failed to fetch calendar events:', err);
+    } finally {
+      setIsRefreshingCalendar(false);
+    }
+  };
+
   useEffect(() => {
     const checkAuth = async () => {
       const { accessToken, isAuthenticated } = useAuthStore.getState();
@@ -74,6 +106,41 @@ export default function History() {
     };
     checkAuth();
   }, [navigate]);
+
+  // When meetings load, fetch calendar events for their range so we can prefer calendar summaries
+  useEffect(() => {
+    if (!meetings) return;
+    void fetchCalendarEventsForRange();
+  }, [meetings?.length]);
+
+  // Periodic refresh of calendar events map to keep titles up to date
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (meetings && meetings.length > 0) {
+        void fetchCalendarEventsForRange();
+      }
+    }, 120000); // every 2 minutes
+
+    return () => clearInterval(interval);
+  }, [meetings]);
+
+  const queryClient = useQueryClient();
+
+  const triggerFullSync = async () => {
+    try {
+      setIsRefreshingCalendar(true);
+      // Ask backend to persist calendar summaries into DB
+      await apiClient.forceCalendarSync();
+      // Invalidate meetings so useMeetings will refetch and reflect persisted titles
+      queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      // Also refresh the in-memory calendar events map
+      await fetchCalendarEventsForRange();
+    } catch (err) {
+      console.error('Failed to force calendar sync:', err);
+    } finally {
+      setIsRefreshingCalendar(false);
+    }
+  };
 
   const filteredMeetings = meetings?.filter(m => {
     const matchesFilter = filter === 'all' || m.status === filter;
@@ -189,7 +256,6 @@ export default function History() {
               className="w-full pl-9 pr-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50"
             />
           </div>
-
           <button
             onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-slate-300 hover:bg-white/[0.05] active:scale-[0.98] transition-all"
@@ -197,6 +263,15 @@ export default function History() {
           >
             <ArrowUpDown className="h-4 w-4" />
             <span className="sm:hidden">{sortOrder === 'desc' ? 'Newest' : 'Oldest'}</span>
+          </button>
+
+          <button
+            onClick={() => void triggerFullSync()}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-slate-300 hover:bg-white/[0.05] active:scale-[0.98] transition-all"
+            title="Refresh from Google Calendar"
+            disabled={isRefreshingCalendar}
+          >
+            {isRefreshingCalendar ? 'Refreshing…' : 'Refresh from Google'}
           </button>
         </div>
 
@@ -258,7 +333,11 @@ export default function History() {
                       {/* Title & Status Row */}
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2">
-                          {displayTitle(meeting.title)}
+                          {
+                            meeting.external_event_id && calendarEventsMap[meeting.external_event_id]
+                              ? calendarEventsMap[meeting.external_event_id].summary || displayTitle(meeting.title)
+                              : displayTitle(meeting.title)
+                          }
                         </h3>
                         <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${statusConfig.class}`}>
                           {statusConfig.label}

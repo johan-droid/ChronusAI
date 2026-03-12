@@ -228,6 +228,26 @@ async def get_meetings(
             .order_by(Meeting.start_time)
         )
         return list(result.scalars().all())
+
+
+    @router.post("/sync-google")
+    async def sync_google_calendar_for_user(
+        current_user: User = Depends(get_current_user),
+        calendar_integration = Depends(get_calendar_integration_provider),
+        db: AsyncSession = Depends(get_db),
+    ):
+        """Force a sync from Google Calendar and persist titles/changes into the DB.
+
+        This endpoint is intended to be called from the frontend when the user requests
+        an on-demand refresh so that calendar summaries (friendly titles) are written
+        into the local meetings table.
+        """
+        try:
+            await sync_google_calendar_meetings(current_user, calendar_integration, db)
+            return {"status": "ok", "message": "Calendar sync completed"}
+        except Exception as e:
+            logger.error("manual_google_sync_failed", error=str(e), user_id=getattr(current_user, 'id', None))
+            raise HTTPException(status_code=500, detail="Failed to sync calendar")
     except Exception:
         # If sync fails, still return cached meetings from database with strict filtering
         retention_limit = datetime.now(timezone.utc) - timedelta(days=7)
