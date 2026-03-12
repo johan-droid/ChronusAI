@@ -98,7 +98,8 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
   const isCanceled = message.content.toLowerCase().includes('canceled') ||
     message.content.toLowerCase().includes('❌');
 
-  const formatMeetingTime = (timeString: string) => {
+  const formatMeetingTime = (timeString?: string) => {
+    if (!timeString) return 'TBD';
     try {
       return new Date(timeString).toLocaleString([], {
         weekday: 'short',
@@ -108,7 +109,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
         minute: '2-digit'
       });
     } catch {
-      return timeString;
+      return String(timeString);
     }
   };
 
