@@ -2,16 +2,17 @@ services:
   # Backend API
   - type: web
     name: chronosai-backend
-    env: python
+    runtime: python
     region: oregon
     plan: starter
     buildCommand: pip install -r requirements.txt
     startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
     envVars:
       - key: APP_ENV
         value: production
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.12.8
       - key: SECRET_KEY
         generateValue: true
       - key: ENCRYPTION_KEY
@@ -19,18 +20,14 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        value: sqlite+aiosqlite:///./scheduler.db
+        sync: false
       - key: REDIS_URL
         fromService:
           name: chronosai-redis
           type: redis
           property: connectionString
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
-      - key: OPENAI_MODEL
-        value: deepseek-chat
-      - key: OPENAI_BASE_URL
-        value: https://api.deepseek.com
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -48,7 +45,7 @@ services:
 
   # Redis Cache
   - type: redis
-    name: chronusai-redis
+    name: chronosai-redis
     plan: starter
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []

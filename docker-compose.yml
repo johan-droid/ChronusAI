@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   backend:
     image: ghcr.io/johan-droid/chronosai-backend:latest
@@ -7,42 +5,45 @@ services:
     restart: unless-stopped
     env_file: ./backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD:-scheduler_password}@postgres:5432/scheduler_db
+      DATABASE_URL: postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD}@postgres:5432/scheduler_db
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: http://localhost:8000/api/v1/auth/google/callback
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8000/api/v1/auth/google/callback}
       MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
       MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
-      MICROSOFT_REDIRECT_URI: http://localhost:8000/api/v1/auth/outlook/callback
+      MICROSOFT_REDIRECT_URI: ${MICROSOFT_REDIRECT_URI:-http://localhost:8000/api/v1/auth/outlook/callback}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      OPENAI_BASE_URL: https://api.deepseek.com
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   frontend:
     image: ghcr.io/johan-droid/chronosai-frontend:latest
     container_name: chronosai-frontend
     restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8000
     ports:
       - "3000:80"
+    depends_on:
+      - backend
     command: nginx -g 'daemon off;'
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     container_name: chronosai-db
     environment:
       POSTGRES_DB: scheduler_db
       POSTGRES_USER: scheduler_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scheduler_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U scheduler_user -d scheduler_db"]
       interval: 10s

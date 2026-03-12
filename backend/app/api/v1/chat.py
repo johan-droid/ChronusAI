@@ -82,11 +82,11 @@ async def send_message(
         
         live_events = await fetch_live_calendar_events(calendar_provider, current_user, now_utc, end_time)
         
-        # Format live events for prompt injection
+        # Format live events for prompt injection (limit to 3 to save tokens)
         events_context = "No upcoming events in Google Calendar."
         if live_events:
             context_lines: list[str] = []
-            for event in live_events[:5]:  # Limit to 5 for context
+            for event in live_events[:3]:
                 context_lines.append(
                     f'- ID: {event["id"]}, Title: "{event["title"]}", '
                     f'Start: {event["start_time"].isoformat()}, '
@@ -94,12 +94,12 @@ async def send_message(
                 )
             events_context = "\n".join(context_lines)
         
-        # 2. Implement Self-Correction Retry Loop
-        max_retries = 2
+        # 2. Self-Correction Retry Loop (max 1 retry to save tokens)
+        max_retries = 1
         parsed_intent = None
         last_error = None
         
-        for attempt in range(max_retries):
+        for attempt in range(max_retries + 1):
             try:
                 # Add error feedback to context if this is a redo
                 if last_error:
@@ -135,7 +135,7 @@ async def send_message(
                     logger.error("ai_llm_insufficient_balance", error=str(e))
                     raise HTTPException(status_code=402, detail="insufficient_balance")
                 
-                if attempt == max_retries - 1:
+                if attempt == max_retries:
                     logger.error("ai_intent_parsing_exhausted", error=last_error)
                     return ChatResponse(
                         response="I'm having trouble understanding the specific date or details. Could you please rephrase your request?",
@@ -225,23 +225,31 @@ async def send_message(
                 intent="unknown"
             )
 
-        # If we executed a handler, use enhanced response generation
+        # If we executed a handler, use the handler's own response text when it
+        # already contains a user-facing message (starts with an icon or has
+        # meaningful content).  Only fall back to generate_action_response for
+        # sparse handler results – this eliminates a 2nd Gemini call in ~90% of
+        # cases and is the single biggest token saver.
         if parsed_intent.intent not in ["chat", "unknown"] and 'result' in locals():
-            # Generate natural language explanation of what happened
-            final_text = await llm_service.generate_action_response(
-                user_message=payload.message,
-                intent_data=parsed_intent,
-                action_result=result.dict() if 'result' in locals() else {},
-                history=context
-            )
-            response = ChatResponse(
-                response=final_text,
-                intent=parsed_intent.intent,
-                # Pass through any additional data from handlers
-                meetings=getattr(result, 'meetings', None),
-                availability=getattr(result, 'availability', None),
-                suggestions=getattr(result, 'suggestions', None)
-            )
+            handler_text = getattr(result, 'response', '') or ''
+            # Handler already produced a good human response – reuse it directly
+            if handler_text and len(handler_text) > 20:
+                response = result  # ChatResponse from handler
+            else:
+                # Fall back to LLM explanation only when handler returned no text
+                final_text = await llm_service.generate_action_response(
+                    user_message=payload.message,
+                    intent_data=parsed_intent,
+                    action_result=result.dict() if 'result' in locals() else {},
+                    history=context
+                )
+                response = ChatResponse(
+                    response=final_text,
+                    intent=parsed_intent.intent,
+                    meetings=getattr(result, 'meetings', None),
+                    availability=getattr(result, 'availability', None),
+                    suggestions=getattr(result, 'suggestions', None)
+                )
         
         # Add bot response to context
         if response and hasattr(response, 'response'):

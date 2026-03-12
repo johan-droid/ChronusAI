@@ -209,6 +209,7 @@ export default function ChatWindow() {
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
                         placeholder="Ask me to schedule, reschedule, or check your calendar..."
+                        data-chat-input
                         className="w-full bg-transparent border-none text-white/90 placeholder-white/25 focus:ring-0 resize-none py-3.5 px-5 min-h-[52px] max-h-[150px] overflow-y-auto text-[15px] leading-relaxed outline-none"
                         style={{ scrollbarWidth: 'none' }}
                       />
@@ -375,6 +376,7 @@ export default function ChatWindow() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Message ChronosAI..."
+                data-chat-input
                 className="w-full bg-transparent border-none text-white/90 placeholder-white/25 focus:ring-0 resize-none py-3 px-4 min-h-[48px] max-h-[150px] overflow-y-auto text-[15px] leading-relaxed outline-none"
                 style={{ scrollbarWidth: 'none' }}
               />

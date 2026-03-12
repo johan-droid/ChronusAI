@@ -47,6 +47,42 @@ async def check_availability(
         busy_slots = await calendar_provider.get_free_busy(
             start_of_day, end_of_day, [str(current_user.email)]
         )
+
+        # Fetch actual events to get titles for busy slots
+        calendar_events = []
+        try:
+            calendar_events = await calendar_provider.list_events(start_of_day, end_of_day)
+        except Exception as ev_err:
+            import logging
+            logging.getLogger(__name__).warning("Could not fetch event titles: %s", ev_err)
+
+        def _find_event_title(slot_start: datetime, slot_end: datetime) -> str | None:
+            """Return the summary of the calendar event overlapping this slot."""
+            for ev in calendar_events:
+                ev_start_raw = ev.get("start")
+                ev_end_raw = ev.get("end")
+                # list_events may return datetime objects directly or ISO strings
+                def _to_aware_dt(val):
+                    if val is None:
+                        return None
+                    if isinstance(val, datetime):
+                        return val
+                    if isinstance(val, dict):
+                        s = val.get("dateTime") or val.get("date")
+                        if s:
+                            return datetime.fromisoformat(str(s).replace("Z", "+00:00"))
+                        return None
+                    if isinstance(val, str):
+                        return datetime.fromisoformat(val.replace("Z", "+00:00"))
+                    return None
+                ev_start = _to_aware_dt(ev_start_raw)
+                ev_end = _to_aware_dt(ev_end_raw)
+                if not ev_start or not ev_end:
+                    continue
+                # Check overlap: not (slot_end <= ev_start or slot_start >= ev_end)
+                if not (slot_end <= ev_start or slot_start >= ev_end):
+                    return ev.get("summary") or None
+            return None
         
         # Generate 30-minute time slots
         all_slots: List[TimeSlotResponse] = []
@@ -68,23 +104,26 @@ async def check_availability(
             # Check if slot is in past
             is_past = slot_end <= now
             
-            # Determine slot status
+            # Determine slot status and event title
+            event_title = None
             if is_past:
-                status = SlotStatus.PAST
+                slot_status = SlotStatus.PAST
                 is_available = False
             elif is_busy:
-                status = SlotStatus.BUSY
+                slot_status = SlotStatus.BUSY
                 is_available = False
+                event_title = _find_event_title(current_slot, slot_end)
             else:
-                status = SlotStatus.AVAILABLE
+                slot_status = SlotStatus.AVAILABLE
                 is_available = True
             
             all_slots.append(TimeSlotResponse(
                 start_time=current_slot.isoformat(),
                 end_time=slot_end.isoformat(),
                 is_available=is_available,
-                status=status,
-                timezone=tz_str
+                status=slot_status,
+                timezone=tz_str,
+                event_title=event_title,
             ))
             
             current_slot = slot_end

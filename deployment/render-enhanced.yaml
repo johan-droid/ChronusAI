@@ -7,17 +7,12 @@ services:
     plan: starter
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    healthCheckPath: /health
-    healthCheck:
-      path: /health
-      intervalSeconds: 15
-      timeoutSeconds: 10
-      gracePeriodSeconds: 30
+    healthCheckPath: /api/v1/health
     envVars:
       - key: APP_ENV
         value: production
       - key: PYTHON_VERSION
-        value: 3.11.0
+        value: 3.12.8
       - key: SECRET_KEY
         generateValue: true
       - key: ENCRYPTION_KEY
@@ -27,20 +22,16 @@ services:
       - key: JWT_ALGORITHM
         value: HS256
       - key: JWT_EXPIRE_MINUTES
-        value: 60
+        value: 1440
       - key: DATABASE_URL
-        value: sqlite+aiosqlite:///./scheduler.db
+        sync: false
       - key: REDIS_URL
         fromService:
           name: chronosai-redis
           type: redis
           property: connectionString
-      - key: OPENAI_API_KEY
+      - key: GEMINI_API_KEY
         sync: false
-      - key: OPENAI_MODEL
-        value: deepseek-chat
-      - key: OPENAI_BASE_URL
-        value: https://api.deepseek.com
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET
@@ -65,16 +56,11 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
     healthCheckPath: /
-    healthCheck:
-      path: /
-      intervalSeconds: 15
-      timeoutSeconds: 10
-      gracePeriodSeconds: 30
     envVars:
       - key: VITE_API_URL
-        value: https://chronosai-backend.onrender.com
+        sync: false
       - key: VITE_WS_URL
-        value: wss://chronosai-backend.onrender.com
+        sync: false
 
   # Redis Cache Service
   - type: redis
@@ -83,34 +69,3 @@ services:
     plan: starter
     maxmemoryPolicy: allkeys-lru
     ipAllowList: []
-    healthCheck:
-      path: /ping
-
-  # Background Worker (if needed)
-  - type: worker
-    name: chronosai-worker
-    runtime: docker
-    region: oregon
-    plan: starter
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    envVars:
-      - key: APP_ENV
-        value: production
-      - key: WORKER_MODE
-        value: true
-      # Copy all other env vars from backend service
-    healthCheck:
-      path: /worker/health
-      gracePeriodSeconds: 30
-
-  # PostgreSQL Database (Optional - for production)
-  - type: pserv
-    name: chronosai-postgres
-    region: oregon
-    plan: starter
-    databaseName: chronosai
-    user: chronos_user
-    ipAllowList: []
-    healthCheck:
-      path: /health

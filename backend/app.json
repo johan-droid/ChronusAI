@@ -4,7 +4,7 @@
   "keywords": ["fastapi", "python", "ai", "calendar", "scheduler"],
   "website": "https://github.com/johan-droid/ChronosAI",
   "repository": "https://github.com/johan-droid/ChronosAI",
-  "stack": "heroku-22",
+  "stack": "heroku-24",
   "buildpacks": [
     {
       "url": "heroku/python"

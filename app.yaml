@@ -1,4 +1,4 @@
-name: chronusai
+name: chronosai
 region: nyc
 services:
   - name: backend
@@ -71,6 +71,6 @@ services:
 databases:
   - name: db
     engine: PG
-    version: "15"
+    version: "16"
     size_slug: db-s-dev-database
     num_nodes: 1

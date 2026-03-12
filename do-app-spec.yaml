@@ -10,7 +10,7 @@ region: nyc
 databases:
   - name: db
     engine: PG
-    version: "15"
+    version: "16"
     size: db-s-dev-database
     num_nodes: 1
 
@@ -69,13 +69,10 @@ services:
       - key: SECRET_KEY
         scope: RUN_TIME
         type: SECRET
-      # OpenAI / DeepSeek
-      - key: OPENAI_API_KEY
+      # AI Provider
+      - key: GEMINI_API_KEY
         scope: RUN_TIME
         type: SECRET
-      - key: OPENAI_BASE_URL
-        scope: RUN_TIME
-        value: https://api.deepseek.com
       # App settings
       - key: APP_ENV
         scope: RUN_TIME

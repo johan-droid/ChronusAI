@@ -15,6 +15,7 @@ class TimeSlotResponse(BaseModel):
     is_available: bool
     status: SlotStatus = Field(..., description="Slot status: available, busy, or past")
     timezone: str
+    event_title: str | None = Field(None, description="Title of the event occupying this slot (busy slots only)")
 
 
 class AvailabilityRequest(BaseModel):

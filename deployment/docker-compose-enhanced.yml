@@ -1,43 +1,43 @@
-version: '3.9'
-
 services:
   backend:
-    build: ./backend
+    build: ../backend
     ports:
       - "8000:8000"
-    env_file: ./backend/.env
+    env_file: ../backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD:-scheduler_password}@postgres:5432/scheduler_db
+      DATABASE_URL: postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD}@postgres:5432/scheduler_db
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      GOOGLE_REDIRECT_URI: http://localhost:8000/api/v1/auth/google/callback
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8000/api/v1/auth/google/callback}
       MICROSOFT_CLIENT_ID: ${MICROSOFT_CLIENT_ID}
       MICROSOFT_CLIENT_SECRET: ${MICROSOFT_CLIENT_SECRET}
-      MICROSOFT_REDIRECT_URI: http://localhost:8000/api/v1/auth/outlook/callback
+      MICROSOFT_REDIRECT_URI: ${MICROSOFT_REDIRECT_URI:-http://localhost:8000/api/v1/auth/outlook/callback}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       REDIS_URL: redis://redis:6379/0
-      FRONTEND_URL: http://localhost:5173
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
-      - ./backend:/app
+      - ../backend:/app
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
     networks:
       - chronos-network
 
   frontend:
-    build: ./frontend
+    build: ../frontend
     ports:
       - "5173:5173"
     environment:
       - VITE_API_URL=http://localhost:8000
       - VITE_WS_URL=ws://localhost:8000
     volumes:
-      - ./frontend:/app
+      - ../frontend:/app
       - /app/node_modules
     command: npm run dev -- --host
     restart: unless-stopped
@@ -45,14 +45,13 @@ services:
       - chronos-network
 
   postgres:
-    image: postgres:15-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: scheduler_db
       POSTGRES_USER: scheduler_user
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-scheduler_password}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pg_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -66,8 +65,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data

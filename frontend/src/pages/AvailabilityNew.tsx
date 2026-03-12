@@ -64,14 +64,13 @@ export default function Availability() {
           // Re-fetch user to get updated timezone
           await apiClient.getCurrentUser();
         }
-        await fetchAvailability();
       } catch (err) {
         console.error('Auth/Timezone error:', err);
         navigate('/login');
       }
     };
     checkAuth();
-  }, [navigate, fetchAvailability]);
+  }, [navigate]);
 
   useEffect(() => {
     if (user) {
@@ -136,7 +135,7 @@ export default function Availability() {
               <span className="avail-slot-indicator" />
               <span className="avail-slot-time">{formatTime(slot.start_time)}</span>
               <span className="avail-slot-label">
-                {slot.status === 'past' ? 'Past' : slot.is_available ? 'Free' : 'Busy'}
+                {slot.status === 'past' ? 'Past' : slot.is_available ? 'Free' : (slot.event_title || 'Busy')}
               </span>
             </div>
           ))}

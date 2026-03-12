@@ -297,7 +297,6 @@ debug.log
 *~
 
 # Emacs
-*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -415,7 +414,7 @@ models/
 # ===========================================
 # DOCKER TEST ARTIFACTS
 # ===========================================
-test_*.py
+# NOTE: test_*.py is NOT ignored — test source files must be committed
 test_*.db
 test_migration.db
 test_overlap.db

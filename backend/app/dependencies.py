@@ -146,11 +146,36 @@ async def get_calendar_integration_provider(
         )
 
 
+# ---------------------------------------------------------------------------
+# In-memory conversation store (per-user, with max turns + TTL)
+# ---------------------------------------------------------------------------
+import time as _time
+from collections import OrderedDict
+
+_MAX_CONTEXT_TURNS = 10       # keep at most 10 messages per user
+_CONTEXT_TTL_SECS = 30 * 60  # 30 minutes
+_MAX_USERS = 500              # evict oldest user if more
+
+_conversation_store: OrderedDict[str, dict[str, Any]] = OrderedDict()
+
+
 async def get_conversation_context(user_id: str) -> list[dict[str, Any]]:
-    """Get conversation context (in-memory fallback)."""
-    return []
+    """Return up to _MAX_CONTEXT_TURNS recent messages for the user."""
+    entry = _conversation_store.get(user_id)
+    if entry is None:
+        return []
+    # TTL check
+    if _time.time() - entry["ts"] > _CONTEXT_TTL_SECS:
+        _conversation_store.pop(user_id, None)
+        return []
+    return list(entry["messages"][-_MAX_CONTEXT_TURNS:])
 
 
 async def save_conversation_context(user_id: str, messages: list[dict[str, Any]]):
-    """Save conversation context (no-op without Redis)."""
-    pass
+    """Persist (in-memory) the last _MAX_CONTEXT_TURNS messages."""
+    trimmed = messages[-_MAX_CONTEXT_TURNS:] if len(messages) > _MAX_CONTEXT_TURNS else messages
+    _conversation_store[user_id] = {"messages": trimmed, "ts": _time.time()}
+    _conversation_store.move_to_end(user_id)
+    # Evict oldest users if store grows too large
+    while len(_conversation_store) > _MAX_USERS:
+        _conversation_store.popitem(last=False)

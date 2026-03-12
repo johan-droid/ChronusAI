@@ -5,122 +5,72 @@ from datetime import datetime, timezone
 from typing import Any, List, Dict, Tuple
 
 import google.genai as genai
-from google.genai.models import Models
+from google.genai import types
 from app.config import settings
+
+# Token caps – much lower than before to conserve quota
+_PATTERN_MAX_TOKENS = 800
+_SUGGEST_MAX_TOKENS = 600
+_CONFLICT_MAX_TOKENS = 600
+_OPTIMIZE_MAX_TOKENS = 800
+
+# Compressed scheduling prompt – ~75 % shorter than original
+_SCHEDULING_PROMPT = (
+    "You are ChronosAI scheduling AI. Respond ONLY with valid JSON.\n"
+    "Capabilities: pattern analysis, conflict resolution, optimal time suggestion, focus-time preservation.\n"
+    "Meeting type norms: standup 15m daily, sync 30m 2-3x/wk, review 60m weekly, client 45-60m, 1:1 30m weekly.\n"
+    "JSON keys (include relevant ones): analysis, recommendations[{type,description,impact}], "
+    "optimal_times[{time,reason,confidence}], conflict_resolution{strategy,suggestion}, "
+    "productivity_tips[], meeting_insights{total_meetings,avg_duration,focus_time_available}.\n"
+)
 
 
 class AISchedulingService:
-    """Advanced AI-powered service with Google Calendar integration."""
-    
+    """AI scheduling service – optimised for low token usage."""
+
     def __init__(self) -> None:
         self.client = genai.Client(api_key=settings.gemini_api_key)
         self.model_name = settings.llm_model_name
 
-    @staticmethod
-    def _scheduling_intelligence_prompt() -> str:
-        """Comprehensive prompt for AI scheduling intelligence (Zoom/Google Meet/Teams aware)."""
-        return (
-            "You are ChronosAI, an expert scheduling AI with deep understanding of meeting patterns and optimization. "
-            "You support Google Calendar, Google Meet, Microsoft Graph/Outlook, Teams online meetings, and Zoom. "
-            "Provide recommendations that respect platform limits: Zoom 15-720 min; Meet/Teams follow calendar event duration.\n\n"
-            "SCHEDULING INTELLIGENCE CAPABILITIES:\n"
-            "• Analyze meeting patterns and productivity\n"
-            "• Optimize meeting types and durations\n"
-            "• Suggest best times based on historical data\n"
-            "• Detect and resolve scheduling conflicts\n"
-            "• Recommend meeting frequency adjustments\n"
-            "• Identify time-wasting meetings\n"
-            "• Suggest focus time blocks\n"
-            "• Optimize multi-attendee coordination\n\n"
-            
-            "📊 MEETING TYPE OPTIMIZATION:\n"
-            "• Standup meetings: 15 minutes, daily morning\n"
-            "• Team sync: 30 minutes, 2-3 times per week\n"
-            "• Project reviews: 60 minutes, weekly/bi-weekly\n"
-            "• Client calls: 45-60 minutes, as needed\n"
-            "• Brainstorming: 60-90 minutes, when energy is high\n"
-            "• 1-on-1s: 30 minutes, weekly\n"
-            "• All-hands: 60 minutes, monthly\n\n"
-            
-            "⏰ TIME ZONE INTELLIGENCE:\n"
-            "• Automatically detect attendee time zones\n"
-            "• Suggest meeting times that work across zones\n"
-            "• Account for daylight saving time changes\n"
-            "• Consider cultural meeting norms\n\n"
-            
-            "🎯 PRIORITY-BASED SCHEDULING:\n"
-            "• High priority: Best time slots, no conflicts\n"
-            "• Medium priority: Flexible timing, minor conflicts acceptable\n"
-            "• Low priority: Can be rescheduled easily\n\n"
-            
-            "🔄 RECURRING MEETING PATTERNS:\n"
-            "• Daily standups: Same time each day\n"
-            "• Weekly reviews: Consistent day/time\n"
-            "• Monthly syncs: First/last week of month\n"
-            "• Quarterly planning: Start of quarter\n\n"
-            
-            "⚡ RESPONSE FORMAT:\n"
-            "Respond with JSON containing:\n"
-            "{\n"
-            "  'analysis': 'Meeting pattern analysis',\n"
-            "  'recommendations': [{'type': 'schedule_optimization', 'description': 'What to improve', 'impact': 'high|medium|low'}],\n"
-            "  'optimal_times': [{'time': 'ISO_datetime', 'reason': 'Why this time is optimal', 'confidence': 0.95}],\n"
-            "  'conflict_resolution': {'strategy': 'move|shorten|cancel', 'suggestion': 'How to resolve'},\n"
-            "  'productivity_tips': ['Tip 1', 'Tip 2'],\n"
-            "  'meeting_insights': {'total_meetings': 25, 'avg_duration': 45, 'focus_time_available': 12}\n"
-            "}"
-        )
-
-    async def analyze_calendar_patterns(
-        self, 
-        events: List[Dict[str, Any]], 
-        user_timezone: str,
-        date_range: Tuple[datetime, datetime]
-    ) -> Dict[str, Any]:
-        """Analyze calendar patterns and provide optimization recommendations."""
+    # ---- helpers ----
+    async def _call(self, user_content: str, max_tokens: int, temperature: float = 0.3) -> Dict[str, Any]:
+        """Shared Gemini call with compressed system prompt."""
+        contents = [{"role": "user", "parts": [{"text": user_content}]}]
         try:
-            # Prepare calendar data for analysis
-            calendar_summary = self._prepare_calendar_summary(events, date_range)
-            
-            messages = [
-                {"role": "system", "content": self._scheduling_intelligence_prompt()},
-                {
-                    "role": "user", 
-                    "content": f"""
-                    Analyze this calendar data for {date_range[0].date()} to {date_range[1].date()} in {user_timezone} timezone:
-                    
-                    {json.dumps(calendar_summary, indent=2)}
-                    
-                    Provide insights on:
-                    1. Meeting patterns and frequency
-                    2. Optimal time slots for different meeting types
-                    3. Productivity recommendations
-                    4. Conflict resolution strategies
-                    5. Focus time availability
-                    """
-                }
-            ]
-            
-            response = await self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_name,
-                contents=messages,
-                config=genai.GenerationConfig(
-                    temperature=0.3,
-                    max_output_tokens=1500
-                )
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=_SCHEDULING_PROMPT,
+                    temperature=temperature,
+                    max_output_tokens=max_tokens,
+                ),
             )
-            
-            content = response.text
-            if content:
-                try:
-                    return json.loads(content)
-                except json.JSONDecodeError:
-                    return {"analysis": content, "recommendations": []}
-            
-            return {"analysis": "Unable to analyze calendar patterns", "recommendations": []}
-            
+            text = (response.text or "").strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            return json.loads(text.strip())
+        except json.JSONDecodeError:
+            return {"analysis": response.text if response else "Parse error", "recommendations": []}
         except Exception as e:
-            return {"analysis": f"Error analyzing patterns: {str(e)}", "recommendations": []}
+            return {"analysis": f"Error: {e}", "recommendations": []}
+
+    # ---- public API (same signatures, lower token cost) ----
+    async def analyze_calendar_patterns(
+        self,
+        events: List[Dict[str, Any]],
+        user_timezone: str,
+        date_range: Tuple[datetime, datetime],
+    ) -> Dict[str, Any]:
+        summary = self._prepare_calendar_summary(events, date_range)
+        prompt = (
+            f"Analyze calendar {date_range[0].date()} to {date_range[1].date()} tz={user_timezone}.\n"
+            f"{json.dumps(summary)}\n"
+            "Return: patterns, optimal slots, productivity tips, conflicts, focus time."
+        )
+        return await self._call(prompt, _PATTERN_MAX_TOKENS)
 
     async def suggest_optimal_meeting_times(
         self,
@@ -129,162 +79,42 @@ class AISchedulingService:
         meeting_type: str,
         user_timezone: str,
         preferred_days: List[str] = None,
-        time_constraints: Dict[str, Any] = None
+        time_constraints: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """Suggest optimal meeting times based on AI analysis."""
-        try:
-            current_time = datetime.now(timezone.utc)
-            
-            messages = [
-                {"role": "system", "content": self._scheduling_intelligence_prompt()},
-                {
-                    "role": "user",
-                    "content": f"""
-                    Suggest optimal meeting times for:
-                    - Duration: {duration_minutes} minutes
-                    - Meeting type: {meeting_type}
-                    - Attendees: {', '.join(attendees)}
-                    - Timezone: {user_timezone}
-                    - Preferred days: {preferred_days or 'Any'}
-                    - Current time: {current_time.isoformat()}
-                    - Constraints: {time_constraints or 'None'}
-                    
-                    Consider:
-                    1. Best times for this meeting type
-                    2. Attendee availability patterns
-                    3. Energy levels and productivity
-                    4. Time zone considerations
-                    5. Recurring pattern optimization
-                    
-                    Provide 3-5 specific time suggestions with reasoning.
-                    """
-                }
-            ]
-            
-            response = await self.client.models.generate_content(
-                model=self.model_name,
-                contents=messages,
-                config=genai.GenerationConfig(
-                    temperature=0.4,
-                    max_output_tokens=1000
-                )
-            )
-            
-            content = response.text
-            if content:
-                try:
-                    return json.loads(content)
-                except json.JSONDecodeError:
-                    return {"suggestions": [], "analysis": content}
-            
-            return {"suggestions": [], "analysis": "Unable to generate suggestions"}
-            
-        except Exception as e:
-            return {"suggestions": [], "analysis": f"Error generating suggestions: {str(e)}"}
+        prompt = (
+            f"Suggest 3 optimal times: {duration_minutes}min {meeting_type}, "
+            f"attendees={','.join(attendees[:5])}, tz={user_timezone}, "
+            f"days={preferred_days or 'any'}, now={datetime.now(timezone.utc).isoformat()}, "
+            f"constraints={json.dumps(time_constraints or {})}"
+        )
+        return await self._call(prompt, _SUGGEST_MAX_TOKENS, temperature=0.4)
 
     async def resolve_conflicts_intelligently(
         self,
         conflicting_events: List[Dict[str, Any]],
         new_event: Dict[str, Any],
-        user_preferences: Dict[str, Any] = None
+        user_preferences: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """AI-powered conflict resolution with smart suggestions."""
-        try:
-            messages = [
-                {"role": "system", "content": self._scheduling_intelligence_prompt()},
-                {
-                    "role": "user",
-                    "content": f"""
-                    Resolve scheduling conflicts intelligently:
-                    
-                    New Event: {json.dumps(new_event, indent=2)}
-                    Conflicting Events: {json.dumps(conflicting_events, indent=2)}
-                    User Preferences: {json.dumps(user_preferences or {}, indent=2)}
-                    
-                    Analyze and provide:
-                    1. Conflict severity assessment
-                    2. Resolution strategies (move, shorten, cancel)
-                    3. Specific alternative time suggestions
-                    4. Impact on productivity and priorities
-                    5. Recommended action with reasoning
-                    
-                    Consider meeting importance, attendee availability, and optimal scheduling patterns.
-                    """
-                }
-            ]
-            
-            response = await self.client.models.generate_content(
-                model=self.model_name,
-                contents=messages,
-                config=genai.GenerationConfig(
-                    temperature=0.3,
-                    max_output_tokens=1200
-                )
-            )
-            
-            content = response.text
-            if content:
-                try:
-                    return json.loads(content)
-                except json.JSONDecodeError:
-                    return {"resolution": content, "alternatives": []}
-            
-            return {"resolution": "Unable to resolve conflicts", "alternatives": []}
-            
-        except Exception as e:
-            return {"resolution": f"Error resolving conflicts: {str(e)}", "alternatives": []}
+        prompt = (
+            f"Resolve conflict: new={json.dumps(new_event)}, "
+            f"conflicts={json.dumps(conflicting_events)}, "
+            f"prefs={json.dumps(user_preferences or {})}. "
+            "Suggest strategy and alternative times."
+        )
+        return await self._call(prompt, _CONFLICT_MAX_TOKENS)
 
     async def optimize_meeting_schedule(
         self,
         events: List[Dict[str, Any]],
         goals: List[str],
-        constraints: Dict[str, Any] = None
+        constraints: Dict[str, Any] = None,
     ) -> Dict[str, Any]:
-        """Optimize entire meeting schedule based on goals and constraints."""
-        try:
-            messages = [
-                {"role": "system", "content": self._scheduling_intelligence_prompt()},
-                {
-                    "role": "user",
-                    "content": f"""
-                    Optimize this meeting schedule for better productivity:
-                    
-                    Current Events: {json.dumps(events, indent=2)}
-                    Goals: {', '.join(goals)}
-                    Constraints: {json.dumps(constraints or {}, indent=2)}
-                    
-                    Provide optimization recommendations for:
-                    1. Meeting frequency and duration adjustments
-                    2. Better time slot allocations
-                    3. Focus time preservation
-                    4. Energy management throughout the day
-                    5. Meeting type improvements
-                    
-                    Include specific actions to take and expected benefits.
-                    """
-                }
-            ]
-            
-            response = await self.client.models.generate_content(
-                model=self.model_name,
-                contents=messages,
-                config=genai.GenerationConfig(
-                    temperature=0.3,
-                    max_output_tokens=1500
-                )
-            )
-            
-            content = response.text
-            if content:
-                try:
-                    return json.loads(content)
-                except json.JSONDecodeError:
-                    return {"optimizations": [], "analysis": content}
-            
-            return {"optimizations": [], "analysis": "Unable to optimize schedule"}
-            
-        except Exception as e:
-            return {"optimizations": [], "analysis": f"Error optimizing schedule: {str(e)}"}
+        prompt = (
+            f"Optimize schedule: events={json.dumps(events[:15])}, "
+            f"goals={','.join(goals)}, constraints={json.dumps(constraints or {})}. "
+            "Return frequency/duration adjustments, focus time, energy tips."
+        )
+        return await self._call(prompt, _OPTIMIZE_MAX_TOKENS)
 
     def _prepare_calendar_summary(
         self, 

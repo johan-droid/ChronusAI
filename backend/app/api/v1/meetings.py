@@ -99,9 +99,8 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
             # events are always plain dicts from list_events
             event_id = event.get("id")
             event_summary = event.get("summary", "No Title")
-            # If the summary is just an email address, replace with something friendlier
-            if event_summary and "@" in event_summary and " " not in event_summary.strip():
-                event_summary = "Meeting"
+            # Preserve the original Google Calendar summary as-is
+            # The frontend displayTitle() handles email-like titles gracefully
             event_description = event.get("description", "")
             event_start_raw = event.get("start")
             event_end_raw = event.get("end")

@@ -43,7 +43,7 @@ build-backend:
 
 build-frontend:
 	@echo "🔨 Building frontend Docker image..."
-	docker build -t $(FRONTEND_IMAGE):$(TAG) ./deployment/frontend
+	docker build -t $(FRONTEND_IMAGE):$(TAG) ./frontend
 	@echo "✅ Frontend image built: $(FRONTEND_IMAGE):$(TAG)"
 
 build-all: build-backend build-frontend
@@ -73,12 +73,12 @@ deploy:
 
 deploy-prod:
 	@echo "🚀 Deploying production environment..."
-	docker-compose -f docker-compose.prod.yml up -d
+	docker-compose -f deployment/docker-compose.prod.yml up -d
 	@echo "✅ Production deployment complete!"
 
 deploy-enhanced:
 	@echo "🚀 Deploying enhanced environment..."
-	docker-compose -f docker-compose-enhanced.yml up -d
+	docker-compose -f deployment/docker-compose-enhanced.yml up -d
 	@echo "✅ Enhanced deployment complete!"
 
 # Development Commands
@@ -121,12 +121,12 @@ test:
 
 test-backend:
 	@echo "🧪 Running backend tests..."
-	docker run --rm -v $(PWD)/backend:/app -w /app python:3.11-slim bash -c "pip install -r requirements.txt && python -m pytest"
+	docker run --rm -v $(PWD)/backend:/app -w /app python:3.12-slim bash -c "pip install -r requirements.txt && python -m pytest"
 	@echo "✅ Backend tests complete!"
 
 test-frontend:
 	@echo "🧪 Running frontend tests..."
-	docker run --rm -v $(PWD)/deployment/frontend:/app -w /app node:18-slim bash -c "npm ci && npm test"
+	docker run --rm -v $(PWD)/frontend:/app -w /app node:22-slim bash -c "npm ci && npm test"
 	@echo "✅ Frontend tests complete!"
 
 # Stop Commands
@@ -137,7 +137,7 @@ stop:
 
 stop-prod:
 	@echo "🛑 Stopping production services..."
-	docker-compose -f docker-compose.prod.yml down
+	docker-compose -f deployment/docker-compose.prod.yml down
 	@echo "✅ Production services stopped!"
 
 # Utility Commands

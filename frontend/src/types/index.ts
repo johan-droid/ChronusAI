@@ -113,6 +113,7 @@ export interface TimeSlot {
   is_available: boolean;
   status: SlotStatus;
   timezone: string;
+  event_title?: string | null;
 }
 
 export interface AvailabilityResponse {

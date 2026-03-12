@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     gemini_api_key: str
     llm_model_name: str = "gemini-3-flash-preview"
 
+    # LLM token budget tunables (override via env to control cost)
+    llm_max_history_turns: int = 6          # conversation turns sent to Gemini
+    llm_parse_max_tokens: int = 600         # max output tokens for intent parsing
+    llm_action_max_tokens: int = 400        # max output tokens for action responses
+    llm_helpful_max_tokens: int = 300       # max output tokens for chat responses
+    llm_cache_size: int = 128               # LRU cache entries for dedup
+
     # Google OAuth
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None
