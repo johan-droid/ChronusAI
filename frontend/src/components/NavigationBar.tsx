@@ -178,7 +178,7 @@ const NavigationBar = memo(({
                             <div className="space-y-2">
                                 {[
                                     { path: '/dashboard', label: 'Dashboard', icon: BarChart3, color: 'text-blue-400' },
-                                    { path: '/chat', label: 'Chat', icon: () => null, color: 'text-cyan-400' },
+                                    { path: '/chat', label: 'Chat', icon: MessageSquare, color: 'text-cyan-400' },
                                     { path: '/availability', label: 'Availability', icon: Clock, color: 'text-purple-400' },
                                     { path: '/history', label: 'History', icon: Calendar, color: 'text-emerald-400' },
                                 ].map(({ path, label, icon: Icon, color }) => (
@@ -197,7 +197,21 @@ const NavigationBar = memo(({
                                 ))}
                             </div>
 
-                            <div className="pt-4 mt-4 border-t border-white/10">
+                            <div className="pt-4 mt-4 border-t border-white/10 space-y-3">
+                                {user && (
+                                    <div className="px-4 py-3 rounded-xl bg-white/[0.03] border border-white/5">
+                                        <p className="text-sm font-bold text-white truncate">{user.full_name || 'User'}</p>
+                                        <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                                    </div>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={() => { handleNav('/settings'); }}
+                                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 text-slate-300 text-base font-semibold flex items-center gap-3 hover:bg-white/10 border border-white/5 smooth-transition active:scale-[0.98]"
+                                >
+                                    <Calendar className="h-5 w-5 text-blue-400" />
+                                    Settings
+                                </button>
                                 <button
                                     type="button"
                                     onClick={() => { setShowLogout(true); setMobileMenuOpen(false); }}

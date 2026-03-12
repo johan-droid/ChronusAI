@@ -5,7 +5,7 @@ import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
 import ChronosLogo from '../components/ChronosLogo';
 import AuthDebug from '../components/AuthDebug';
-import { Loader2, Shield, Sparkles, Zap, Lock, Mail, Key, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Loader2, Shield, Sparkles, Zap, Lock, Mail, Key, User as UserIcon, ArrowRight, Calendar, Bot } from 'lucide-react';
 import { apiClient } from '../lib/api';
 import { clearAllCache } from '../lib/cache';
 import { useAuthStore } from '../store/authStore';
@@ -151,7 +151,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[#030303] text-foreground relative overflow-hidden font-sans">
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40 lg:opacity-40 max-lg:opacity-50">
         <ColorBends
           colors={["#4F46E5", "#7C3AED", "#EC4899"]}
           rotation={15}
@@ -165,7 +165,13 @@ export default function Login() {
           transparent
           autoRotate={0.02}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/0 via-[#030303]/40 to-[#030303]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#030303]/0 via-[#030303]/30 to-[#030303]/80" />
+      </div>
+
+      {/* Mobile ambient glow orbs */}
+      <div className="lg:hidden fixed inset-0 z-[1] pointer-events-none">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] h-[200px] bg-indigo-500/[0.06] rounded-full blur-[100px]" />
+        <div className="absolute bottom-1/3 right-0 w-[200px] h-[200px] bg-purple-500/[0.05] rounded-full blur-[80px]" />
       </div>
 
       <div className="stars opacity-20" />
@@ -173,12 +179,22 @@ export default function Login() {
 
       <div className="relative z-10 min-h-screen flex flex-col lg:flex-row items-center justify-center p-4 sm:p-6 lg:p-8">
         {/* Mobile Header - Visible only on mobile */}
-        <div className="lg:hidden fixed top-0 left-0 right-0 z-50 p-4 flex items-center justify-between bg-[#030303]/80 backdrop-blur-xl border-b border-white/5">
-          <div className="flex items-center gap-2">
-            <AnimatedLogo className="h-8 w-8" />
-            <span className="text-lg font-bold gradient-text">ChronosAI</span>
-            <ChronosLogo className="h-6 w-6" />
+        <div className="lg:hidden fixed top-0 left-0 right-0 z-50">
+          <div className="p-4 flex items-center justify-between bg-[#030303]/80 backdrop-blur-xl border-b border-white/[0.06]">
+            <div className="flex items-center gap-2.5">
+              <AnimatedLogo className="h-8 w-8" />
+              <span className="text-lg font-bold gradient-text tracking-tight">ChronosAI</span>
+            </div>
+            <button
+              onClick={() => navigate('/')}
+              className="text-xs text-slate-500 hover:text-white transition-colors font-medium flex items-center gap-1"
+            >
+              <ArrowRight className="h-3 w-3 rotate-180" />
+              Home
+            </button>
           </div>
+          {/* Gradient accent line */}
+          <div className="h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
         </div>
 
         <div className="w-full max-w-6xl grid lg:grid-cols-2 gap-12 items-center pt-16 lg:pt-0">
@@ -258,13 +274,59 @@ export default function Login() {
           {/* Right Side - Auth Form */}
           <div className="w-full max-w-md mx-auto">
             {/* Mobile Welcome Text */}
-            <div className="lg:hidden text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-tight">
-                {mode === 'oauth' ? 'Welcome Back' : mode === 'login' ? 'Sign In' : 'Create Account'}
-              </h2>
-              <p className="text-slate-400 text-sm">
-                {mode === 'oauth' ? 'Sign in to continue to ChronosAI' : 'Enter your details to continue'}
-              </p>
+            <div className="lg:hidden text-center mb-8 space-y-5">
+              {/* Animated AI badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] text-xs font-medium text-slate-400"
+              >
+                <div className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse shadow-[0_0_6px_rgba(129,140,248,0.6)]" />
+                <span>AI-Powered Scheduling</span>
+              </motion.div>
+
+              <motion.h2
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.15 }}
+                className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight"
+              >
+                {mode === 'oauth' ? (
+                  <>Welcome to{' '}<span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400">ChronosAI</span></>
+                ) : mode === 'login' ? 'Sign In' : 'Create Account'}
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.25, duration: 0.5 }}
+                className="text-slate-500 text-sm font-medium"
+              >
+                {mode === 'oauth' ? 'Your intelligent scheduling companion' : 'Enter your details to continue'}
+              </motion.p>
+
+              {/* Mobile Feature Highlights Strip */}
+              {mode === 'oauth' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.5 }}
+                  className="flex items-center justify-center gap-3 pt-1"
+                >
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <Sparkles className="h-3 w-3 text-indigo-400" />
+                    <span className="text-[10px] font-semibold text-slate-400">Smart NLP</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <Calendar className="h-3 w-3 text-blue-400" />
+                    <span className="text-[10px] font-semibold text-slate-400">Auto-Sync</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <Bot className="h-3 w-3 text-purple-400" />
+                    <span className="text-[10px] font-semibold text-slate-400">AI Chat</span>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             {/* Desktop Header */}
@@ -284,13 +346,16 @@ export default function Login() {
               </div>
             )}
 
+            {/* Auth Card — glass treatment on mobile */}
+            <div className="lg:p-0 p-5 sm:p-6 lg:bg-transparent bg-white/[0.02] lg:border-0 border border-white/[0.06] lg:rounded-none rounded-2xl lg:backdrop-blur-none backdrop-blur-md">
+
             {/* Auth Selection */}
             {mode === 'oauth' ? (
               <div className="space-y-4">
                 <button
                   onClick={() => handleOAuthLogin('google')}
                   disabled={isLoading}
-                  className="w-full min-h-[52px] h-[52px] sm:h-[60px] bg-white hover:bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold shadow-lg hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 touch-manipulation"
+                  className="w-full min-h-[52px] h-[52px] sm:h-[60px] bg-white hover:bg-gray-50 text-gray-900 rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 font-semibold shadow-lg shadow-white/5 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 touch-manipulation"
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -423,6 +488,8 @@ export default function Login() {
                 ISO 27001
               </div>
             </div>
+
+            </div>{/* Close auth card */}
           </div>
         </div>
       </div>

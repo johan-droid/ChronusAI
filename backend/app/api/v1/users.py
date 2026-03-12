@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.schemas.user import UserRead, UserUpdate
@@ -178,7 +178,7 @@ async def update_user(
                 new_timezone=user_update.timezone
             )
         except pytz.exceptions.UnknownTimeZoneError:
-            return {"detail": "Invalid timezone"}
+            raise HTTPException(status_code=400, detail="Invalid timezone value.")
     
     await db.commit()
     await db.refresh(current_user)

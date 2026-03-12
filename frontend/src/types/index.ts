@@ -130,7 +130,7 @@ export interface CalendarInfo {
   id: string;
   summary: string;
   primary?: boolean;
-  accessRole?: string;
+  access_role?: string;
 }
 
 export interface CalendarEvent {
@@ -142,6 +142,9 @@ export interface CalendarEvent {
   attendees?: Attendee[];
   meeting_url?: string;
   status?: string;
+  location?: string;
+  created?: string;
+  updated?: string;
 }
 
 // Organization types

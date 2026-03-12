@@ -34,6 +34,7 @@ class MeetingRead(MeetingBase):
     id: UUID
     user_id: UUID
     external_event_id: Optional[str] = None
+    zoom_meeting_id: Optional[str] = None
     status: str
     raw_user_input: Optional[str] = None
     created_at: datetime

@@ -101,6 +101,9 @@
   --z-nav: 50;
   --z-modal: 60;
   --z-toast: 70;
+
+  /* Navigation height */
+  --nav-height: 64px;
 }
 
 * {
@@ -1162,13 +1165,12 @@ a:focus-visible {
     padding-right: 0.75rem !important;
   }
   
-  /* Improve touch targets */
+  /* Improve touch targets — use touch-action but avoid forcing min-height on all elements */
   button, 
   a,
   input,
   select,
   textarea {
-    min-height: 44px;
     touch-action: manipulation;
   }
   
@@ -1183,14 +1185,9 @@ a:focus-visible {
     transition: all 0.2s ease-in-out;
   }
 
-  /* Enhanced Hover States */
+  /* Enhanced Active States for touch */
   button, a, .interactive-element {
     transition: all 0.2s ease-in-out;
-  }
-
-  button:hover, a:hover, .interactive-element:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   button:active, a:active, .interactive-element:active {
@@ -1232,11 +1229,11 @@ a:focus-visible {
     scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.05);
   }
   
-  /* Mobile-optimized cards */
-  .premium-glass,
-  .glass-card,
-  .cosmic-card {
-    padding: 1rem !important;
+  /* Mobile-optimized cards — only apply to standalone cards, not layout containers */
+  .premium-glass:not([class*="p-"]),
+  .glass-card:not([class*="p-"]),
+  .cosmic-card:not([class*="p-"]) {
+    padding: 1rem;
   }
   
   /* Better mobile spacing */
@@ -1275,10 +1272,10 @@ a:focus-visible {
     padding-right: 0.5rem !important;
   }
   
-  .premium-glass,
-  .glass-card,
-  .cosmic-card {
-    padding: 0.75rem !important;
+  .premium-glass:not([class*="p-"]),
+  .glass-card:not([class*="p-"]),
+  .cosmic-card:not([class*="p-"]) {
+    padding: 0.75rem;
   }
 }
 

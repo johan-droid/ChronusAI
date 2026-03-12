@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.rate_limit import limiter
 from app.core.security import hash_user_id, token_encryptor
 from app.db.session import get_db
-from app.services.calendar_integration_service import fetch_live_calendar_events
 from app.dependencies import (
     get_calendar_provider,
     get_conversation_context,

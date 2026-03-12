@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 import { useNavigate } from 'react-router-dom';
 
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 
 import ColorBends from '../components/ColorBends';
 
@@ -38,7 +38,11 @@ import {
 
   Mail,
 
-  Github
+  Github,
+
+  Menu,
+
+  X
 
 } from 'lucide-react';
 
@@ -47,6 +51,7 @@ import {
 export default function LandingPage() {
 
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -432,25 +437,25 @@ export default function LandingPage() {
 
       <div className="space-particles opacity-20" />
 
-      <div className="planet planet-1 opacity-20" />
+      <div className="hidden sm:block planet planet-1 opacity-20" />
 
-      <div className="planet planet-2 opacity-20" />
+      <div className="hidden sm:block planet planet-2 opacity-20" />
 
 
 
       {/* Navigation */}
 
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-6 py-4 ${isScrolled ? 'pt-2' : 'pt-6'}`}>
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 px-4 sm:px-6 py-4 ${isScrolled ? 'pt-2' : 'pt-4 sm:pt-6'}`}>
 
-        <nav className={`max-w-5xl mx-auto transition-all duration-500 rounded-full border border-white/5 shadow-2xl ${isScrolled ? 'bg-black/60 backdrop-blur-xl border-white/10 px-6 py-2' : 'bg-transparent px-2 py-2 border-transparent'}`}>
+        <nav className={`max-w-5xl mx-auto transition-all duration-500 rounded-2xl sm:rounded-full border border-white/5 shadow-2xl ${isScrolled ? 'bg-black/60 backdrop-blur-xl border-white/10 px-4 sm:px-6 py-2' : 'bg-black/30 backdrop-blur-md sm:bg-transparent px-4 sm:px-2 py-2.5 sm:py-2 border-white/[0.06] sm:border-transparent'}`}>
 
           <div className="flex items-center justify-between">
 
             <div className="flex items-center space-x-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
 
-              <AnimatedLogo className={isScrolled ? "h-8 w-8" : "h-10 w-10"} />
+              <AnimatedLogo className={isScrolled ? "h-8 w-8" : "h-9 w-9 sm:h-10 sm:w-10"} />
 
-              <span className="text-xl font-bold gradient-text">ChronosAI</span>
+              <span className="text-lg sm:text-xl font-bold gradient-text">ChronosAI</span>
 
             </div>
 
@@ -468,23 +473,133 @@ export default function LandingPage() {
 
 
 
-            <button
+            <div className="flex items-center gap-2">
 
-              onClick={() => navigate('/login')}
+              <button
 
-              className={`transition-all duration-500 px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 group ${isScrolled ? 'bg-primary text-white hover:bg-primary/90' : 'glass-card border-white/10 hover:border-primary/50 text-foreground'}`}
+                onClick={() => navigate('/login')}
 
-            >
+                className={`transition-all duration-500 px-4 sm:px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 group ${isScrolled ? 'bg-primary text-white hover:bg-primary/90' : 'glass-card border-white/10 hover:border-primary/50 text-foreground'}`}
 
-              <span>Sign In</span>
+              >
 
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                <span>Sign In</span>
 
-            </button>
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+
+              </button>
+
+
+
+              {/* Mobile hamburger */}
+
+              <button
+
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+
+                className="md:hidden h-9 w-9 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-white/70 hover:text-white transition-colors"
+
+                aria-label="Toggle menu"
+
+              >
+
+                {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+
+              </button>
+
+            </div>
 
           </div>
 
         </nav>
+
+
+
+        {/* Mobile Dropdown Menu */}
+
+        <AnimatePresence>
+
+          {mobileMenuOpen && (
+
+            <motion.div
+
+              initial={{ opacity: 0, y: -10 }}
+
+              animate={{ opacity: 1, y: 0 }}
+
+              exit={{ opacity: 0, y: -10 }}
+
+              transition={{ duration: 0.2 }}
+
+              className="md:hidden mt-2 max-w-5xl mx-auto rounded-2xl bg-black/70 backdrop-blur-2xl border border-white/[0.08] shadow-2xl overflow-hidden"
+
+            >
+
+              <div className="p-4 space-y-1">
+
+                <button
+
+                  onClick={() => { scrollToSection('features'); setMobileMenuOpen(false); }}
+
+                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all"
+
+                >
+
+                  Features
+
+                </button>
+
+                <button
+
+                  onClick={() => { scrollToSection('workflow'); setMobileMenuOpen(false); }}
+
+                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all"
+
+                >
+
+                  Workflow
+
+                </button>
+
+                <button
+
+                  onClick={() => { scrollToSection('testimonials'); setMobileMenuOpen(false); }}
+
+                  className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/[0.04] transition-all"
+
+                >
+
+                  Wall of Love
+
+                </button>
+
+              </div>
+
+              <div className="h-[1px] bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent" />
+
+              <div className="p-4">
+
+                <button
+
+                  onClick={() => navigate('/login')}
+
+                  className="w-full py-3 bg-primary/10 border border-primary/20 text-primary rounded-xl text-sm font-bold hover:bg-primary/20 transition-all flex items-center justify-center gap-2"
+
+                >
+
+                  Get Started Free
+
+                  <ArrowRight className="h-4 w-4" />
+
+                </button>
+
+              </div>
+
+            </motion.div>
+
+          )}
+
+        </AnimatePresence>
 
       </header>
 
@@ -492,9 +607,9 @@ export default function LandingPage() {
 
       {/* Hero Section */}
 
-      <section className="relative z-10 pt-20 pb-20">
+      <section className="relative z-10 pt-28 sm:pt-32 pb-12 sm:pb-20">
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
 
           <motion.div
 
@@ -504,11 +619,11 @@ export default function LandingPage() {
 
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
 
-            className="text-center space-y-8"
+            className="text-center space-y-6 sm:space-y-8"
 
           >
 
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
 
               <motion.div
 
@@ -518,7 +633,7 @@ export default function LandingPage() {
 
                 transition={{ delay: 0.2, duration: 0.5 }}
 
-                className="inline-flex items-center space-x-2 premium-glass px-4 py-2 rounded-full text-sm"
+                className="inline-flex items-center space-x-2 premium-glass px-4 py-2 rounded-full text-xs sm:text-sm"
 
               >
 
@@ -534,11 +649,11 @@ export default function LandingPage() {
 
 
 
-              <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-zinc-50 tracking-tight leading-[1.12] font-heading drop-shadow-sm">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-bold text-zinc-50 tracking-tight leading-[1.08] sm:leading-[1.12] font-heading drop-shadow-sm">
 
                 Schedule meetings with
 
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 pb-1 block">natural language</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 pb-1 block mt-1 sm:mt-0">natural language</span>
 
               </h1>
 
@@ -572,7 +687,7 @@ export default function LandingPage() {
 
               transition={{ delay: 0.6, duration: 0.5 }}
 
-              className="flex flex-col sm:flex-row items-center justify-center gap-4"
+              className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4"
 
             >
 
@@ -580,15 +695,31 @@ export default function LandingPage() {
 
                 onClick={() => navigate('/login')}
 
-                className="group relative overflow-hidden premium-glass px-8 py-4 rounded-xl border border-white/10 hover:border-white/20 hover:scale-[1.02] active:scale-95 transition-all duration-300 ease-in-out shadow-lg shadow-primary/10"
+                className="group relative overflow-hidden w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 px-8 py-4 rounded-xl hover:scale-[1.02] active:scale-95 transition-all duration-300 ease-in-out shadow-xl shadow-indigo-500/20"
 
               >
 
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                <span className="relative flex items-center justify-center space-x-2 text-white font-bold">
+
+                  <span>Get Started for Free</span>
+
+                  <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+
+                </span>
+
+              </button>
+
+              <button
+
+                onClick={() => scrollToSection('features')}
+
+                className="hidden sm:flex group premium-glass px-8 py-4 rounded-xl border border-white/10 hover:border-white/20 hover:scale-[1.02] active:scale-95 transition-all duration-300 ease-in-out"
+
+              >
 
                 <span className="relative flex items-center space-x-2 text-foreground font-semibold">
 
-                  <span>Get Started for Free</span>
+                  <span>See How It Works</span>
 
                   <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
 
@@ -635,15 +766,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── Section Divider ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        <hr className="border-t-2 border-white/10" />
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* How It Works Section */}
 
-      <section id="features" className="relative z-10 py-24">
+      <section id="features" className="relative z-10 py-12 sm:py-24">
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
 
           <motion.div
 
@@ -655,7 +786,7 @@ export default function LandingPage() {
 
             transition={{ duration: 0.8 }}
 
-            className="text-center space-y-6 mb-20"
+            className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-20"
 
           >
 
@@ -679,7 +810,7 @@ export default function LandingPage() {
 
 
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
 
             {howItWorks.map((item, index) => (
 
@@ -701,7 +832,7 @@ export default function LandingPage() {
 
               >
 
-                <div className="p-8 space-y-4">
+                <div className="p-5 sm:p-8 space-y-3 sm:space-y-4">
 
                   <div className="text-xs font-bold text-primary/60 bg-primary/5 w-fit px-3 py-1.5 rounded-full border border-primary/10 tracking-widest uppercase">
 
@@ -736,17 +867,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── Section Divider ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        <hr className="border-t-2 border-white/10" />
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* Integration Store Section */}
 
-      <section id="workflow" className="relative z-10 py-24 overflow-hidden">
+      <section id="workflow" className="relative z-10 py-12 sm:py-24 overflow-hidden">
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
 
-          <div className="glass-card p-12 rounded-[2.5rem] border-white/10 bg-zinc-900/50 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] flex flex-col lg:flex-row items-center gap-16 transition-all duration-300">
+          <div className="glass-card p-5 sm:p-8 lg:p-12 rounded-2xl sm:rounded-[2.5rem] border-white/10 bg-zinc-900/50 backdrop-blur-xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] flex flex-col lg:flex-row items-center gap-8 sm:gap-12 lg:gap-16 transition-all duration-300">
 
             <div className="flex-1 space-y-8">
 
@@ -772,13 +903,13 @@ export default function LandingPage() {
 
               </p>
 
-              <div className="flex flex-wrap gap-4 pt-4">
+              <div className="flex flex-wrap gap-3 sm:gap-4 pt-4">
 
                 <button
 
                   onClick={() => navigate('/login')}
 
-                  className="bg-zinc-50 text-zinc-950 px-8 py-3.5 rounded-xl font-bold hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 flex items-center gap-2 group"
+                  className="w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 sm:bg-none sm:bg-zinc-50 sm:text-zinc-950 text-white px-8 py-3.5 rounded-xl font-bold hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(99,102,241,0.3)] sm:hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300 flex items-center justify-center gap-2 group"
 
                 >
 
@@ -788,7 +919,7 @@ export default function LandingPage() {
 
                 </button>
 
-                <button className="glass-card px-8 py-3.5 rounded-xl font-bold border-white/10 hover:bg-white/5 transition-all text-foreground flex items-center gap-2">
+                <button className="hidden sm:flex glass-card px-8 py-3.5 rounded-xl font-bold border-white/10 hover:bg-white/5 transition-all text-foreground items-center gap-2">
 
                   Explore apps
 
@@ -810,7 +941,7 @@ export default function LandingPage() {
 
 
 
-              <div className="grid grid-cols-4 gap-6 relative">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 relative">
 
                 {integrations.map((app, i) => (
 
@@ -844,17 +975,17 @@ export default function LandingPage() {
 
 
 
-                {/* Visual connectors (plus signs) */}
+                {/* Visual connectors (plus signs) — hidden on small screens */}
 
-                <div className="absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl">+</div>
+                <div className="hidden sm:block absolute top-1/2 left-1/4 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl">+</div>
 
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl">+</div>
+                <div className="hidden sm:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl">+</div>
 
-                <div className="absolute top-1/2 left-3/4 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl">+</div>
+                <div className="hidden sm:block absolute top-1/2 left-3/4 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl">+</div>
 
-                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl rotate-90">+</div>
+                <div className="hidden sm:block absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl rotate-90">+</div>
 
-                <div className="absolute top-3/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl rotate-90">+</div>
+                <div className="hidden sm:block absolute top-3/4 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/10 font-thin text-2xl rotate-90">+</div>
 
               </div>
 
@@ -867,17 +998,17 @@ export default function LandingPage() {
       </section>
 
       {/* ── Section Divider ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        <hr className="border-t-2 border-white/10" />
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* Wall of Love Section */}
 
-      <section id="testimonials" className="relative z-10 py-24">
+      <section id="testimonials" className="relative z-10 py-12 sm:py-24">
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
 
-          <div className="text-center space-y-6 mb-20">
+          <div className="text-center space-y-4 sm:space-y-6 mb-10 sm:mb-20">
 
             <div className="inline-flex items-center space-x-2 glass-card px-4 py-2 rounded-full text-xs font-medium">
 
@@ -1000,15 +1131,15 @@ export default function LandingPage() {
       </section>
 
       {/* ── Section Divider ── */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        <hr className="border-t-2 border-white/10" />
+      <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div className="h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
       </div>
 
       {/* CTA Section */}
 
-      <section className="relative z-10 py-24">
+      <section className="relative z-10 py-12 sm:py-24">
 
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 text-center">
+        <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8 text-center">
 
           <motion.div
 
@@ -1020,11 +1151,11 @@ export default function LandingPage() {
 
             transition={{ duration: 0.8 }}
 
-            className="premium-glass p-8 sm:p-12 md:p-16 rounded-[2rem] sm:rounded-[3rem] space-y-8 sm:space-y-10 border border-white/10 bg-zinc-900/40 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]"
+            className="premium-glass p-6 sm:p-12 md:p-16 rounded-2xl sm:rounded-[3rem] space-y-6 sm:space-y-10 border border-white/10 bg-zinc-900/40 backdrop-blur-2xl shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)]"
 
           >
 
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
 
               <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-zinc-50 font-heading tracking-tight">
 
@@ -1044,17 +1175,17 @@ export default function LandingPage() {
 
 
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
 
               <button
 
                 onClick={() => navigate('/login')}
 
-                className="group relative overflow-hidden bg-zinc-50 text-zinc-950 px-10 py-5 rounded-2xl font-bold hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all duration-300"
+                className="group relative overflow-hidden w-full sm:w-auto bg-gradient-to-r from-indigo-500 to-purple-500 px-10 py-4 sm:py-5 rounded-xl sm:rounded-2xl font-bold hover:scale-[1.02] active:scale-95 hover:shadow-[0_0_25px_rgba(99,102,241,0.3)] transition-all duration-300"
 
               >
 
-                <span className="relative z-10 flex items-center space-x-2">
+                <span className="relative z-10 flex items-center justify-center space-x-2 text-white">
 
                   <span>Start for Free Now</span>
 
@@ -1068,7 +1199,7 @@ export default function LandingPage() {
 
 
 
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-muted-foreground/60 font-semibold pt-6 border-t border-white/5">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm text-muted-foreground/60 font-semibold pt-6 border-t border-white/5">
 
               <div className="flex items-center space-x-2">
 
