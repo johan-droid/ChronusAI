@@ -1,7 +1,7 @@
 import os
 import secrets
 from functools import lru_cache
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from pydantic import AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -68,42 +68,74 @@ class Settings(BaseSettings):
     smtp_from: Optional[str] = None  # e.g. "ChronosAI <no-reply@yourdomain.com>"
 
     # Reminder scheduling
-    # Reminder scheduling
-    # Comma-separated list of minutes before event to send reminders (e.g. [1440,60,15,3])
-    reminder_minutes_before: int = 15  # legacy single reminder value
-    reminder_schedule_minutes: Optional[List[int]] = None
+    # Accept str so pydantic doesn't reject comma-separated env values like "1440,60,15"
+    reminder_minutes_before: Union[int, str] = 15
+    reminder_schedule_minutes: Optional[Union[List[int], str]] = None
 
     # CORS
     cors_origins: List[str] = []
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        
-        # Auto-generate missing secret keys for security
-        # Only generate if truly empty (not falsy)
+
+        # ── Auto-generate missing secret keys ────────────────────────────
         if self.secret_key == "":
             self.secret_key = secrets.token_urlsafe(32)
-            # Backwards-compatible: accept either a single integer (legacy) or
-            # a comma-separated string / list for multiple reminder minutes.
-            reminder_minutes_before: Union[int, str] = 15  # legacy single reminder value
-            reminder_schedule_minutes: Optional[Union[List[int], str]] = None
+            print("🔑 Generated SECRET_KEY")
+
         if self.encryption_key == "":
             from cryptography.fernet import Fernet
             self.encryption_key = Fernet.generate_key().decode()
             print("🔐 Generated ENCRYPTION_KEY")
-            
+
         if self.jwt_secret_key == "":
             self.jwt_secret_key = secrets.token_urlsafe(32)
             print("🎫 Generated JWT_SECRET_KEY")
-        
-        # Override redirect URIs in production environment
+
+        # ── Normalize reminder env vars to canonical types ───────────────
+        try:
+            # reminder_schedule_minutes: str → list[int]
+            if isinstance(self.reminder_schedule_minutes, str):
+                parts = [p.strip() for p in self.reminder_schedule_minutes.split(",") if p.strip()]
+                self.reminder_schedule_minutes = [int(p) for p in parts] if parts else None
+
+            # reminder_minutes_before: str → int  (may contain CSV by mistake)
+            if isinstance(self.reminder_minutes_before, str):
+                if "," in self.reminder_minutes_before:
+                    parts = [p.strip() for p in self.reminder_minutes_before.split(",") if p.strip()]
+                    parsed = [int(p) for p in parts]
+                    if not self.reminder_schedule_minutes:
+                        self.reminder_schedule_minutes = parsed
+                    self.reminder_minutes_before = parsed[0] if parsed else 15
+                else:
+                    self.reminder_minutes_before = int(self.reminder_minutes_before)
+
+            if isinstance(self.reminder_minutes_before, float):
+                self.reminder_minutes_before = int(self.reminder_minutes_before)
+
+            # Coerce any remaining str items in the list
+            if isinstance(self.reminder_schedule_minutes, list):
+                coerced = []
+                for item in self.reminder_schedule_minutes:
+                    val = int(str(item).strip()) if isinstance(item, str) else int(item)
+                    coerced.append(val)
+                self.reminder_schedule_minutes = sorted(set(coerced)) if coerced else None
+        except Exception:
+            # Fallback to safe defaults
+            try:
+                self.reminder_minutes_before = int(self.reminder_minutes_before)
+            except Exception:
+                self.reminder_minutes_before = 15
+            if not isinstance(self.reminder_schedule_minutes, list):
+                self.reminder_schedule_minutes = None
+
+        # ── Override redirect URIs in production ─────────────────────────
         is_production = os.getenv("RENDER") is not None or os.getenv("RENDER") == "true" or \
                         os.getenv("DIGITALOCEAN") is not None or self.app_env == "production"
-        
+
         if is_production:
-            # Domain provided by DO App Platform or custom domain
             app_url = os.getenv("APP_URL") or os.getenv("BASE_URL")
-            
+
             if app_url:
                 app_url_str = str(app_url).rstrip("/")
                 if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
@@ -112,11 +144,9 @@ class Settings(BaseSettings):
                     self.microsoft_redirect_uri = AnyHttpUrl(f"{app_url_str}/api/v1/auth/outlook/callback")
                 if not self.zoom_redirect_uri or "localhost" in str(self.zoom_redirect_uri):
                     self.zoom_redirect_uri = AnyHttpUrl(f"{app_url_str}/api/v1/auth/zoom/callback")
-                
                 if "localhost" in str(self.frontend_url):
                     self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or app_url_str)
             else:
-                # Fallback to Render URLs if no APP_URL is provided, for backwards compatibility
                 if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
                     self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
                 if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
@@ -125,16 +155,13 @@ class Settings(BaseSettings):
                     self.zoom_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/zoom/callback")
                 if "localhost" in str(self.frontend_url):
                     self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
-        
-        # Ensure CORS includes frontend URLs
+
+        # ── CORS ─────────────────────────────────────────────────────────
         if self.frontend_url and str(self.frontend_url) not in self.cors_origins:
             self.cors_origins.append(str(self.frontend_url))
-        
-        # Add production URLs to CORS
+
         if is_production:
-            production_urls = [
-                "https://chronusai.onrender.com"
-            ]
+            production_urls = ["https://chronusai.onrender.com"]
             for url in production_urls:
                 if url not in self.cors_origins:
                     self.cors_origins.append(url)
@@ -144,54 +171,6 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance to ensure consistent secret keys."""
     return Settings()  # type: ignore[call-arg]
-
-                # Normalize reminder environment variables to canonical types:
-                # - `reminder_minutes_before` should be an int
-                # - `reminder_schedule_minutes` should be a list[int] or None
-                try:
-                    # If schedule provided as a comma-separated string, parse to list[int]
-                    if isinstance(self.reminder_schedule_minutes, str):
-                        parts = [p.strip() for p in self.reminder_schedule_minutes.split(',') if p.strip()]
-                        self.reminder_schedule_minutes = [int(p) for p in parts]
-
-                    # If legacy single or mis-set value provided as string, handle it
-                    if isinstance(self.reminder_minutes_before, str):
-                        # If it contains commas the deploy likely set the schedule into the
-                        # single-value var by mistake, so interpret as a schedule.
-                        if ',' in self.reminder_minutes_before:
-                            parts = [p.strip() for p in self.reminder_minutes_before.split(',') if p.strip()]
-                            parsed = [int(p) for p in parts]
-                            self.reminder_schedule_minutes = parsed
-                            # set primary single reminder to the first parsed value
-                            self.reminder_minutes_before = int(parsed[0]) if parsed else 15
-                        else:
-                            # single integer string
-                            self.reminder_minutes_before = int(self.reminder_minutes_before)
-
-                    # Coerce types: ensure reminder_minutes_before is an int
-                    if isinstance(self.reminder_minutes_before, float):
-                        self.reminder_minutes_before = int(self.reminder_minutes_before)
-
-                    # If schedule exists and contains non-int entries (e.g., list[str]), coerce
-                    if isinstance(self.reminder_schedule_minutes, list):
-                        coerced = []
-                        for item in self.reminder_schedule_minutes:
-                            if isinstance(item, str):
-                                if item.strip():
-                                    coerced.append(int(item.strip()))
-                            else:
-                                coerced.append(int(item))
-                        # Deduplicate & sort
-                        self.reminder_schedule_minutes = sorted(set(coerced)) if coerced else None
-
-                except Exception:
-                    # Best-effort fallback to defaults on any parsing error
-                    try:
-                        self.reminder_minutes_before = int(getattr(self, 'reminder_minutes_before', 15) or 15)
-                    except Exception:
-                        self.reminder_minutes_before = 15
-                    if not isinstance(self.reminder_schedule_minutes, list):
-                        self.reminder_schedule_minutes = None
 
 
 # Back-compat for existing imports
