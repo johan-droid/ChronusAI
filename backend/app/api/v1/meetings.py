@@ -98,8 +98,21 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
             event_id = event.get("id")
             event_summary = event.get("summary", "No Title")
             event_description = event.get("description", "")
-            event_start = event.get("start")
-            event_end = event.get("end")
+            event_start_raw = event.get("start")
+            event_end_raw = event.get("end")
+
+            # Ensure start/end are datetime objects (CalendarIntegrationService returns ISO strings)
+            def _to_dt(val):
+                if val is None:
+                    return None
+                if isinstance(val, datetime):
+                    return val
+                if isinstance(val, str):
+                    return datetime.fromisoformat(val.replace("Z", "+00:00"))
+                return None
+
+            event_start = _to_dt(event_start_raw)
+            event_end = _to_dt(event_end_raw)
             # attendees are now stored as plain dicts by list_events
             raw_attendees = event.get("attendees") or []
             
