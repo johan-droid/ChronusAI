@@ -64,22 +64,8 @@ async def lifespan(app: FastAPI):
     logger.info("Database cleanup background task started")
 
     # Start APScheduler for reminder jobs
+    # SQLAlchemyJobStore creates its tables automatically on scheduler.start()
     try:
-        # Ensure APScheduler SQLAlchemy jobstore tables exist (if using DB-backed jobstore)
-        try:
-            from sqlalchemy import create_engine
-            from apscheduler.jobstores.sqlalchemy import Base as _aps_base
-            db_url = getattr(settings, 'database_url', None)
-            if db_url:
-                # Normalize postgres URL prefix for SQLAlchemy
-                if db_url.startswith('postgres://'):
-                    db_url = db_url.replace('postgres://', 'postgresql://', 1)
-                engine = create_engine(db_url)
-                _aps_base.metadata.create_all(engine)
-                engine.dispose()
-        except Exception:
-            logger.exception('failed_to_create_apscheduler_tables')
-
         start_scheduler()
     except Exception:
         logger.exception("failed_to_start_scheduler")
