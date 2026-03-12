@@ -162,7 +162,10 @@ async def send_message(
         # Handle different intents
         if parsed_intent.intent == "schedule":
             result = await handle_create_meeting(
-                parsed_intent, current_user, calendar_provider, db, raw_user_input=payload.message
+                parsed_intent, current_user, calendar_provider, db,
+                raw_user_input=payload.message,
+                explicit_reminder_minutes=getattr(payload, 'reminder_schedule_minutes', None),
+                explicit_reminder_methods=getattr(payload, 'reminder_methods', None),
             )
         elif parsed_intent.intent == "cancel":
             result = await handle_cancel_meeting(
@@ -324,7 +327,7 @@ def _day_window_local(target_date, user_tz: str) -> tuple[datetime, datetime]:
     return start_local, end_local
 
 
-async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession, raw_user_input: str) -> ChatResponse:
+async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provider, db: AsyncSession, raw_user_input: str, explicit_reminder_minutes=None, explicit_reminder_methods=None) -> ChatResponse:
     """Handle meeting creation intent."""
     try:
         # Check if we have enough information
@@ -425,6 +428,9 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
             attendees=[Attendee(email=e) for e in attendees_emails],
             provider=str(user.provider),
             raw_user_input=raw_user_input,
+            # prefer explicit payload values, fall back to AI-parsed intent
+            reminder_schedule_minutes=explicit_reminder_minutes or getattr(intent, 'reminder_schedule_minutes', None) or getattr(intent, 'reminder_minutes', None),
+            reminder_methods=explicit_reminder_methods or getattr(intent, 'reminder_methods', None),
         )
 
         platform = getattr(intent, "meeting_platform", None) or "none"
@@ -480,6 +486,8 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
             meeting_url=meeting_url,
             zoom_meeting_id=zoom_meeting_id or None,
             raw_user_input=raw_user_input,
+            reminder_schedule_minutes=getattr(meeting_create, 'reminder_schedule_minutes', None),
+            reminder_methods=getattr(meeting_create, 'reminder_methods', None),
         )
 
         db.add(meeting)
@@ -498,6 +506,69 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
             provider=user.provider,
             start_time_utc=meeting_create.start_time.isoformat(),
         )
+
+        # Send immediate email notifications to attendees in background
+        try:
+            from app.services.email import send_email
+
+            attendees = [a.get('email') if isinstance(a, dict) else str(a) for a in meeting.attendees]
+            subject = f"Meeting scheduled: {meeting.title}"
+            meeting_time_local = local_start.strftime("%A, %B %d at %I:%M %p %Z")
+            text_body = (
+                f"Your meeting '{meeting.title}' has been scheduled for {meeting_time_local}.\n\n"
+                f"Details:\n{meeting.description or ''}\n\nLink: {meeting.meeting_url or 'N/A'}\n\n"
+                "This is an automated notification from ChronosAI."
+            )
+            html_body = (
+                f"<p>Your meeting '<strong>{meeting.title}</strong>' has been scheduled for <strong>{meeting_time_local}</strong>.</p>"
+                f"<p>{(meeting.description or '')}</p>"
+                f"<p>Join: <a href=\"{meeting.meeting_url or '#'}\">{meeting.meeting_url or 'Open meeting'}</a></p>"
+                f"<hr/><p><small>This is an automated notification from ChronosAI.</small></p>"
+            )
+
+            # Fire-and-forget: run in background so API response isn't delayed
+            import asyncio as _asyncio
+            _asyncio.create_task(send_email(attendees, subject, text_body, html_body))
+
+            # Schedule multiple reminders before meeting based on settings
+            try:
+                from datetime import timedelta
+                from app.services.scheduler import schedule_job
+                from app.services.scheduler import remove_job
+                from app.config import settings as _settings
+
+                # Determine reminder minutes list: prefer per-meeting setting, then global settings
+                if getattr(meeting_create, 'reminder_schedule_minutes', None):
+                    schedule_minutes = list(meeting_create.reminder_schedule_minutes or [])
+                elif _settings.reminder_schedule_minutes:
+                    schedule_minutes = list(_settings.reminder_schedule_minutes)
+                else:
+                    schedule_minutes = [int(getattr(_settings, 'reminder_minutes_before', 15))]
+
+                # Ensure unique increasing order and positive ints
+                schedule_minutes = sorted({int(x) for x in schedule_minutes if int(x) >= 0})
+
+                for minutes_before in schedule_minutes:
+                    try:
+                        run_at = meeting.start_time - timedelta(minutes=minutes_before)
+                        # Skip past times
+                        from datetime import datetime, timezone as _tz
+                        if run_at <= datetime.now(_tz.utc):
+                            continue
+
+                        job_id = f"reminder-{meeting.id}-{minutes_before}"
+                        schedule_job(
+                            send_email,
+                            run_date=run_at,
+                            args=[attendees, f"Reminder: {meeting.title} (in {minutes_before} minutes)", text_body, html_body],
+                            id=job_id,
+                        )
+                    except Exception:
+                        logger.exception("failed_to_schedule_single_reminder", minutes_before=minutes_before)
+            except Exception:
+                logger.exception("failed_to_schedule_reminder")
+        except Exception:
+            logger.exception("failed_to_enqueue_meeting_emails")
 
         return ChatResponse(
             response=f"✅ Meeting scheduled: {title} on {formatted_time}",

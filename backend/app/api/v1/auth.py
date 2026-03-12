@@ -352,10 +352,7 @@ async def google_login():
 
 @router.get("/google/callback")
 async def google_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
-    from fastapi import Response
-    response = Response()
-    result = await _oauth_callback("google", code, state, db, response=response)
-    return result
+    return await _oauth_callback("google", code, state, db)
 
 
 @microsoft_router.get("/outlook/login")

@@ -15,6 +15,7 @@ import httpx
 import structlog
 
 from app.schemas.meeting import MeetingCreate
+from app.config import settings
 
 from app.core.security import token_encryptor
 
@@ -296,6 +297,32 @@ class GoogleCalendarService:
 
     async def create_event(self, meeting: MeetingCreate, calendar_id: str = "primary") -> CalendarEvent:
         """Create a new event"""
+        # Build reminder overrides using per-meeting settings if present, else global settings
+        reminders_overrides = []
+        try:
+            # Prefer per-meeting schedule if provided
+            if getattr(meeting, 'reminder_schedule_minutes', None):
+                schedule_minutes = list(meeting.reminder_schedule_minutes or [])
+            elif settings.reminder_schedule_minutes:
+                schedule_minutes = list(settings.reminder_schedule_minutes)
+            else:
+                schedule_minutes = [int(getattr(settings, 'reminder_minutes_before', 15))]
+
+            # Methods: per-meeting preference or default to ['email']
+            methods = getattr(meeting, 'reminder_methods', None) or (list(settings.reminder_methods) if getattr(settings, 'reminder_methods', None) else ['email'])
+
+            # Normalize inputs
+            schedule_minutes = sorted({int(x) for x in schedule_minutes if int(x) >= 0})
+            methods = [m for m in methods if m in ('email', 'popup')]
+
+            # Create overrides: for each minute, create an override for each method requested
+            for m in schedule_minutes:
+                for method in methods:
+                    reminders_overrides.append({"method": method, "minutes": m})
+        except Exception:
+            # Fallback defaults
+            reminders_overrides = [{"method": "email", "minutes": 24 * 60}, {"method": "popup", "minutes": 30}]
+
         event_data = {
             "summary": meeting.title,
             "description": meeting.description or "",
@@ -309,11 +336,8 @@ class GoogleCalendarService:
             },
             "attendees": [{"email": a.email} for a in (meeting.attendees or [])],
             "reminders": {
-                "useDefault": True,
-                "overrides": [
-                    {"method": "email", "minutes": 24 * 60},  # 1 day before
-                    {"method": "popup", "minutes": 30}  # 30 minutes before
-                ]
+                "useDefault": False,
+                "overrides": reminders_overrides,
             }
         }
         
@@ -347,6 +371,27 @@ class GoogleCalendarService:
 
     async def update_event(self, event_id: str, meeting: MeetingCreate, calendar_id: str = "primary") -> CalendarEvent:
         """Update an existing event"""
+        # Build reminders similar to create_event
+        reminders_overrides = []
+        try:
+            # Prefer per-meeting schedule if provided
+            if getattr(meeting, 'reminder_schedule_minutes', None):
+                schedule_minutes = list(meeting.reminder_schedule_minutes or [])
+            elif settings.reminder_schedule_minutes:
+                schedule_minutes = list(settings.reminder_schedule_minutes)
+            else:
+                schedule_minutes = [int(getattr(settings, 'reminder_minutes_before', 15))]
+
+            methods = getattr(meeting, 'reminder_methods', None) or (list(settings.reminder_methods) if getattr(settings, 'reminder_methods', None) else ['email'])
+
+            schedule_minutes = sorted({int(x) for x in schedule_minutes if int(x) >= 0})
+            methods = [m for m in methods if m in ('email', 'popup')]
+            for m in schedule_minutes:
+                for method in methods:
+                    reminders_overrides.append({"method": method, "minutes": m})
+        except Exception:
+            reminders_overrides = [{"method": "email", "minutes": 24 * 60}, {"method": "popup", "minutes": 30}]
+
         event_body = {
             "summary": meeting.title,
             "description": meeting.description or "",
@@ -358,7 +403,8 @@ class GoogleCalendarService:
                 "dateTime": meeting.end_time.isoformat(),
                 "timeZone": "UTC"
             },
-            "attendees": [{"email": a.email} for a in (meeting.attendees or [])]
+            "attendees": [{"email": a.email} for a in (meeting.attendees or [])],
+            "reminders": {"useDefault": False, "overrides": reminders_overrides}
         }
         
         if meeting.location:

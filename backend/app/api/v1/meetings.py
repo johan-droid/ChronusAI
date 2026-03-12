@@ -244,6 +244,8 @@ async def update_meeting(
                 attendees=[Attendee(**a) for a in (getattr(meeting, 'attendees') or [])],
                 provider=str(meeting.provider),
                 raw_user_input=str(meeting.raw_user_input) if meeting.raw_user_input else None,
+                reminder_schedule_minutes=getattr(meeting, 'reminder_schedule_minutes', None),
+                reminder_methods=getattr(meeting, 'reminder_methods', None),
             )
             await calendar_provider.update_event(meeting.external_event_id, meeting_create)
         
@@ -286,6 +288,30 @@ async def delete_meeting(
         # Delete from calendar
         if meeting.external_event_id:
             await calendar_provider.delete_event(meeting.external_event_id)
+            # Remove any scheduled reminders for this meeting
+                try:
+                    from app.services.scheduler import remove_job
+                    # Prefer removing jobs that match the meeting's configured reminder minutes
+                    minutes_list = getattr(meeting, 'reminder_schedule_minutes', None)
+                    if minutes_list:
+                        for minutes in minutes_list:
+                            try:
+                                remove_job(f"reminder-{meeting.id}-{minutes}")
+                            except Exception:
+                                pass
+                    else:
+                        # Fallback to common candidates
+                        for minutes in (3, 15, 60, 1440):
+                            try:
+                                remove_job(f"reminder-{meeting.id}-{minutes}")
+                            except Exception:
+                                pass
+                        try:
+                            remove_job(f"reminder-{meeting.id}")
+                        except Exception:
+                            pass
+                except Exception:
+                    pass
         
         # Update status in database
         meeting.status = "canceled"  # type: ignore[assignment]

@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse } from '../types';
+import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse, Attendee } from '../types';
 import { cacheManager, clearAuthCache } from './cache';
 import { useAuthStore } from '../store/authStore';
 
@@ -223,6 +223,7 @@ class ApiClient {
 
   async updateMeeting(meetingId: string, updates: Partial<Meeting>): Promise<Meeting> {
     const response = await this.client.put(`meetings/${meetingId}`, updates);
+    cacheManager.invalidatePattern('meetings');
     return response.data;
   }
 
@@ -248,6 +249,22 @@ class ApiClient {
 
   async deleteAccount(): Promise<{ message: string; provider?: string }> {
     const response = await this.client.delete('auth/account');
+    return response.data;
+  }
+
+  // Create meeting directly (non-chat path)
+  async createMeeting(data: {
+    title: string;
+    description?: string;
+    start_time: string;
+    end_time: string;
+    attendees: Attendee[];
+    provider: string;
+    reminder_schedule_minutes?: number[];
+    reminder_methods?: string[];
+  }): Promise<Meeting> {
+    const response = await this.client.post('meetings', data);
+    cacheManager.invalidatePattern('meetings');
     return response.data;
   }
 

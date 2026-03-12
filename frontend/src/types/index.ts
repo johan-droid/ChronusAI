@@ -27,6 +27,8 @@ export interface Meeting {
   provider: 'google' | 'outlook' | 'zoom' | 'email';
   meeting_url?: string;
   raw_user_input?: string;
+  reminder_schedule_minutes?: number[];
+  reminder_methods?: string[];
   created_at: string;
   updated_at: string;
 }
@@ -56,6 +58,8 @@ export interface ChatMessage {
 
 export interface ChatRequest {
   message: string;
+  reminder_schedule_minutes?: number[];
+  reminder_methods?: string[];
 }
 
 export interface ChatResponse {

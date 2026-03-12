@@ -16,6 +16,10 @@ class MeetingBase(BaseModel):
     start_time: datetime
     end_time: datetime
     attendees: List[Attendee] = []
+    # Per-meeting reminder schedule in minutes before the event (e.g. [1440, 60, 3])
+    reminder_schedule_minutes: Optional[List[int]] = None
+    # Methods to use for Google reminders: 'email', 'popup'
+    reminder_methods: Optional[List[str]] = None
     provider: str
     meeting_url: Optional[str] = None
 
@@ -43,3 +47,5 @@ class MeetingUpdate(BaseModel):
     start_time: Optional[datetime] = None
     end_time: Optional[datetime] = None
     attendees: Optional[List[Attendee]] = None
+    reminder_schedule_minutes: Optional[List[int]] = None
+    reminder_methods: Optional[List[str]] = None

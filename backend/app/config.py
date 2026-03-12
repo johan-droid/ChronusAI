@@ -59,6 +59,20 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440  # 24 hours instead of 1 hour
 
+    # SMTP / Email
+    smtp_host: Optional[str] = None
+    smtp_port: Optional[int] = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_use_tls: bool = True
+    smtp_from: Optional[str] = None  # e.g. "ChronosAI <no-reply@yourdomain.com>"
+
+    # Reminder scheduling
+    # Reminder scheduling
+    # Comma-separated list of minutes before event to send reminders (e.g. [1440,60,15,3])
+    reminder_minutes_before: int = 15  # legacy single reminder value
+    reminder_schedule_minutes: Optional[List[int]] = None
+
     # CORS
     cors_origins: List[str] = []
 

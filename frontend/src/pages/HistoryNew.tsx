@@ -1,16 +1,55 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown } from 'lucide-react';
-import { useMeetings } from '../hooks/useMeetings';
+import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown, Bell, X, Check } from 'lucide-react';
+import { useMeetings, useUpdateMeeting } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
+import ReminderPicker from '../components/ReminderPicker';
+import type { Meeting } from '../types';
 
 export default function History() {
   const navigate = useNavigate();
   const { data: meetings, isLoading } = useMeetings();
+  const updateMeeting = useUpdateMeeting();
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  // reminder editing state
+  const [reminderMeeting, setReminderMeeting] = useState<Meeting | null>(null);
+  const [pendingMinutes, setPendingMinutes] = useState<number[]>([]);
+  const [pendingMethods, setPendingMethods] = useState<string[]>(['email']);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const openReminderModal = (meeting: Meeting) => {
+    setReminderMeeting(meeting);
+    setPendingMinutes(meeting.reminder_schedule_minutes ?? []);
+    setPendingMethods(meeting.reminder_methods ?? ['email']);
+    setSaveSuccess(false);
+  };
+
+  const closeReminderModal = () => {
+    setReminderMeeting(null);
+    setSaveSuccess(false);
+  };
+
+  const saveReminders = () => {
+    if (!reminderMeeting) return;
+    updateMeeting.mutate(
+      {
+        id: reminderMeeting.id,
+        updates: {
+          reminder_schedule_minutes: pendingMinutes,
+          reminder_methods: pendingMethods,
+        },
+      },
+      {
+        onSuccess: () => {
+          setSaveSuccess(true);
+          setTimeout(closeReminderModal, 900);
+        },
+      },
+    );
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -60,6 +99,58 @@ export default function History() {
     <div className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
       <div className="page-bg" />
       <div className="page-grid-overlay" />
+
+      {/* Reminder edit modal */}
+      {reminderMeeting && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) closeReminderModal(); }}
+        >
+          <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-base font-bold text-white">Edit Reminders</h3>
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{reminderMeeting.title}</p>
+              </div>
+              <button
+                onClick={closeReminderModal}
+                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <ReminderPicker
+              minutes={pendingMinutes}
+              methods={pendingMethods}
+              onChange={(m, mt) => { setPendingMinutes(m); setPendingMethods(mt); }}
+            />
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closeReminderModal}
+                className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveReminders}
+                disabled={updateMeeting.isPending || saveSuccess}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2
+                  bg-orange-500 hover:bg-orange-600 disabled:opacity-70 text-white"
+              >
+                {saveSuccess ? (
+                  <><Check className="h-4 w-4" /> Saved!</>
+                ) : updateMeeting.isPending ? (
+                  'Saving…'
+                ) : (
+                  'Save reminders'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="saas-main px-3 sm:px-4 lg:px-6 overflow-y-auto pb-12">
         {/* Page Header */}
@@ -185,9 +276,37 @@ export default function History() {
                             </div>
                           </>
                         )}
+                        {/* Show existing reminders summary */}
+                        {(meeting.reminder_schedule_minutes?.length ?? 0) > 0 && (
+                          <>
+                            <span className="text-slate-600">•</span>
+                            <div className="flex items-center gap-1 text-[11px] text-orange-400/80">
+                              <Bell className="h-3 w-3" />
+                              <span>
+                                {[...(meeting.reminder_schedule_minutes ?? [])]
+                                  .sort((a, b) => a - b)
+                                  .map((m) => (m === 1440 ? '1 day' : m >= 60 ? `${m / 60}h` : `${m}m`))
+                                  .join(', ')}
+                              </span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
+
+                  {/* Actions row */}
+                  {meeting.status !== 'canceled' && (
+                    <div className="mt-3 pt-3 border-t border-white/5 flex justify-end">
+                      <button
+                        onClick={() => openReminderModal(meeting)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 bg-white/[0.03] border border-white/10 hover:bg-white/[0.07] hover:text-orange-400 hover:border-orange-500/30 transition-all"
+                      >
+                        <Bell className="h-3.5 w-3.5" />
+                        {(meeting.reminder_schedule_minutes?.length ?? 0) > 0 ? 'Edit reminders' : 'Set reminders'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -37,3 +37,4 @@ pytest-cov
 mypy
 types-pytz
 ruff
+apscheduler

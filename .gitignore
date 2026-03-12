@@ -430,5 +430,41 @@ backend/alembic/versions/__pycache__/
 # EXCLUDE NOTE
 # These files are for local testing and migration debugging, not for production or deployment.
 
+# ===========================================
+# ADDITIONAL RUNTIME ARTIFACTS
+# ===========================================
+# APScheduler SQLite fallback jobstore
+apscheduler.db
+apscheduler-jobs.db
+apscheduler-jobs.sqlite
+
+# Backend local .env variants (root .env covered above; these cover nested paths)
+backend/.env
+backend/.env.local
+backend/.env.*.local
+backend/.env.production
+backend/.env.staging
+
+# Frontend local .env variants
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/.env.production
+frontend/.env.staging
+
+# Render, Railway, Vercel local metadata
+.render-buildpacks
+*.render.env
+.railway/
+railway-secrets.json
+.vercel/
+vercel-secrets.json
+
+# AI/IDE assistants (local config, not source)
+.cursor/
+.windsurf/
+.aider*
+.copilot-workspace/
+
 # ===============================
 # END OF GITIGNORE

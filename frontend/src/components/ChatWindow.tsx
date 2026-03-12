@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect, useLayoutEffect, memo, useCallback } from 'react';
-import { SendHorizontal, ArrowRight, Calendar, Clock, Edit2, Eye, X } from 'lucide-react';
+import { SendHorizontal, ArrowRight, Calendar, Clock, Edit2, Eye, X, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSendMessage } from '../hooks/useSendMessage';
 import { useChatStore } from '../store/chatStore';
 import { useUserSession, useLlmStatus } from '../hooks/useUserSession';
 import ChatMessage from './ChatMessage';
 import OptimizedSpinner from './OptimizedSpinner';
+import ReminderPicker from './ReminderPicker';
 
 const QUICK_PROMPTS = [
   { icon: Calendar, label: "Schedule", text: "Schedule a meeting tomorrow at 2pm", color: "text-blue-400", iconBg: "bg-blue-500/15 border-blue-500/20" },
@@ -78,6 +79,15 @@ export default function ChatWindow() {
   const sendMessage = useSendMessage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // reminder preferences for the next scheduled meeting
+  const [showReminders, setShowReminders] = useState(false);
+  const [reminderMinutes, setReminderMinutes] = useState<number[]>([]);
+  const [reminderMethods, setReminderMethods] = useState<string[]>(['email']);
+
+  const handleReminderChange = useCallback((mins: number[], meths: string[]) => {
+    setReminderMinutes(mins);
+    setReminderMethods(meths);
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -97,13 +107,17 @@ export default function ChatWindow() {
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !isLoading) {
-      sendMessage.mutate({ message: message.trim() });
+      sendMessage.mutate({
+        message: message.trim(),
+        reminder_schedule_minutes: reminderMinutes.length ? reminderMinutes : undefined,
+        reminder_methods: reminderMinutes.length && reminderMethods.length ? reminderMethods : undefined,
+      });
       setMessage('');
       if (textareaRef.current) {
         textareaRef.current.style.height = '52px';
       }
     }
-  }, [message, isLoading, sendMessage]);
+  }, [message, isLoading, sendMessage, reminderMinutes, reminderMethods]);
 
   const handleQuickPrompt = useCallback((text: string) => {
     if (!isLoading) {
@@ -185,6 +199,20 @@ export default function ChatWindow() {
 
                       <div className="flex items-center justify-end px-2 pb-1.5">
                         <div className="flex items-center gap-3">
+                          {/* Reminder toggle */}
+                          <button
+                            type="button"
+                            onClick={() => setShowReminders((v) => !v)}
+                            title="Set reminders for this meeting"
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium border transition-all ${
+                              showReminders || reminderMinutes.length > 0
+                                ? 'bg-orange-500/15 border-orange-500/40 text-orange-400'
+                                : 'bg-white/[0.03] border-white/10 text-slate-500 hover:text-slate-300'
+                            }`}
+                          >
+                            <Bell className="h-3 w-3" />
+                            {reminderMinutes.length > 0 ? `${reminderMinutes.length} reminder${reminderMinutes.length > 1 ? 's' : ''}` : 'Remind'}
+                          </button>
                           {/* Status indicator */}
                           <div className="flex items-center gap-1.5">
                             <div className={`w-1.5 h-1.5 rounded-full ${
@@ -207,6 +235,18 @@ export default function ChatWindow() {
                           </button>
                         </div>
                       </div>
+
+                      {/* Reminder picker panel (empty-state input) */}
+                      {showReminders && (
+                        <div className="px-4 pb-3 pt-1 border-t border-white/5">
+                          <ReminderPicker
+                            minutes={reminderMinutes}
+                            methods={reminderMethods}
+                            onChange={handleReminderChange}
+                            compact
+                          />
+                        </div>
+                      )}
                     </div>
                   </form>
 
@@ -283,6 +323,21 @@ export default function ChatWindow() {
                     <span className="text-[11px] text-slate-600 font-medium">ChronosAI</span>
                   </div>
 
+                  {/* Reminder toggle — persistent input */}
+                  <button
+                    type="button"
+                    onClick={() => setShowReminders((v) => !v)}
+                    title="Set reminders for this meeting"
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${
+                      showReminders || reminderMinutes.length > 0
+                        ? 'bg-orange-500/15 border-orange-500/40 text-orange-400'
+                        : 'bg-transparent border-transparent text-slate-600 hover:text-slate-400'
+                    }`}
+                  >
+                    <Bell className="h-3 w-3" />
+                    {reminderMinutes.length > 0 ? `${reminderMinutes.length}` : ''}
+                  </button>
+
                   {isLoading ? (
                     <div className="h-8 w-8 flex items-center justify-center">
                       <OptimizedSpinner size="sm" variant="dots" className="text-slate-400" />
@@ -302,6 +357,18 @@ export default function ChatWindow() {
                   )}
                 </div>
               </div>
+
+              {/* Reminder picker panel (persistent input) */}
+              {showReminders && (
+                <div className="px-4 pb-3 pt-1 border-t border-white/5">
+                  <ReminderPicker
+                    minutes={reminderMinutes}
+                    methods={reminderMethods}
+                    onChange={handleReminderChange}
+                    compact
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex justify-between mt-2 px-1">

@@ -32,6 +32,8 @@ class ParsedIntent(BaseModel):
 
 class ChatRequest(BaseModel):
     message: str
+    reminder_schedule_minutes: Optional[List[int]] = None
+    reminder_methods: Optional[List[str]] = None
 
 
 class ChatResponse(BaseModel):

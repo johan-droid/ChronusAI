@@ -16,6 +16,7 @@ from app.core.middleware import TokenRefreshMiddleware, SecurityValidationMiddle
 from app.core.self_ping import SelfPinger
 from app.services.cleanup_service import run_cleanup_task
 import asyncio
+from app.services.scheduler import start_scheduler, shutdown_scheduler
 
 # Configure structured logging
 structlog.configure(
@@ -61,12 +62,37 @@ async def lifespan(app: FastAPI):
     # Start database cleanup task (runs every 24 hours)
     cleanup_task = asyncio.create_task(run_cleanup_task(interval_hours=24))
     logger.info("Database cleanup background task started")
+
+    # Start APScheduler for reminder jobs
+    try:
+        # Ensure APScheduler SQLAlchemy jobstore tables exist (if using DB-backed jobstore)
+        try:
+            from sqlalchemy import create_engine
+            from apscheduler.jobstores.sqlalchemy import Base as _aps_base
+            db_url = getattr(settings, 'database_url', None)
+            if db_url:
+                # Normalize postgres URL prefix for SQLAlchemy
+                if db_url.startswith('postgres://'):
+                    db_url = db_url.replace('postgres://', 'postgresql://', 1)
+                engine = create_engine(db_url)
+                _aps_base.metadata.create_all(engine)
+                engine.dispose()
+        except Exception:
+            logger.exception('failed_to_create_apscheduler_tables')
+
+        start_scheduler()
+    except Exception:
+        logger.exception("failed_to_start_scheduler")
     
     yield
     
     # Shutdown
     logger.info("Shutting down ChronosAI API")
     self_pinger.stop()
+    try:
+        shutdown_scheduler()
+    except Exception:
+        logger.exception("failed_to_shutdown_scheduler")
 
 
 app = FastAPI(
