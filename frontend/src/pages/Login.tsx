@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import ColorBends from '../components/ColorBends';
 import AnimatedLogo from '../components/AnimatedLogo';
-import ChronosLogo from '../components/ChronosLogo';
 import AuthDebug from '../components/AuthDebug';
 import { Loader2, Shield, Sparkles, Zap, Lock, Mail, Key, User as UserIcon, ArrowRight, Calendar, Bot } from 'lucide-react';
 import { apiClient } from '../lib/api';
