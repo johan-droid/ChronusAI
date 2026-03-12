@@ -1,6 +1,7 @@
 # pyre-unsafe
 from __future__ import annotations
 
+import asyncio as _asyncio
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 import structlog
@@ -15,6 +16,7 @@ from app.dependencies import get_calendar_provider, get_current_user, get_calend
 from app.models.meeting import Meeting
 from app.models.user import User
 from app.schemas.meeting import Attendee, MeetingCreate, MeetingRead, MeetingUpdate
+from app.services.email import send_email
 
 logger = structlog.get_logger()
 
@@ -97,6 +99,9 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
             # events are always plain dicts from list_events
             event_id = event.get("id")
             event_summary = event.get("summary", "No Title")
+            # If the summary is just an email address, replace with something friendlier
+            if event_summary and "@" in event_summary and " " not in event_summary.strip():
+                event_summary = "Meeting"
             event_description = event.get("description", "")
             event_start_raw = event.get("start")
             event_end_raw = event.get("end")
@@ -317,7 +322,42 @@ async def update_meeting(
 
         # Reschedule APScheduler reminder jobs when time or reminders change
         _reschedule_reminder_jobs(meeting, current_user)
-        
+
+        # Send immediate confirmation email if reminders were changed
+        reminders_changed = "reminder_schedule_minutes" in update_data or "reminder_methods" in update_data
+        new_mins = list(meeting.reminder_schedule_minutes or [])
+        if reminders_changed and new_mins and current_user.email:
+            friendly = ", ".join(
+                "1 day" if m == 1440 else f"{m // 60}h" if m >= 60 else f"{m}m"
+                for m in sorted(new_mins)
+            )
+            methods = ", ".join(meeting.reminder_methods or ["email"])
+            confirm_subject = f"✅ Reminders updated – {meeting.title}"
+            confirm_text = (
+                f"Hi {current_user.full_name or 'there'},\n\n"
+                f"Your reminders for \"{meeting.title}\" have been updated.\n\n"
+                f"Reminders: {friendly} before the meeting\n"
+                f"Methods: {methods}\n"
+                f"Meeting time: {meeting.start_time:%Y-%m-%d %H:%M} UTC\n\n"
+                "You'll receive notifications at the scheduled times.\n\n"
+                "– ChronosAI"
+            )
+            confirm_html = (
+                f"<p>Hi {current_user.full_name or 'there'},</p>"
+                f"<p>Your reminders for <strong>{meeting.title}</strong> have been updated.</p>"
+                f"<table style='border-collapse:collapse;margin:12px 0'>"
+                f"<tr><td style='padding:4px 12px 4px 0;color:#888'>Reminders</td><td><strong>{friendly}</strong> before</td></tr>"
+                f"<tr><td style='padding:4px 12px 4px 0;color:#888'>Methods</td><td>{methods}</td></tr>"
+                f"<tr><td style='padding:4px 12px 4px 0;color:#888'>Meeting</td><td>{meeting.start_time:%Y-%m-%d %H:%M} UTC</td></tr>"
+                f"</table>"
+                f"<p>You'll receive notifications at the scheduled times.</p>"
+                f"<hr/><p><small>ChronosAI – Automated Calendar Assistant</small></p>"
+            )
+            _asyncio.create_task(
+                send_email([str(current_user.email)], confirm_subject, confirm_text, confirm_html)
+            )
+            logger.info("reminder_confirmation_email_queued", meeting_id=str(meeting.id), user=str(current_user.email))
+
         await db.commit()
         await db.refresh(meeting)
         

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../lib/api';
-import type { Meeting } from '../types';
+import type { Meeting, MeetingUpdate } from '../types';
 
 export const useMeetings = () => {
   return useQuery<Meeting[], Error>({
@@ -29,7 +29,7 @@ export const useDeleteMeeting = () => {
 export const useUpdateMeeting = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<Meeting, Error, { id: string; updates: Partial<Meeting> }>({
+  return useMutation<Meeting, Error, { id: string; updates: MeetingUpdate }>({
     mutationFn: ({ id, updates }) => apiClient.updateMeeting(id, updates),
     onSuccess: () => {
       // Invalidate and refetch meetings

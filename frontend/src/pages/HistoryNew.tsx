@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown, Bell, X, Check } from 'lucide-react';
+import { Calendar, Clock, MessageSquare, Users, MapPin, Search, ArrowUpDown, Bell, X, Check, Mail } from 'lucide-react';
 import { useMeetings, useUpdateMeeting } from '../hooks/useMeetings';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
 import ReminderPicker from '../components/ReminderPicker';
 import type { Meeting } from '../types';
+
+/** Display a friendlier title when the raw title is just an email address */
+const displayTitle = (title: string) => {
+  if (!title) return 'Untitled Meeting';
+  const trimmed = title.trim();
+  if (trimmed.includes('@') && !trimmed.includes(' ')) return 'Meeting';
+  return trimmed;
+};
 
 export default function History() {
   const navigate = useNavigate();
@@ -70,7 +78,7 @@ export default function History() {
   const filteredMeetings = meetings?.filter(m => {
     const matchesFilter = filter === 'all' || m.status === filter;
     const matchesSearch = !searchTerm ||
-      m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      displayTitle(m.title).toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.attendees.some((a: { email?: string }) => a.email?.toLowerCase().includes(searchTerm.toLowerCase()));
     return matchesFilter && matchesSearch;
@@ -110,7 +118,7 @@ export default function History() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <h3 className="text-base font-bold text-white">Edit Reminders</h3>
-                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{reminderMeeting.title}</p>
+                <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{displayTitle(reminderMeeting.title)}</p>
               </div>
               <button
                 onClick={closeReminderModal}
@@ -140,7 +148,7 @@ export default function History() {
                   bg-orange-500 hover:bg-orange-600 disabled:opacity-70 text-white"
               >
                 {saveSuccess ? (
-                  <><Check className="h-4 w-4" /> Saved!</>
+                  <><Check className="h-4 w-4" /> Saved! <Mail className="h-3.5 w-3.5 ml-0.5 opacity-70" /></>
                 ) : updateMeeting.isPending ? (
                   'Saving…'
                 ) : (
@@ -148,6 +156,12 @@ export default function History() {
                 )}
               </button>
             </div>
+
+            {saveSuccess && (
+              <p className="mt-3 text-center text-xs text-emerald-400/80 flex items-center justify-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" /> Confirmation email sent to your inbox
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -244,7 +258,7 @@ export default function History() {
                       {/* Title & Status Row */}
                       <div className="flex items-start justify-between gap-2 mb-1">
                         <h3 className="text-sm sm:text-base font-bold text-white leading-tight line-clamp-2">
-                          {meeting.title}
+                          {displayTitle(meeting.title)}
                         </h3>
                         <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-tight border ${statusConfig.class}`}>
                           {statusConfig.label}

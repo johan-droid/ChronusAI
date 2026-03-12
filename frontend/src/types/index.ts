@@ -3,7 +3,7 @@ export interface User {
   email: string;
   full_name?: string;
   timezone: string;
-  provider: 'google' | 'outlook' | 'zoom' | 'email';
+  provider: 'google' | 'outlook' | 'email';
   is_verified: boolean;
   created_at: string;
   updated_at: string;
@@ -25,8 +25,9 @@ export interface Meeting {
   end_time: string;
   attendees: Attendee[];
   status: 'scheduled' | 'canceled' | 'rescheduled' | 'pending';
-  provider: 'google' | 'outlook' | 'zoom' | 'email';
+  provider: string;
   meeting_url?: string;
+  zoom_meeting_id?: string;
   raw_user_input?: string;
   reminder_schedule_minutes?: number[];
   reminder_methods?: string[];
@@ -34,11 +35,21 @@ export interface Meeting {
   updated_at: string;
 }
 
+export interface MeetingUpdate {
+  title?: string;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  attendees?: Attendee[];
+  reminder_schedule_minutes?: number[];
+  reminder_methods?: string[];
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-  meeting?: Meeting;
+  meeting?: Partial<Meeting>;
   meetings?: Array<{
     id: string;
     title: string;
@@ -67,7 +78,7 @@ export interface ChatRequest {
 export interface ChatResponse {
   response: string;
   intent: string;
-  meeting?: Meeting;
+  meeting?: Partial<Meeting>;
   requires_clarification: boolean;
   reminder_confirmed?: boolean;
   meetings?: Array<{
@@ -111,4 +122,44 @@ export interface AvailabilityResponse {
   available_count: number;
   busy_count: number;
   past_count: number;
+}
+
+// Calendar API types
+export interface CalendarInfo {
+  id: string;
+  summary: string;
+  primary?: boolean;
+  accessRole?: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+  attendees?: Attendee[];
+  meeting_url?: string;
+  status?: string;
+}
+
+// Organization types
+export type OrgRole = 'owner' | 'admin' | 'member';
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  owner_id: string;
+  logo_url: string | null;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface OrgMember {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  role: OrgRole;
+  joined_at: string;
 }

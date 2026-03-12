@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse, AvailabilityResponse } from '../types';
+import type { ChatRequest, ChatResponse, Meeting, MeetingUpdate, User, AuthUrlResponse, AvailabilityResponse, CalendarInfo, CalendarEvent } from '../types';
 import { cacheManager, clearAuthCache } from './cache';
 import { useAuthStore } from '../store/authStore';
 
@@ -132,7 +132,7 @@ class ApiClient {
   }
 
   // Auth endpoints
-  async getAuthUrl(provider: 'google' | 'outlook' | 'zoom'): Promise<AuthUrlResponse> {
+  async getAuthUrl(provider: string): Promise<AuthUrlResponse> {
     try {
       const response = await this.client.get(`auth/${provider}/login`);
       return response.data;
@@ -142,13 +142,33 @@ class ApiClient {
     }
   }
 
-  async login(data: Record<string, unknown>): Promise<{ access_token: string; token_type: string; user: User; refresh_token?: string }> {
+  async login(data: { email: string; password: string }): Promise<{ access_token: string; token_type: string; user: User; refresh_token?: string }> {
     const response = await this.client.post('auth/login', data);
     return response.data;
   }
 
-  async signup(data: Record<string, unknown>): Promise<{ access_token: string; token_type: string; user: User; refresh_token?: string }> {
+  async signup(data: { email: string; password: string; full_name: string }): Promise<{ access_token: string; token_type: string; user: User; refresh_token?: string }> {
     const response = await this.client.post('auth/signup', data);
+    return response.data;
+  }
+
+  async requestPasswordReset(email: string): Promise<{ message: string }> {
+    const response = await this.client.post('auth/request-password-reset', { email });
+    return response.data;
+  }
+
+  async resetPassword(token: string, new_password: string): Promise<{ message: string }> {
+    const response = await this.client.post('auth/reset-password', { token, new_password });
+    return response.data;
+  }
+
+  async verifyEmail(token: string): Promise<{ message: string }> {
+    const response = await this.client.post('auth/verify-email', { token });
+    return response.data;
+  }
+
+  async resendVerification(email: string): Promise<{ message: string }> {
+    const response = await this.client.post('auth/resend-verification', { email });
     return response.data;
   }
 
@@ -218,7 +238,7 @@ class ApiClient {
     return response.data;
   }
 
-  async updateMeeting(meetingId: string, updates: Partial<Meeting>): Promise<Meeting> {
+  async updateMeeting(meetingId: string, updates: MeetingUpdate): Promise<Meeting> {
     const response = await this.client.put(`meetings/${meetingId}`, updates);
     cacheManager.invalidatePattern('meetings');
     return response.data;
@@ -265,6 +285,76 @@ class ApiClient {
     const params = new URLSearchParams({ date });
     if (timezone) params.append('timezone', timezone);
     const response = await this.client.get(`availability?${params.toString()}`);
+    return response.data;
+  }
+
+  // Calendar endpoints
+  async testCalendarConnection(): Promise<{ status: string; calendars_found: number; primary_calendar: string }> {
+    const response = await this.client.get('calendar/test-connection');
+    return response.data;
+  }
+
+  async getCalendars(): Promise<{ calendars: CalendarInfo[] }> {
+    const response = await this.client.get('calendar/calendars');
+    return response.data;
+  }
+
+  async getCalendarEvents(params?: {
+    calendar_id?: string;
+    start_time?: string;
+    end_time?: string;
+    max_results?: number;
+  }): Promise<{ events: CalendarEvent[]; total: number }> {
+    const query = new URLSearchParams();
+    if (params?.calendar_id) query.append('calendar_id', params.calendar_id);
+    if (params?.start_time) query.append('start_time', params.start_time);
+    if (params?.end_time) query.append('end_time', params.end_time);
+    if (params?.max_results) query.append('max_results', String(params.max_results));
+    const url = query.toString() ? `calendar/events?${query}` : 'calendar/events';
+    const response = await this.client.get(url);
+    return response.data;
+  }
+
+  async getCalendarAvailability(params?: {
+    calendar_ids?: string[];
+    start_time?: string;
+    end_time?: string;
+    duration_minutes?: number;
+  }): Promise<{ available_slots: Array<{ start: string; end: string }>; total_slots: number; search_period: Record<string, string> }> {
+    const query = new URLSearchParams();
+    if (params?.calendar_ids) params.calendar_ids.forEach(id => query.append('calendar_ids', id));
+    if (params?.start_time) query.append('start_time', params.start_time);
+    if (params?.end_time) query.append('end_time', params.end_time);
+    if (params?.duration_minutes) query.append('duration_minutes', String(params.duration_minutes));
+    const url = query.toString() ? `calendar/availability?${query}` : 'calendar/availability';
+    const response = await this.client.get(url);
+    return response.data;
+  }
+
+  async getFreeBusy(calendar_ids: string[], start_time: string, end_time: string): Promise<{ calendars: Record<string, unknown>; search_period: Record<string, string> }> {
+    const query = new URLSearchParams();
+    calendar_ids.forEach(id => query.append('calendar_ids', id));
+    query.append('start_time', start_time);
+    query.append('end_time', end_time);
+    const response = await this.client.get(`calendar/free-busy?${query}`);
+    return response.data;
+  }
+
+  async createCalendarEvent(event: Record<string, unknown>, calendar_id?: string): Promise<{ event: CalendarEvent; message: string }> {
+    const query = calendar_id ? `?calendar_id=${encodeURIComponent(calendar_id)}` : '';
+    const response = await this.client.post(`calendar/events${query}`, event);
+    return response.data;
+  }
+
+  async updateCalendarEvent(eventId: string, event: Record<string, unknown>, calendar_id?: string): Promise<{ event: CalendarEvent; message: string }> {
+    const query = calendar_id ? `?calendar_id=${encodeURIComponent(calendar_id)}` : '';
+    const response = await this.client.put(`calendar/events/${eventId}${query}`, event);
+    return response.data;
+  }
+
+  async deleteCalendarEvent(eventId: string, calendar_id?: string): Promise<{ message: string }> {
+    const query = calendar_id ? `?calendar_id=${encodeURIComponent(calendar_id)}` : '';
+    const response = await this.client.delete(`calendar/events/${eventId}${query}`);
     return response.data;
   }
 }

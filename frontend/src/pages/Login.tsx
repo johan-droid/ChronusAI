@@ -19,7 +19,7 @@ export default function Login() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
+    full_name: '',
   });
   const navigate = useNavigate();
 
@@ -343,8 +343,8 @@ export default function Login() {
                         required
                         placeholder="John Doe"
                         className="w-full bg-white/[0.03] border border-white/10 focus:border-primary/50 rounded-2xl py-3 pl-12 pr-4 text-white outline-none transition-all placeholder:text-slate-600 font-medium"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        value={formData.full_name}
+                        onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                       />
                     </div>
                   </div>

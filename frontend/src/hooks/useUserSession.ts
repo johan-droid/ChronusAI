@@ -19,7 +19,9 @@ function getGreeting(): Greeting {
 /* ── LLM Health Check via React Query ── */
 async function fetchLlmStatus(): Promise<boolean> {
   try {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const raw = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    // Normalize: strip trailing /api/v1 or /api to get the bare origin
+    const baseUrl = raw.replace(/\/?api(\/v1)?\/?$/, '').replace(/\/$/, '');
     const response = await fetch(`${baseUrl}/api/v1/health/llm`);
     const data = await response.json();
     return data.status === 'online';

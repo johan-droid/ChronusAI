@@ -366,9 +366,7 @@ export default function StatsOverview() {
           <div className="space-y-8">
             <section>
               <h2 className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-4">Overview</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-                <StatsGrid stats={stats} />
-              </div>
+              <StatsGrid stats={stats} />
             </section>
 
             <section>
