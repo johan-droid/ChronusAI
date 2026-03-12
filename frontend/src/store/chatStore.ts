@@ -42,7 +42,8 @@ export const useChatStore = create<ChatState>()(
           meetings: response.meetings,
           availability: response.availability,
           suggestions: response.suggestions,
-          intent: response.intent
+          intent: response.intent,
+          reminder_confirmed: response.reminder_confirmed
         };
 
         return {

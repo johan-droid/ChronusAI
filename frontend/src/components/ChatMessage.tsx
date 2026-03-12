@@ -1,4 +1,4 @@
-import { Check, Calendar, Clock, ExternalLink, Zap } from 'lucide-react';
+import { Check, Calendar, Clock, ExternalLink, Zap, Bell, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
@@ -385,6 +385,25 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
             >
               <Check className="h-3 w-3" />
               <span>{isSuccess ? (message.meeting?.meeting_url ? 'Meeting created with link' : 'Action completed') : 'Event canceled'}</span>
+            </motion.div>
+          )}
+
+          {/* Reminder Confirmation Badge */}
+          {!isUser && message.reminder_confirmed && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="mt-2 flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-500/[0.06] border border-orange-500/[0.12]"
+            >
+              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-orange-500/10">
+                <Bell className="h-3.5 w-3.5 text-orange-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-orange-300/90">Reminder confirmed</p>
+                <p className="text-[10px] text-slate-500 flex items-center gap-1"><Mail className="h-2.5 w-2.5" /> Confirmation sent to your email</p>
+              </div>
+              <Check className="h-3.5 w-3.5 text-emerald-400/70 shrink-0" />
             </motion.div>
           )}
 

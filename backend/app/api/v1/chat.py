@@ -508,6 +508,7 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
         )
 
         # Send immediate email notifications to attendees in background
+        _reminder_confirmed = False
         try:
             from app.services.email import send_email
 
@@ -567,12 +568,51 @@ async def handle_create_meeting(intent: ParsedIntent, user: User, calendar_provi
                         logger.exception("failed_to_schedule_single_reminder", minutes_before=minutes_before)
             except Exception:
                 logger.exception("failed_to_schedule_reminder")
+
+            # Send a confirmation email to the organizer about the reminders that were set
+            try:
+                if schedule_minutes:
+                    readable = ", ".join(
+                        f"{m} min" if m < 60 else f"{m // 60} hr" if m < 1440 else f"{m // 1440} day"
+                        for m in sorted(schedule_minutes)
+                    )
+                    methods_str = ", ".join(getattr(meeting_create, 'reminder_methods', None) or ["email"])
+                    confirm_subject = f"✅ Reminder confirmed: {meeting.title}"
+                    confirm_text = (
+                        f"Hi {str(user.full_name or user.email)},\n\n"
+                        f"Your reminder for '{meeting.title}' has been set successfully.\n\n"
+                        f"Meeting: {meeting.title}\n"
+                        f"When: {formatted_time}\n"
+                        f"Reminders: {readable} before via {methods_str}\n\n"
+                        f"You will receive reminder notifications at the scheduled times.\n\n"
+                        "— ChronosAI"
+                    )
+                    confirm_html = (
+                        f"<div style='font-family:sans-serif;max-width:520px'>"
+                        f"<p>Hi <strong>{str(user.full_name or user.email)}</strong>,</p>"
+                        f"<p>Your reminder for '<strong>{meeting.title}</strong>' has been set successfully.</p>"
+                        f"<table style='border-collapse:collapse;margin:12px 0'>"
+                        f"<tr><td style='padding:4px 12px 4px 0;color:#666'>Meeting</td><td><strong>{meeting.title}</strong></td></tr>"
+                        f"<tr><td style='padding:4px 12px 4px 0;color:#666'>When</td><td>{formatted_time}</td></tr>"
+                        f"<tr><td style='padding:4px 12px 4px 0;color:#666'>Reminders</td><td>{readable} before</td></tr>"
+                        f"<tr><td style='padding:4px 12px 4px 0;color:#666'>Via</td><td>{methods_str}</td></tr>"
+                        f"</table>"
+                        f"<p style='color:#888;font-size:13px'>You will receive reminder notifications at the scheduled times.</p>"
+                        f"<hr style='border:none;border-top:1px solid #eee'/>"
+                        f"<p style='color:#aaa;font-size:12px'>ChronosAI — Automated Meeting Scheduler</p>"
+                        f"</div>"
+                    )
+                    _asyncio.create_task(send_email([str(user.email)], confirm_subject, confirm_text, confirm_html))
+                    _reminder_confirmed = True
+            except Exception:
+                logger.exception("failed_to_send_reminder_confirmation")
         except Exception:
             logger.exception("failed_to_enqueue_meeting_emails")
 
         return ChatResponse(
             response=f"✅ Meeting scheduled: {title} on {formatted_time}",
             intent="schedule",
+            reminder_confirmed=_reminder_confirmed,
             meeting={
                 "id": str(meeting.id),
                 "title": meeting.title,

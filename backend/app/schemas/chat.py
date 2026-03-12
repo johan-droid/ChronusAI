@@ -45,6 +45,7 @@ class ChatResponse(BaseModel):
     availability: Optional[List[dict[str, Any]]] = None  # Available time slots
     suggestions: Optional[List[Any]] = None  # e.g. [{"time": "ISO", "reason": "..."}]
     confidence: Optional[float] = None
+    reminder_confirmed: bool = False  # True when reminders were set & confirmation email sent
 
 
 class ConversationMessage(BaseModel):

@@ -21,6 +21,59 @@ logger = structlog.get_logger()
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
 
+def _reschedule_reminder_jobs(meeting: Meeting, current_user: User) -> None:
+    """Remove old APScheduler reminder jobs and schedule new ones based on current meeting state."""
+    from app.services.scheduler import remove_job, schedule_job
+    from app.services.email import send_email
+
+    # Remove any existing reminder jobs for this meeting
+    old_minutes = getattr(meeting, 'reminder_schedule_minutes', None) or []
+    # Also try common candidates in case the list changed
+    all_candidates = sorted({*old_minutes, 3, 5, 10, 15, 30, 60, 1440})
+    for mins in all_candidates:
+        try:
+            remove_job(f"reminder-{meeting.id}-{mins}")
+        except Exception:
+            pass
+
+    # Schedule new jobs
+    schedule_minutes = list(meeting.reminder_schedule_minutes or [])
+    if not schedule_minutes:
+        return
+
+    attendees = [
+        a.get("email") if isinstance(a, dict) else str(a)
+        for a in (meeting.attendees or [])
+    ]
+    subject_base = f"Reminder: {meeting.title}"
+    text_body = (
+        f"Your meeting '{meeting.title}' is coming up.\n\n"
+        f"Details:\n{meeting.description or ''}\n\nLink: {meeting.meeting_url or 'N/A'}\n\n"
+        "This is an automated reminder from ChronosAI."
+    )
+    html_body = (
+        f"<p>Your meeting '<strong>{meeting.title}</strong>' is coming up.</p>"
+        f"<p>{meeting.description or ''}</p>"
+        f"<p>Join: <a href=\"{meeting.meeting_url or '#'}\">{meeting.meeting_url or 'Open meeting'}</a></p>"
+        f"<hr/><p><small>Automated reminder from ChronosAI.</small></p>"
+    )
+
+    now = datetime.now(timezone.utc)
+    for minutes_before in sorted(set(int(x) for x in schedule_minutes if int(x) >= 0)):
+        run_at = meeting.start_time - timedelta(minutes=minutes_before)
+        if run_at <= now:
+            continue
+        try:
+            schedule_job(
+                send_email,
+                run_date=run_at,
+                args=[attendees, f"{subject_base} (in {minutes_before} min)", text_body, html_body],
+                id=f"reminder-{meeting.id}-{minutes_before}",
+            )
+        except Exception:
+            logger.exception("failed_to_reschedule_reminder", meeting_id=str(meeting.id), minutes_before=minutes_before)
+
+
 async def sync_google_calendar_meetings(current_user: User, calendar_provider, db: AsyncSession):
     """Sync meetings from Google Calendar to local database."""
     try:
@@ -248,6 +301,9 @@ async def update_meeting(
                 reminder_methods=getattr(meeting, 'reminder_methods', None),
             )
             await calendar_provider.update_event(meeting.external_event_id, meeting_create)
+
+        # Reschedule APScheduler reminder jobs when time or reminders change
+        _reschedule_reminder_jobs(meeting, current_user)
         
         await db.commit()
         await db.refresh(meeting)

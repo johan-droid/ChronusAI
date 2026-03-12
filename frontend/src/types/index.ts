@@ -55,6 +55,7 @@ export interface ChatMessage {
     reason?: string;
   }>;
   intent?: string;
+  reminder_confirmed?: boolean;
 }
 
 export interface ChatRequest {
@@ -68,6 +69,7 @@ export interface ChatResponse {
   intent: string;
   meeting?: Meeting;
   requires_clarification: boolean;
+  reminder_confirmed?: boolean;
   meetings?: Array<{
     id: string;
     title: string;
