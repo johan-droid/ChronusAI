@@ -1,160 +1,71 @@
-// ChronosAI Service Worker for PWA functionality
-const CACHE_NAME = 'chronosai-v1.0.0';
+const CACHE_NAME = 'chronosai-cache-v1';
 const OFFLINE_URL = '/offline.html';
 
-// Files to cache for offline functionality
-const STATIC_CACHE_URLS = [
+const ASSETS_TO_CACHE = [
   '/',
-  '/offline.html',
+  '/index.html',
   '/manifest.json',
+  '/offline.html',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
-  '/css/app.css',
-  '/js/app.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
 ];
 
-// Install event - cache static assets
 self.addEventListener('install', (event) => {
-  console.log('🔧 ChronosAI Service Worker: Installing');
-  
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('📦 ChronosAI Service Worker: Caching static assets');
-        return cache.addAll(STATIC_CACHE_URLS);
-      })
-      .then(() => {
-        console.log('✅ ChronosAI Service Worker: Installation complete');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('❌ ChronosAI Service Worker: Installation failed:', error);
-      })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS_TO_CACHE)),
   );
+  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('🚀 ChronosAI Service Worker: Activating');
-  
   event.waitUntil(
-    caches.keys()
-      .then((cacheNames) => {
-        return Promise.all(
-          cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
-              console.log('🗑️ ChronosAI Service Worker: Deleting old cache:', cacheName);
-              return caches.delete(cacheName);
-            }
-          })
-        );
-      })
-      .then(() => {
-        console.log('✅ ChronosAI Service Worker: Activation complete');
-        return self.clients.claim();
-      })
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key)),
+      ),
+    ),
   );
+  self.clients.claim();
 });
 
-// Fetch event - serve from cache when offline
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-HTTP requests
-  if (!request.url.startsWith('http')) {
+  // Don't handle cross-origin requests or chrome-extension requests
+  if (request.method !== 'GET' || url.origin !== self.location.origin) {
     return;
   }
 
-  // Skip API requests - let them fail gracefully
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-
-  // Strategy: Cache first with network fallback for static assets
-  if (STATIC_CACHE_URLS.some(cacheUrl => url.pathname === new URL(cacheUrl, self.location.origin).pathname)) {
-    event.respondWith(
-      caches.match(request)
-        .then((response) => {
-          if (response) {
-            console.log('📋 ChronosAI Service Worker: Serving from cache:', request.url);
-            return response;
-          }
-          
-          console.log('🌐 ChronosAI Service Worker: Fetching from network:', request.url);
-          return fetch(request)
-            .then((response) => {
-              // Cache successful responses
-              if (response.status === 200) {
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME)
-                  .then((cache) => {
-                    cache.put(request, responseClone);
-                  });
-              }
-              return response;
-            })
-            .catch(() => {
-              // Return offline page for navigation requests
-              if (request.mode === 'navigate') {
-                console.log('📴 ChronosAI Service Worker: Serving offline page');
-                return caches.match(OFFLINE_URL);
-              }
-            });
-        })
-    );
-    return;
-  }
-
-  // Strategy: Network first with cache fallback for other requests
+  // Prefer cache, fall back to network, serve offline page for navigations
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cache successful responses
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(request, responseClone);
-            });
-        }
-        return response;
-      })
-      .catch(() => {
-        // Try to serve from cache
-        return caches.match(request)
-          .then((response) => {
-            if (response) {
-              console.log('📋 ChronosAI Service Worker: Serving from cache fallback:', request.url);
-              return response;
-            }
-            
-            // Return offline page for navigation requests
-            if (request.mode === 'navigate') {
-              console.log('📴 ChronosAI Service Worker: Serving offline page');
-              return caches.match(OFFLINE_URL);
-            }
-          });
-      })
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request)
+        .then((response) => {
+          // Optionally cache successful responses for future
+          if (response && response.status === 200 && response.type === 'basic') {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          if (request.mode === 'navigate') return caches.match(OFFLINE_URL);
+          return undefined;
+        });
+    }),
   );
 });
 
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    console.log('🔄 ChronosAI Service Worker: Background sync triggered');
-    event.waitUntil(doBackgroundSync());
+// Optional: respond to skipWaiting messages from the page
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
 });
-
-// Push notifications
-self.addEventListener('push', (event) => {
-  console.log('📢 ChronosAI Service Worker: Push notification received');
-  
-  const options = {
-    body: event.data ? event.data.text() : 'New meeting update',
-    icon: '/icons/icon-192x192.png',
     badge: '/icons/badge-72x72.png',
     vibrate: [200, 100, 200],
     data: {
