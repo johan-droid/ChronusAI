@@ -169,6 +169,8 @@ class ApiClient {
   async detectTimezone(): Promise<{
     timezone: string;
     detected: boolean;
+    cultural_context: string;
+    country: string;
     source: string;
   }> {
     const response = await this.client.post('users/detect-timezone');

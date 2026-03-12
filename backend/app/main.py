@@ -1,3 +1,8 @@
+import warnings
+# Suppress known third-party deprecation warnings that don't affect us
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="google.genai")
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="slowapi")
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse

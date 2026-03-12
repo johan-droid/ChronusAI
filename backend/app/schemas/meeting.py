@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from uuid import UUID
@@ -29,6 +29,8 @@ class MeetingCreate(MeetingBase):
 
 
 class MeetingRead(MeetingBase):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     user_id: UUID
     external_event_id: Optional[str] = None
@@ -36,9 +38,6 @@ class MeetingRead(MeetingBase):
     raw_user_input: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 
 class MeetingUpdate(BaseModel):
