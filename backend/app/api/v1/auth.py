@@ -352,7 +352,10 @@ async def google_login():
 
 @router.get("/google/callback")
 async def google_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
-    return await _oauth_callback("google", code, state, db)
+    from fastapi import Response
+    response = Response()
+    result = await _oauth_callback("google", code, state, db, response=response)
+    return result
 
 
 @microsoft_router.get("/outlook/login")
@@ -390,6 +393,8 @@ async def _oauth_login(provider: str):
 async def _oauth_callback(provider: str, code: str, state: str, db: AsyncSession):
     if provider not in ["google", "outlook"]:
         raise HTTPException(status_code=400, detail="Unsupported provider")
+    from fastapi import Response
+    response = Response()
     try:
         oauth_provider = get_oauth_provider(provider)
         token_data = await oauth_provider.exchange_code_for_tokens(code)
@@ -405,10 +410,11 @@ async def _oauth_callback(provider: str, code: str, state: str, db: AsyncSession
 
         access_token = create_access_token(subject=str(user.id))
         refresh_token = create_refresh_token(subject=str(user.id))
+        _set_refresh_cookie(response, refresh_token)
 
         frontend_url = str(settings.frontend_url)
         redirect_url = f"{frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
-        return RedirectResponse(url=redirect_url)
+        return RedirectResponse(url=redirect_url, headers=response.headers)
 
     except HTTPException:
         raise
