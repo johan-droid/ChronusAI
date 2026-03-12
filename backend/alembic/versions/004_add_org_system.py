@@ -49,16 +49,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    # ── Create OrgRole enum (idempotent via PL/pgSQL exception handler) ───────
-    op.execute("""
-        DO $$
-        BEGIN
-            CREATE TYPE org_role_enum AS ENUM ('owner', 'admin', 'member');
-        EXCEPTION
-            WHEN duplicate_object THEN null;
-        END $$;
-    """)
-
     # ── Create organizations table ────────────────────────────────────────────
     op.create_table(
         "organizations",
@@ -117,7 +107,7 @@ def upgrade() -> None:
         ),
         sa.Column(
             "role",
-            sa.Enum("owner", "admin", "member", name="org_role_enum", create_type=False),
+            sa.Enum("owner", "admin", "member", name="org_role_enum"),
             nullable=False,
             server_default="member",
         ),

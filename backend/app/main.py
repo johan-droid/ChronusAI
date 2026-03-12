@@ -169,14 +169,6 @@ async def root():
     }
 
 
-    return {
-        "status": "healthy",
-        "service": "ChronosAI",
-        "version": "1.0.0",
-        "uptime": "operational",
-        "timestamp": time.time()
-    }
-
 
 @app.get("/api/v1/health/llm")
 async def llm_health_check():
