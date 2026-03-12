@@ -2,6 +2,86 @@ import { Check, Calendar, Clock, ExternalLink, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ChatMessage as ChatMessageType } from '../types';
 
+// ── Lightweight markdown renderer (no external deps) ──────────────────────────
+function renderMd(text: string): React.ReactNode[] {
+  const lines = text.split('\n');
+  const nodes: React.ReactNode[] = [];
+  let i = 0;
+
+  const inlineFormat = (raw: string, key: string | number): React.ReactNode => {
+    // Split on **bold** and *italic* tokens
+    const parts = raw.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+    return (
+      <span key={key}>
+        {parts.map((p, j) => {
+          if (p.startsWith('**') && p.endsWith('**'))
+            return <strong key={j} className="font-semibold text-white/95">{p.slice(2, -2)}</strong>;
+          if (p.startsWith('*') && p.endsWith('*'))
+            return <em key={j} className="italic text-white/80">{p.slice(1, -1)}</em>;
+          return p;
+        })}
+      </span>
+    );
+  };
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Collect a bullet list run
+    if (/^[*\-]\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[*\-]\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^[*\-]\s+/, ''));
+        i++;
+      }
+      nodes.push(
+        <ul key={`ul-${i}`} className="mt-1.5 mb-1.5 space-y-1 pl-1">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex gap-2">
+              <span className="mt-[5px] w-1.5 h-1.5 rounded-full bg-indigo-400/50 shrink-0" />
+              <span>{inlineFormat(item, idx)}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // Collect a numbered list run
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ''));
+        i++;
+      }
+      nodes.push(
+        <ol key={`ol-${i}`} className="mt-1.5 mb-1.5 space-y-1 pl-1 list-none">
+          {items.map((item, idx) => (
+            <li key={idx} className="flex gap-2">
+              <span className="shrink-0 text-indigo-400/60 font-medium text-[13px] w-5 text-right">{idx + 1}.</span>
+              <span>{inlineFormat(item, idx)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // Blank line → spacing
+    if (line.trim() === '') {
+      nodes.push(<div key={`br-${i}`} className="h-2" />);
+      i++;
+      continue;
+    }
+
+    // Regular paragraph line
+    nodes.push(<p key={`p-${i}`} className="leading-relaxed">{inlineFormat(line, i)}</p>);
+    i++;
+  }
+
+  return nodes;
+}
+
 interface ChatMessageProps {
   message: ChatMessageType;
   isTyping?: boolean;
@@ -93,7 +173,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
             </div>
           )}
           {/* Message bubble */}
-          <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
+          <div className={`max-w-[90%] sm:max-w-[78%] rounded-2xl px-4 py-3 ${
             isUser
               ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/15 border border-indigo-500/20 text-white/95'
               : 'bg-white/[0.03] border border-white/[0.05] text-white/80'
@@ -107,10 +187,14 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
                 </div>
                 <span className="text-slate-500 text-sm">Thinking…</span>
               </div>
-            ) : (
+            ) : isUser ? (
               <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">
                 {message.content}
               </p>
+            ) : (
+              <div className="text-[15px] space-y-0.5 break-words">
+                {renderMd(message.content)}
+              </div>
             )}
           </div>
 
@@ -122,7 +206,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mt-2.5 max-w-[85%] sm:max-w-[75%] w-full claude-data-card p-4 space-y-3"
+              className="mt-2.5 max-w-[90%] sm:max-w-[78%] w-full claude-data-card p-4 space-y-3"
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center shrink-0">
@@ -172,7 +256,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mt-2.5 max-w-[85%] sm:max-w-[75%] w-full claude-data-card overflow-hidden"
+              className="mt-2.5 max-w-[90%] sm:max-w-[78%] w-full claude-data-card overflow-hidden"
             >
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
                 <Calendar className="h-3.5 w-3.5 text-blue-400" />
@@ -209,7 +293,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mt-2.5 max-w-[85%] sm:max-w-[75%] w-full claude-data-card overflow-hidden"
+              className="mt-2.5 max-w-[90%] sm:max-w-[78%] w-full claude-data-card overflow-hidden"
             >
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
                 <Clock className="h-3.5 w-3.5 text-emerald-400/80" />
@@ -252,7 +336,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="mt-2.5 max-w-[85%] sm:max-w-[75%] w-full claude-data-card overflow-hidden"
+              className="mt-2.5 max-w-[90%] sm:max-w-[78%] w-full claude-data-card overflow-hidden"
             >
               <div className="flex items-center gap-2 px-4 py-3 border-b border-white/5">
                 <Zap className="h-3.5 w-3.5 text-amber-400/80" />

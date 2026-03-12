@@ -1,6 +1,7 @@
 import uuid
+from types import SimpleNamespace
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from app.services.calendar_provider import CalendarProvider, TimeSlot, CreateEventResult
 from app.schemas.meeting import MeetingCreate
 import httpx
@@ -52,6 +53,18 @@ class GoogleCalendarAdapter(CalendarProvider):
             return busy_slots
         return []  # unreachable, satisfies type checker
     
+    async def get_events(
+        self,
+        calendar_id: str = "primary",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+    ) -> List[SimpleNamespace]:
+        """Fetch events and return as objects with attribute access (used by chat handlers)."""
+        start = start_time or (datetime.now(timezone.utc) - timedelta(days=30))
+        end = end_time or (datetime.now(timezone.utc) + timedelta(days=30))
+        raw = await self.list_events(start, end)
+        return [SimpleNamespace(**e) for e in raw]
+
     async def list_events(self, start: datetime, end: datetime) -> List[dict]:
         """List events from Google Calendar with enhanced error handling."""
         logger.info("Fetching Google Calendar events", start=start.isoformat(), end=end.isoformat())

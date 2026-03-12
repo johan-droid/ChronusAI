@@ -15,7 +15,7 @@ logger = structlog.get_logger()
 async def fetch_live_calendar_events(calendar_provider, current_user, start_time: datetime, end_time: datetime) -> str:
     """Fetch live calendar events for LLM context injection."""
     try:
-        events = await calendar_provider.get_events(start_time, end_time)
+        events = await calendar_provider.get_events(start_time=start_time, end_time=end_time)
         
         if not events:
             return "No upcoming events in Google Calendar."
@@ -71,7 +71,7 @@ class CalendarIntegrationService:
         """Get the appropriate calendar service"""
         if self._service is None:
             if self.provider == CalendarProvider.GOOGLE:
-                self._service = GoogleCalendarService(self.user_id, self.db, self.user_timezone)
+                self._service = GoogleCalendarService(self.access_token, self.user_timezone)
             elif self.provider == CalendarProvider.OUTLOOK:
                 self._service = OutlookCalendarAdapter(self.access_token)
             else:

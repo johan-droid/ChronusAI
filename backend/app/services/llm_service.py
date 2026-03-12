@@ -173,8 +173,13 @@ class LLMService:
             if not content:
                 raise ValueError("Empty response from Gemini")
                 
-            # Parse JSON response (Gemini should return clean JSON)
-            parsed_data = json.loads(content.strip())
+            # Parse JSON response (strip markdown fences if present)
+            text = content.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            parsed_data = json.loads(text.strip())
             return ParsedIntent(**parsed_data)
             
         except json.JSONDecodeError as e:

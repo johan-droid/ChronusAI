@@ -34,7 +34,7 @@ async def sync_google_calendar_meetings(current_user: User, calendar_provider, d
         start_time = datetime.now(timezone.utc) - timedelta(days=7)  # Include past 7 days
         
         # Fetch events from Google Calendar
-        events: List[Dict[str, Any]] = await calendar_provider.get_events(start_time, end_time)
+        events: List[Dict[str, Any]] = await calendar_provider.get_events(start_time=start_time, end_time=end_time)
         
         # Keep track of active external event IDs from Google Calendar
         active_external_ids = set()
