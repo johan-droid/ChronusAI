@@ -83,8 +83,10 @@ class Settings(BaseSettings):
         # Only generate if truly empty (not falsy)
         if self.secret_key == "":
             self.secret_key = secrets.token_urlsafe(32)
-            print("🔑 Generated SECRET_KEY")
-            
+            # Backwards-compatible: accept either a single integer (legacy) or
+            # a comma-separated string / list for multiple reminder minutes.
+            reminder_minutes_before: Union[int, str] = 15  # legacy single reminder value
+            reminder_schedule_minutes: Optional[Union[List[int], str]] = None
         if self.encryption_key == "":
             from cryptography.fernet import Fernet
             self.encryption_key = Fernet.generate_key().decode()
@@ -142,6 +144,54 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance to ensure consistent secret keys."""
     return Settings()  # type: ignore[call-arg]
+
+                # Normalize reminder environment variables to canonical types:
+                # - `reminder_minutes_before` should be an int
+                # - `reminder_schedule_minutes` should be a list[int] or None
+                try:
+                    # If schedule provided as a comma-separated string, parse to list[int]
+                    if isinstance(self.reminder_schedule_minutes, str):
+                        parts = [p.strip() for p in self.reminder_schedule_minutes.split(',') if p.strip()]
+                        self.reminder_schedule_minutes = [int(p) for p in parts]
+
+                    # If legacy single or mis-set value provided as string, handle it
+                    if isinstance(self.reminder_minutes_before, str):
+                        # If it contains commas the deploy likely set the schedule into the
+                        # single-value var by mistake, so interpret as a schedule.
+                        if ',' in self.reminder_minutes_before:
+                            parts = [p.strip() for p in self.reminder_minutes_before.split(',') if p.strip()]
+                            parsed = [int(p) for p in parts]
+                            self.reminder_schedule_minutes = parsed
+                            # set primary single reminder to the first parsed value
+                            self.reminder_minutes_before = int(parsed[0]) if parsed else 15
+                        else:
+                            # single integer string
+                            self.reminder_minutes_before = int(self.reminder_minutes_before)
+
+                    # Coerce types: ensure reminder_minutes_before is an int
+                    if isinstance(self.reminder_minutes_before, float):
+                        self.reminder_minutes_before = int(self.reminder_minutes_before)
+
+                    # If schedule exists and contains non-int entries (e.g., list[str]), coerce
+                    if isinstance(self.reminder_schedule_minutes, list):
+                        coerced = []
+                        for item in self.reminder_schedule_minutes:
+                            if isinstance(item, str):
+                                if item.strip():
+                                    coerced.append(int(item.strip()))
+                            else:
+                                coerced.append(int(item))
+                        # Deduplicate & sort
+                        self.reminder_schedule_minutes = sorted(set(coerced)) if coerced else None
+
+                except Exception:
+                    # Best-effort fallback to defaults on any parsing error
+                    try:
+                        self.reminder_minutes_before = int(getattr(self, 'reminder_minutes_before', 15) or 15)
+                    except Exception:
+                        self.reminder_minutes_before = 15
+                    if not isinstance(self.reminder_schedule_minutes, list):
+                        self.reminder_schedule_minutes = None
 
 
 # Back-compat for existing imports
