@@ -4,6 +4,7 @@ export interface User {
   full_name?: string;
   timezone: string;
   provider: 'google' | 'outlook' | 'zoom' | 'email';
+  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -82,10 +83,30 @@ export interface ChatResponse {
     confidence?: number;
     reason?: string;
   }>;
+  confidence?: number;
 }
 
 export interface AuthUrlResponse {
   auth_url: string;
   state?: string;
   verifier?: string;
+}
+
+export type SlotStatus = 'available' | 'busy' | 'past';
+
+export interface TimeSlot {
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
+  status: SlotStatus;
+  timezone: string;
+}
+
+export interface AvailabilityResponse {
+  date: string;
+  timezone: string;
+  slots: TimeSlot[];
+  available_count: number;
+  busy_count: number;
+  past_count: number;
 }

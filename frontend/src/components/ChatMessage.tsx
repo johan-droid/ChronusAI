@@ -88,15 +88,15 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
           {/* AI identifier badge */}
           {!isUser && (
             <div className="flex items-center gap-1.5 mb-1.5 ml-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-indigo-400/50" />
-              <span className="text-[10px] font-semibold text-indigo-300/50 uppercase tracking-widest">ChronosAI</span>
+              <div className="h-1 w-1 rounded-full bg-indigo-400/40" />
+              <span className="text-[10px] font-semibold text-indigo-300/35 uppercase tracking-widest">ChronosAI</span>
             </div>
           )}
           {/* Message bubble */}
           <div className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-3 ${
             isUser
-              ? 'claude-msg-user'
-              : 'chat-message-ai text-slate-200'
+              ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/15 border border-indigo-500/20 text-white/95'
+              : 'bg-white/[0.03] border border-white/[0.05] text-white/80'
           }`}>
             {isTyping ? (
               <div className="flex items-center gap-2">

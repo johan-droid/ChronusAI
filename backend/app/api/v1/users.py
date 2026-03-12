@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.schemas.user import UserRead, UserUpdate
 from app.dependencies import get_current_user, get_db
 from app.services.timezone_service import TimezoneDetectionService
+from app.core.security import revoke_all_user_sessions
 from app.db.session import AsyncSessionLocal
 import structlog
 
@@ -183,3 +184,32 @@ async def update_user(
     await db.refresh(current_user)
     
     return current_user
+
+
+@router.delete("/me")
+async def delete_account(
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete the current user's account and revoke all sessions."""
+    user_id = str(current_user.id)
+
+    # Revoke all refresh-token sessions
+    await revoke_all_user_sessions(user_id)
+
+    # Delete the user row (cascade will handle related records)
+    await db.delete(current_user)
+    await db.commit()
+
+    # Clear the refresh cookie
+    response.delete_cookie(
+        "chronos_refresh",
+        path="/",
+        httponly=True,
+        samesite="none",
+        secure=True,
+    )
+
+    logger.info("user_account_deleted", user_id=user_id)
+    return {"message": "Account deleted successfully."}

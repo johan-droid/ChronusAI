@@ -3,14 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { RefreshCw, XCircle, CheckCircle, Clock, Sunrise, Sunset } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../lib/api';
-
-interface TimeSlot {
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
-  timezone: string;
-  status?: 'PAST' | 'AVAILABLE' | 'BUSY';
-}
+import type { TimeSlot } from '../types';
 
 export default function Availability() {
   const navigate = useNavigate();
@@ -98,9 +91,9 @@ export default function Availability() {
     return 'evening';
   };
 
-  const morningSlots = timeSlots.filter(s => s.status !== 'PAST' && getTimeCategory(s.start_time) === 'morning');
-  const afternoonSlots = timeSlots.filter(s => s.status !== 'PAST' && getTimeCategory(s.start_time) === 'afternoon');
-  const eveningSlots = timeSlots.filter(s => s.status !== 'PAST' && getTimeCategory(s.start_time) === 'evening');
+  const morningSlots = timeSlots.filter(s => s.status !== 'past' && getTimeCategory(s.start_time) === 'morning');
+  const afternoonSlots = timeSlots.filter(s => s.status !== 'past' && getTimeCategory(s.start_time) === 'afternoon');
+  const eveningSlots = timeSlots.filter(s => s.status !== 'past' && getTimeCategory(s.start_time) === 'evening');
 
   const totalSlots = availableCount + busyCount;
   const availPercent = totalSlots > 0 ? Math.round((availableCount / totalSlots) * 100) : 0;
@@ -126,14 +119,14 @@ export default function Availability() {
         <div className="avail-section-header">
           <div className={`avail-section-icon ${gradient}`}>{icon}</div>
           <h3 className="avail-section-title">{title}</h3>
-          <span className="avail-section-count">{slots.filter(s => s.is_available && s.status !== 'PAST').length}/{slots.filter(s => s.status !== 'PAST').length} free</span>
+          <span className="avail-section-count">{slots.filter(s => s.is_available && s.status !== 'past').length}/{slots.filter(s => s.status !== 'past').length} free</span>
         </div>
         <div className="avail-slots-grid sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           {slots.map((slot, idx) => (
             <div
               key={idx}
               className={`avail-slot ${
-                slot.status === 'PAST' 
+                slot.status === 'past' 
                   ? 'avail-slot--past' 
                   : slot.is_available 
                     ? 'avail-slot--free' 
@@ -143,7 +136,7 @@ export default function Availability() {
               <span className="avail-slot-indicator" />
               <span className="avail-slot-time">{formatTime(slot.start_time)}</span>
               <span className="avail-slot-label">
-                {slot.status === 'PAST' ? 'Past' : slot.is_available ? 'Free' : 'Busy'}
+                {slot.status === 'past' ? 'Past' : slot.is_available ? 'Free' : 'Busy'}
               </span>
             </div>
           ))}

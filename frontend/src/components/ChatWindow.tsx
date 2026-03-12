@@ -9,11 +9,11 @@ import OptimizedSpinner from './OptimizedSpinner';
 import ReminderPicker from './ReminderPicker';
 
 const QUICK_PROMPTS = [
-  { icon: Calendar, label: "Schedule", text: "Schedule a meeting tomorrow at 2pm", color: "text-blue-400", iconBg: "bg-blue-500/15 border-blue-500/20" },
-  { icon: Clock, label: "Availability", text: "Check my availability this week", color: "text-emerald-400", iconBg: "bg-emerald-500/15 border-emerald-500/20" },
-  { icon: Edit2, label: "Modify", text: "Reschedule my 3pm meeting to 4pm", color: "text-amber-400", iconBg: "bg-amber-500/15 border-amber-500/20" },
-  { icon: Eye, label: "View", text: "Show all my meetings for today", color: "text-purple-400", iconBg: "bg-purple-500/15 border-purple-500/20" },
-  { icon: X, label: "Cancel", text: "Cancel my next meeting", color: "text-rose-400", iconBg: "bg-rose-500/15 border-rose-500/20" },
+  { icon: Calendar, label: "Schedule", text: "Schedule a meeting tomorrow at 2pm", color: "from-blue-400 to-cyan-400", iconBg: "bg-blue-500/10 border-blue-500/15", hoverBorder: "hover:border-blue-500/30" },
+  { icon: Clock, label: "Availability", text: "Check my availability this week", color: "from-emerald-400 to-teal-400", iconBg: "bg-emerald-500/10 border-emerald-500/15", hoverBorder: "hover:border-emerald-500/30" },
+  { icon: Edit2, label: "Modify", text: "Reschedule my 3pm meeting to 4pm", color: "from-amber-400 to-orange-400", iconBg: "bg-amber-500/10 border-amber-500/15", hoverBorder: "hover:border-amber-500/30" },
+  { icon: Eye, label: "View", text: "Show all my meetings for today", color: "from-purple-400 to-pink-400", iconBg: "bg-purple-500/10 border-purple-500/15", hoverBorder: "hover:border-purple-500/30" },
+  { icon: X, label: "Cancel", text: "Cancel my next meeting", color: "from-rose-400 to-red-400", iconBg: "bg-rose-500/10 border-rose-500/15", hoverBorder: "hover:border-rose-500/30" },
 ];
 
 const getContextualSuggestions = (lastMessage: string): string[] => {
@@ -30,20 +30,20 @@ const SmartSuggestions = memo(({ onSuggestionClick, suggestions }: { onSuggestio
   if (!suggestions.length) return null;
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 10 }}
-      className="shrink-0 px-4 sm:px-6 py-3"
+      exit={{ opacity: 0, y: 8 }}
+      className="shrink-0 px-4 sm:px-6 py-2.5"
     >
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-0.5 max-w-3xl mx-auto">
         {suggestions.map((suggestion, i) => (
           <button
             key={i}
             onClick={() => onSuggestionClick(suggestion)}
-            className="claude-suggestion shrink-0 flex items-center gap-1.5 group touch-target"
+            className="shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-medium text-indigo-300/60 bg-white/[0.02] border border-white/[0.06] hover:border-indigo-500/20 hover:bg-indigo-500/[0.04] hover:text-indigo-300/80 transition-all duration-200 group"
           >
             {suggestion}
-            <ArrowRight className="h-3 w-3 opacity-40 group-hover:opacity-70 group-hover:translate-x-0.5 transition-all" />
+            <ArrowRight className="h-3 w-3 opacity-30 group-hover:opacity-60 group-hover:translate-x-0.5 transition-all" />
           </button>
         ))}
       </div>
@@ -55,14 +55,14 @@ SmartSuggestions.displayName = 'SmartSuggestions';
 /* ───── Typing Indicator ───── */
 const TypingIndicator = memo(() => (
   <div className="flex justify-start px-4 sm:px-6 py-3 max-w-3xl mx-auto w-full">
-    <div className="chat-shimmer rounded-2xl px-5 py-3.5">
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1">
-          <span className="w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-white/20 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+    <div className="rounded-2xl px-5 py-3.5 bg-white/[0.03] border border-white/[0.05]">
+      <div className="flex items-center gap-2.5">
+        <div className="flex gap-1.5">
+          <span className="w-1.5 h-1.5 bg-indigo-400/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-1.5 h-1.5 bg-indigo-400/35 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-1.5 h-1.5 bg-indigo-400/20 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
-        <span className="text-[13px] text-slate-500 ml-1">Thinking…</span>
+        <span className="text-[12px] text-white/25 ml-0.5 font-medium">Thinking...</span>
       </div>
     </div>
   </div>
@@ -157,88 +157,106 @@ export default function ChatWindow() {
       <div className="flex-1 min-h-0 overflow-y-auto w-full scroll-smooth">
         <div className="w-full pb-6 pt-2">
           <AnimatePresence>
-            {/* Empty State — Claude-style centered greeting */}
+            {/* Empty State — centered greeting with refined design */}
             {!hasMessages && (
               <div className="flex flex-col items-center justify-center h-full min-h-[60vh] px-5">
-                {/* Greeting Tile */}
-                <div className="text-center mb-10 claude-greeting relative">
-                  {/* Ambient glow — matches galaxy-bg orange/purple theme */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-orange-500/25 via-purple-500/15 to-indigo-500/20 blur-2xl pointer-events-none" />
-                  <div className="relative glass-card rounded-3xl p-8 sm:p-10 shadow-2xl shadow-black/50">
-                    {/* Emoji with glow ring */}
-                    <div className="flex items-center justify-center mb-5">
-                      <div className="relative">
-                        <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-xl scale-150" />
-                        <span className="relative text-5xl sm:text-6xl leading-none drop-shadow-lg">{greeting.emoji}</span>
-                      </div>
+                {/* Greeting */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-center mb-8"
+                >
+                  {/* Animated emoji */}
+                  <motion.div 
+                    className="flex items-center justify-center mb-6"
+                    initial={{ scale: 0.8 }}
+                    animate={{ scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.1, type: 'spring', stiffness: 200 }}
+                  >
+                    <div className="relative">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-500/20 to-purple-500/20 blur-2xl scale-[2]" />
+                      <span className="relative text-5xl sm:text-6xl leading-none drop-shadow-lg">{greeting.emoji}</span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white/95">
-                      {greeting.text},{' '}
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-400 via-orange-400 to-purple-400">{firstName}</span>
-                    </h1>
-                    <p className="text-[15px] text-white/55 mt-3 claude-greeting-delay-1 font-medium">
-                      Ready to schedule your meetings with AI assistance.
-                    </p>
-                  </div>
-                </div>
+                  </motion.div>
+                  <h1 className="text-2xl sm:text-[32px] font-bold tracking-tight text-white/90 leading-tight">
+                    {greeting.text},{' '}
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-300 via-orange-400 to-purple-400">{firstName}</span>
+                  </h1>
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3, duration: 0.5 }}
+                    className="text-[14px] text-white/40 mt-2.5 font-medium"
+                  >
+                    Your AI meeting assistant is ready to help.
+                  </motion.p>
+                </motion.div>
 
-                {/* Central Input — shown in empty state */}
-                <div className="w-full max-w-2xl claude-greeting-delay-1">
+                {/* Central Input */}
+                <motion.div 
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.15 }}
+                  className="w-full max-w-2xl"
+                >
                   <form onSubmit={handleSubmit}>
-                    <div className="claude-chat-input rounded-2xl p-1.5">
+                    <div className="chat-input-hero group">
                       <textarea
                         ref={textareaRef}
                         rows={1}
                         value={message}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
-                        placeholder="How can I help you today?"
-                        className="w-full bg-transparent border-none text-white/90 placeholder-slate-600 focus:ring-0 resize-none py-3 px-4 min-h-[52px] max-h-[150px] overflow-y-auto text-[15px] leading-relaxed outline-none"
+                        placeholder="Ask me to schedule, reschedule, or check your calendar..."
+                        className="w-full bg-transparent border-none text-white/90 placeholder-white/25 focus:ring-0 resize-none py-3.5 px-5 min-h-[52px] max-h-[150px] overflow-y-auto text-[15px] leading-relaxed outline-none"
                         style={{ scrollbarWidth: 'none' }}
                       />
 
-                      <div className="flex items-center justify-end px-2 pb-1.5">
-                        <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-between px-3 pb-2">
+                        <div className="flex items-center gap-2">
                           {/* Reminder toggle */}
                           <button
                             type="button"
                             onClick={() => setShowReminders((v) => !v)}
-                            title="Set reminders for this meeting"
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[12px] font-medium border transition-all ${
+                            title="Set reminders"
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
                               showReminders || reminderMinutes.length > 0
-                                ? 'bg-orange-500/15 border-orange-500/40 text-orange-400'
-                                : 'bg-white/[0.03] border-white/10 text-slate-500 hover:text-slate-300'
+                                ? 'bg-orange-500/15 text-orange-400'
+                                : 'text-white/20 hover:text-white/40 hover:bg-white/[0.03]'
                             }`}
                           >
                             <Bell className="h-3 w-3" />
                             {reminderMinutes.length > 0 ? `${reminderMinutes.length} reminder${reminderMinutes.length > 1 ? 's' : ''}` : 'Remind'}
                           </button>
-                          {/* Status indicator */}
-                          <div className="flex items-center gap-1.5">
+                          {/* Status */}
+                          <div className="flex items-center gap-1.5 px-2 py-1">
                             <div className={`w-1.5 h-1.5 rounded-full ${
-                              isLlmOnline === true ? 'bg-emerald-400/70' : isLlmOnline === false ? 'bg-rose-400/70' : 'bg-slate-500/70'
+                              isLlmOnline === true ? 'bg-emerald-400' : isLlmOnline === false ? 'bg-rose-400' : 'bg-white/20 animate-pulse'
                             }`} />
-                            <span className="text-[12px] text-slate-500 font-medium">
-                              {isLlmOnline === true ? 'Online' : isLlmOnline === false ? 'Offline' : 'Checking...'}
+                            <span className="text-[11px] text-white/20 font-medium">
+                              {isLlmOnline === true ? 'Online' : isLlmOnline === false ? 'Offline' : '...'}
                             </span>
                           </div>
-
-                          {/* Send button */}
-                          <button
-                            type="submit"
-                            disabled={!message.trim() || isLoading}
-                            className="p-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:bg-slate-600 disabled:opacity-50 text-white transition-all duration-200 hover:scale-105 disabled:hover:scale-100"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                            </svg>
-                          </button>
                         </div>
+
+                        {/* Send */}
+                        <button
+                          type="submit"
+                          disabled={!message.trim() || isLoading}
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                            message.trim()
+                              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:scale-105 active:scale-95'
+                              : 'text-white/15 cursor-not-allowed'
+                          }`}
+                        >
+                          <SendHorizontal className="h-3.5 w-3.5" />
+                        </button>
                       </div>
 
-                      {/* Reminder picker panel (empty-state input) */}
+                      {/* Reminder picker */}
                       {showReminders && (
-                        <div className="px-4 pb-3 pt-1 border-t border-white/5">
+                        <div className="px-4 pb-3 pt-1 border-t border-white/[0.04]">
                           <ReminderPicker
                             minutes={reminderMinutes}
                             methods={reminderMethods}
@@ -250,25 +268,72 @@ export default function ChatWindow() {
                     </div>
                   </form>
 
-                  {/* Quick prompts */}
-                  <div className="mt-4 flex flex-wrap justify-center gap-2">
-                    {QUICK_PROMPTS.slice(0, 4).map((prompt, index) => (
-                      <button
-                        key={index}
-                        onClick={() => {
-                          setMessage(prompt.text);
-                          handleSubmit({ preventDefault: () => {} } as React.FormEvent);
-                        }}
-                        className="text-left p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-105 group"
-                      >
-                        <span className="font-semibold text-[14px] text-white/80">{prompt.label}</span>
-                        <span className="text-[12px] text-slate-500 font-medium line-clamp-1 mt-0.5">
-                          {prompt.text}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                  {/* Quick prompts — grid layout */}
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.35, duration: 0.5 }}
+                    className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2.5"
+                  >
+                    {QUICK_PROMPTS.slice(0, 3).map((prompt, index) => {
+                      const Icon = prompt.icon;
+                      return (
+                        <motion.button
+                          key={index}
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleQuickPrompt(prompt.text)}
+                          className={`group relative text-left p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] ${prompt.hoverBorder} hover:bg-white/[0.04] transition-all duration-300`}
+                        >
+                          <div className="flex items-center gap-2.5 mb-1.5">
+                            <div className={`w-6 h-6 rounded-md ${prompt.iconBg} border flex items-center justify-center`}>
+                              <Icon className="h-3 w-3 text-white/60" />
+                            </div>
+                            <span className={`text-[13px] font-semibold bg-clip-text text-transparent bg-gradient-to-r ${prompt.color}`}>
+                              {prompt.label}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-white/30 leading-relaxed line-clamp-1 pl-[34px]">
+                            {prompt.text}
+                          </p>
+                        </motion.button>
+                      );
+                    })}
+                  </motion.div>
+
+                  {/* Second row */}
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.45, duration: 0.5 }}
+                    className="mt-2.5 grid grid-cols-2 gap-2.5"
+                  >
+                    {QUICK_PROMPTS.slice(3, 5).map((prompt, index) => {
+                      const Icon = prompt.icon;
+                      return (
+                        <motion.button
+                          key={index}
+                          whileHover={{ y: -2 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleQuickPrompt(prompt.text)}
+                          className={`group relative text-left p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] ${prompt.hoverBorder} hover:bg-white/[0.04] transition-all duration-300`}
+                        >
+                          <div className="flex items-center gap-2.5 mb-1.5">
+                            <div className={`w-6 h-6 rounded-md ${prompt.iconBg} border flex items-center justify-center`}>
+                              <Icon className="h-3 w-3 text-white/60" />
+                            </div>
+                            <span className={`text-[13px] font-semibold bg-clip-text text-transparent bg-gradient-to-r ${prompt.color}`}>
+                              {prompt.label}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-white/30 leading-relaxed line-clamp-1 pl-[34px]">
+                            {prompt.text}
+                          </p>
+                        </motion.button>
+                      );
+                    })}
+                  </motion.div>
+                </motion.div>
               </div>
             )}
 
@@ -300,9 +365,9 @@ export default function ChatWindow() {
 
       {/* Persistent Input Area — shown when there are messages */}
       {hasMessages && (
-        <div className="shrink-0 px-4 sm:px-6 py-4 w-full" style={{ zIndex: 'var(--z-backdrop, 30)' }}>
+        <div className="shrink-0 px-4 sm:px-6 py-3 w-full border-t border-white/[0.04] bg-[rgba(9,9,11,0.6)] backdrop-blur-xl" style={{ zIndex: 'var(--z-backdrop, 30)' }}>
           <form onSubmit={handleSubmit} className="w-full max-w-3xl mx-auto">
-            <div className="claude-chat-input rounded-2xl p-1.5">
+            <div className="chat-input-hero rounded-xl p-1">
               <textarea
                 ref={!hasMessages ? undefined : textareaRef}
                 rows={1}
@@ -310,57 +375,61 @@ export default function ChatWindow() {
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder="Message ChronosAI..."
-                className="w-full bg-transparent border-none text-white/90 placeholder-slate-600 focus:ring-0 resize-none py-3 px-4 min-h-[52px] max-h-[150px] overflow-y-auto text-[15px] leading-relaxed outline-none"
+                className="w-full bg-transparent border-none text-white/90 placeholder-white/25 focus:ring-0 resize-none py-3 px-4 min-h-[48px] max-h-[150px] overflow-y-auto text-[15px] leading-relaxed outline-none"
                 style={{ scrollbarWidth: 'none' }}
               />
 
-              <div className="flex items-end justify-end px-2 pb-2">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className={`w-1.5 h-1.5 rounded-full ${
-                      isLlmOnline === true ? 'bg-emerald-400/70' : isLlmOnline === false ? 'bg-rose-400/70' : 'bg-slate-500/70'
-                    }`} />
-                    <span className="text-[11px] text-slate-600 font-medium">ChronosAI</span>
-                  </div>
-
-                  {/* Reminder toggle — persistent input */}
+              <div className="flex items-center justify-between px-2.5 pb-1.5">
+                <div className="flex items-center gap-2">
+                  {/* Reminder toggle */}
                   <button
                     type="button"
                     onClick={() => setShowReminders((v) => !v)}
-                    title="Set reminders for this meeting"
-                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium border transition-all ${
+                    title="Set reminders"
+                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-medium transition-all ${
                       showReminders || reminderMinutes.length > 0
-                        ? 'bg-orange-500/15 border-orange-500/40 text-orange-400'
-                        : 'bg-transparent border-transparent text-slate-600 hover:text-slate-400'
+                        ? 'bg-orange-500/15 text-orange-400'
+                        : 'text-white/20 hover:text-white/35'
                     }`}
                   >
                     <Bell className="h-3 w-3" />
                     {reminderMinutes.length > 0 ? `${reminderMinutes.length}` : ''}
                   </button>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      isLlmOnline === true ? 'bg-emerald-400' : isLlmOnline === false ? 'bg-rose-400' : 'bg-white/15 animate-pulse'
+                    }`} />
+                    <span className="text-[10px] text-white/20 font-medium">ChronosAI</span>
+                  </div>
+                </div>
 
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-white/15 hidden sm:inline">
+                    <kbd className="px-1 py-0.5 rounded text-white/20 font-mono text-[9px]">Enter</kbd> to send
+                  </span>
                   {isLoading ? (
                     <div className="h-8 w-8 flex items-center justify-center">
-                      <OptimizedSpinner size="sm" variant="dots" className="text-slate-400" />
+                      <OptimizedSpinner size="sm" variant="dots" className="text-white/30" />
                     </div>
                   ) : (
                     <button
                       type="submit"
                       disabled={!message.trim()}
-                      className={`h-9 w-9 rounded-xl flex items-center justify-center transition-all duration-200 mb-0.5 touch-target ${
+                      className={`h-8 w-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
                         message.trim()
-                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:from-indigo-400 hover:to-purple-500 shadow-lg shadow-indigo-500/25 active:scale-95'
-                          : 'text-slate-700 cursor-not-allowed bg-white/[0.03]'
+                          ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 active:scale-95'
+                          : 'text-white/15 cursor-not-allowed'
                       }`}
                     >
-                      <SendHorizontal className="h-4 w-4" />
+                      <SendHorizontal className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Reminder picker panel (persistent input) */}
+              {/* Reminder picker */}
               {showReminders && (
-                <div className="px-4 pb-3 pt-1 border-t border-white/5">
+                <div className="px-4 pb-3 pt-1 border-t border-white/[0.04]">
                   <ReminderPicker
                     minutes={reminderMinutes}
                     methods={reminderMethods}
@@ -369,12 +438,6 @@ export default function ChatWindow() {
                   />
                 </div>
               )}
-            </div>
-
-            <div className="flex justify-between mt-2 px-1">
-              <span className="text-[10px] text-slate-600">
-                Press <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-slate-500 font-mono">Enter</kbd> to send · <kbd className="px-1 py-0.5 bg-white/[0.04] rounded text-slate-500 font-mono">Shift+Enter</kbd> for new line
-              </span>
             </div>
           </form>
         </div>

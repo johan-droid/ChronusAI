@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse, Attendee } from '../types';
+import type { ChatRequest, ChatResponse, Meeting, User, AuthUrlResponse, AvailabilityResponse } from '../types';
 import { cacheManager, clearAuthCache } from './cache';
 import { useAuthStore } from '../store/authStore';
 
@@ -142,12 +142,12 @@ class ApiClient {
     }
   }
 
-  async login(data: Record<string, unknown>): Promise<{ access_token: string; refresh_token: string; user: User }> {
+  async login(data: Record<string, unknown>): Promise<{ access_token: string; token_type: string; user: User; refresh_token?: string }> {
     const response = await this.client.post('auth/login', data);
     return response.data;
   }
 
-  async signup(data: Record<string, unknown>): Promise<{ access_token: string; refresh_token: string; user: User }> {
+  async signup(data: Record<string, unknown>): Promise<{ access_token: string; token_type: string; user: User; refresh_token?: string }> {
     const response = await this.client.post('auth/signup', data);
     return response.data;
   }
@@ -161,7 +161,7 @@ class ApiClient {
     return response.data;
   }
 
-  async checkStatus(): Promise<{ online: boolean; latency: string }> {
+  async checkStatus(): Promise<{ online: boolean; latency: string; timestamp: number; oauth_configured: Record<string, boolean> }> {
     const response = await this.client.get('status');
     return response.data;
   }
@@ -185,20 +185,6 @@ class ApiClient {
     timezone: string;
   }> {
     const response = await this.client.get('users/indian-context');
-    return response.data;
-  }
-
-  async getPersonalizedGreeting(timezone?: string): Promise<{
-    greeting: string;
-    time_period: string;
-    local_time: string;
-    timezone: string;
-    is_indian: boolean;
-    cultural_context: string;
-  }> {
-    const params = new URLSearchParams();
-    if (timezone) params.append('timezone', timezone);
-    const response = await this.client.get(`greetings/personalized?${params.toString()}`);
     return response.data;
   }
 
@@ -256,24 +242,8 @@ class ApiClient {
     return response.data;
   }
 
-  async deleteAccount(): Promise<{ message: string; provider?: string }> {
-    const response = await this.client.delete('auth/account');
-    return response.data;
-  }
-
-  // Create meeting directly (non-chat path)
-  async createMeeting(data: {
-    title: string;
-    description?: string;
-    start_time: string;
-    end_time: string;
-    attendees: Attendee[];
-    provider: string;
-    reminder_schedule_minutes?: number[];
-    reminder_methods?: string[];
-  }): Promise<Meeting> {
-    const response = await this.client.post('meetings', data);
-    cacheManager.invalidatePattern('meetings');
+  async deleteAccount(): Promise<{ message: string }> {
+    const response = await this.client.delete('users/me');
     return response.data;
   }
 
@@ -289,18 +259,7 @@ class ApiClient {
   }
 
   // Availability endpoints
-  async getAvailability(date: string, timezone?: string): Promise<{
-    date: string;
-    timezone: string;
-    slots: Array<{
-      start_time: string;
-      end_time: string;
-      is_available: boolean;
-      timezone: string;
-    }>;
-    available_count: number;
-    busy_count: number;
-  }> {
+  async getAvailability(date: string, timezone?: string): Promise<AvailabilityResponse> {
     const params = new URLSearchParams({ date });
     if (timezone) params.append('timezone', timezone);
     const response = await this.client.get(`availability?${params.toString()}`);

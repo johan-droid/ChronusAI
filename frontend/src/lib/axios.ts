@@ -194,7 +194,7 @@ export const authApi = {
 export const userApi = {
   me: () => api.get('/users/me'),
   update: (data: { full_name?: string; timezone?: string }) =>
-    api.patch('/users/me', data),
+    api.put('/users/me', data),
 };
 
 export const orgApi = {
