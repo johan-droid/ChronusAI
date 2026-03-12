@@ -542,3 +542,6 @@ backups/
 !Dockerfile*
 !docker-compose*
 !.dockerignore
+
+# Keep backend models
+!backend/app/models/
