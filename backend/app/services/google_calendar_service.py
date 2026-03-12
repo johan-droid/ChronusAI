@@ -105,7 +105,8 @@ class GoogleCalendarService:
         self,
         calendar_id: str = "primary",
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
+        max_results: int = 100
     ) -> List[CalendarEvent]:
         """Get events from calendar"""
         async with httpx.AsyncClient() as client:
@@ -118,7 +119,7 @@ class GoogleCalendarService:
             params = {
                 "timeMin": start_time.isoformat(),
                 "timeMax": end_time.isoformat(),
-                "maxResults": 100,
+                "maxResults": max_results,
                 "singleEvents": "true",
                 "orderBy": "startTime"
             }
@@ -158,13 +159,13 @@ class GoogleCalendarService:
                 
                 event = CalendarEvent(
                     id=item["id"],
-                    summary=data["summary"],
-                    description=data.get("description"),
+                    summary=item.get("summary", "No Title"),
+                    description=item.get("description"),
                     start=start_time,
                     end=end_time,
-                    attendees=data.get("attendees", []),
-                    location=data.get("location"),
-                    status=data.get("status", "confirmed"),
+                    attendees=item.get("attendees", []),
+                    location=item.get("location"),
+                    status=item.get("status", "confirmed"),
                     created=datetime.fromisoformat(item["created"].replace("Z", "+00:00")) if item.get("created") else None,
                     updated=datetime.fromisoformat(item["updated"].replace("Z", "+00:00")) if item.get("updated") else None
                 )
