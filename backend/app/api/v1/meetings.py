@@ -289,29 +289,29 @@ async def delete_meeting(
         if meeting.external_event_id:
             await calendar_provider.delete_event(meeting.external_event_id)
             # Remove any scheduled reminders for this meeting
-                try:
-                    from app.services.scheduler import remove_job
-                    # Prefer removing jobs that match the meeting's configured reminder minutes
-                    minutes_list = getattr(meeting, 'reminder_schedule_minutes', None)
-                    if minutes_list:
-                        for minutes in minutes_list:
-                            try:
-                                remove_job(f"reminder-{meeting.id}-{minutes}")
-                            except Exception:
-                                pass
-                    else:
-                        # Fallback to common candidates
-                        for minutes in (3, 15, 60, 1440):
-                            try:
-                                remove_job(f"reminder-{meeting.id}-{minutes}")
-                            except Exception:
-                                pass
+            try:
+                from app.services.scheduler import remove_job
+                # Prefer removing jobs that match the meeting's configured reminder minutes
+                minutes_list = getattr(meeting, 'reminder_schedule_minutes', None)
+                if minutes_list:
+                    for minutes in minutes_list:
                         try:
-                            remove_job(f"reminder-{meeting.id}")
+                            remove_job(f"reminder-{meeting.id}-{minutes}")
                         except Exception:
                             pass
-                except Exception:
-                    pass
+                else:
+                    # Fallback to common candidates
+                    for minutes in (3, 15, 60, 1440):
+                        try:
+                            remove_job(f"reminder-{meeting.id}-{minutes}")
+                        except Exception:
+                            pass
+                    try:
+                        remove_job(f"reminder-{meeting.id}")
+                    except Exception:
+                        pass
+            except Exception:
+                pass
         
         # Update status in database
         meeting.status = "canceled"  # type: ignore[assignment]
