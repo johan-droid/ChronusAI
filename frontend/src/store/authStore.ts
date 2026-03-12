@@ -22,6 +22,8 @@ import type { User } from '../types';
 export interface AuthState {
   /** Short-lived access token — in memory only, NEVER persisted. */
   accessToken: string | null;
+  /** Refresh token — in memory only, NEVER persisted. Used as fallback when HttpOnly cookie is unavailable (cross-origin). */
+  refreshToken: string | null;
   /** Authenticated user's profile — safe to persist. */
   user: User | null;
   isAuthenticated: boolean;
@@ -32,9 +34,11 @@ export interface AuthState {
 
   // ── Actions ────────────────────────────────────────────────────────────────
   /** Called after a successful login / register / token refresh. */
-  setAuth: (user: User, accessToken: string) => void;
+  setAuth: (user: User, accessToken: string, refreshToken?: string) => void;
   /** Update just the access token (token rotation). */
   updateAccessToken: (accessToken: string) => void;
+  /** Update the refresh token (token rotation). */
+  updateRefreshToken: (refreshToken: string) => void;
   /** Merge partial user profile updates. */
   updateUser: (updates: Partial<User>) => void;
   setTimezone: (tz: string) => void;
@@ -57,21 +61,25 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       accessToken: null,       // ← NEVER persisted
+      refreshToken: null,      // ← NEVER persisted
       user: null,
       isAuthenticated: false,
       isLoading: true,
       timezone: 'UTC',
 
-      setAuth: (user, accessToken) =>
+      setAuth: (user, accessToken, refreshToken) =>
         set({
           user,
           accessToken,
+          refreshToken: refreshToken ?? null,
           timezone: user.timezone ?? 'UTC',
           isAuthenticated: true,
           isLoading: false,
         }),
 
       updateAccessToken: (accessToken) => set({ accessToken }),
+
+      updateRefreshToken: (refreshToken) => set({ refreshToken }),
 
       updateUser: (updates) =>
         set((s) => ({
@@ -91,6 +99,7 @@ export const useAuthStore = create<AuthState>()(
         set({
           user: null,
           accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
           timezone: 'UTC',
@@ -121,6 +130,7 @@ export const useAuthStore = create<AuthState>()(
         if (state) {
           // Access token was wiped — require a silent refresh before acting.
           state.accessToken = null;
+          state.refreshToken = null;
           state.isAuthenticated = false;
           state.isLoading = true;
         }

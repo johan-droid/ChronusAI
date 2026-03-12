@@ -30,20 +30,20 @@ export default function Login() {
 
 
   useEffect(() => {
-    clearAllCache();
-
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('access_token');
     const refreshToken = urlParams.get('refresh_token');
 
     if (accessToken && refreshToken) {
+      // OAuth callback — process tokens before clearing anything
       setIsLoading(true);
       window.history.replaceState({}, document.title, '/login');
 
       (async () => {
         try {
-          // Store access token temporarily so getCurrentUser call is authenticated.
+          // Store both tokens so API calls are authenticated.
           useAuthStore.getState().updateAccessToken(accessToken);
+          useAuthStore.getState().updateRefreshToken(refreshToken);
 
           const userData = await apiClient.getCurrentUser();
           if (!userData || !userData.id || !userData.email) {
@@ -56,11 +56,11 @@ export default function Login() {
             full_name: (userData as { full_name?: string; name?: string }).full_name ?? (userData as { full_name?: string; name?: string }).name ?? userData.email,
           };
 
-          useAuthStore.getState().setAuth(user, accessToken);
+          useAuthStore.getState().setAuth(user, accessToken, refreshToken);
           navigate('/dashboard', { replace: true });
         } catch (error) {
           console.error('Authentication failed:', error);
-          useAuthStore.setState({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
+          useAuthStore.setState({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false, isLoading: false });
           if (typeof window !== 'undefined') {
             localStorage.removeItem('chronos-auth');
             sessionStorage.clear();
@@ -71,6 +71,8 @@ export default function Login() {
         }
       })();
     } else {
+      // No tokens in URL — clean slate for fresh login
+      clearAllCache();
       const { isAuthenticated } = useAuthStore.getState();
       if (isAuthenticated) {
         navigate('/dashboard', { replace: true });
@@ -132,8 +134,8 @@ export default function Login() {
         });
       }
 
-      const { user, access_token } = response;
-      useAuthStore.getState().setAuth(user, access_token);
+      const { user, access_token, refresh_token } = response;
+      useAuthStore.getState().setAuth(user, access_token, refresh_token);
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Email auth error:', error);

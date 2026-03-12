@@ -38,8 +38,8 @@ const ProtectedRoute: React.FC = () => {
       hasTried.current = true;
       authApi
         .refresh()
-        .then(({ data }: { data: { access_token: string } }) => {
-          setAuth(user, data.access_token);
+        .then(({ data }: { data: { access_token: string; refresh_token?: string } }) => {
+          setAuth(user, data.access_token, data.refresh_token);
         })
         .catch(() => {
           setLoading(false); // refresh failed → will redirect to /login

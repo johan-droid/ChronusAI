@@ -63,7 +63,7 @@ def _set_refresh_cookie(response: Response, token: str) -> None:
         value=token,
         httponly=True,
         secure=is_prod,
-        samesite="lax",
+        samesite="none" if is_prod else "lax",
         max_age=_REFRESH_COOKIE_MAX_AGE,
         path="/api/v1/auth",
     )
@@ -409,7 +409,7 @@ async def _oauth_callback(provider: str, code: str, state: str, db: AsyncSession
         refresh_token = create_refresh_token(subject=str(user.id))
         _set_refresh_cookie(response, refresh_token)
 
-        frontend_url = str(settings.frontend_url)
+        frontend_url = str(settings.frontend_url).rstrip("/")
         redirect_url = f"{frontend_url}/login?access_token={access_token}&refresh_token={refresh_token}"
         return RedirectResponse(url=redirect_url, headers=response.headers)
 

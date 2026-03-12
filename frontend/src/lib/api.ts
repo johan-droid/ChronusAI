@@ -78,14 +78,23 @@ class ApiClient {
           isRefreshing = true;
 
           try {
-            const { updateAccessToken } = useAuthStore.getState();
-            // Refresh token is in HttpOnly cookie — no need to pass it manually.
+            const { updateAccessToken, updateRefreshToken, refreshToken: storedRefreshToken } = useAuthStore.getState();
+            // Send refresh token via header as fallback for cross-origin deployments
+            // where the HttpOnly cookie may not be available.
+            const headers: Record<string, string> = {};
+            if (storedRefreshToken) {
+              headers.Authorization = `Bearer ${storedRefreshToken}`;
+            }
             const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, {
-              withCredentials: true
+              withCredentials: true,
+              headers,
             });
 
-              const { access_token } = response.data;
+              const { access_token, refresh_token: newRefreshToken } = response.data;
               updateAccessToken(access_token);
+              if (newRefreshToken) {
+                updateRefreshToken(newRefreshToken);
+              }
 
               isRefreshing = false;
               onRefreshed(access_token);

@@ -113,15 +113,25 @@ api.interceptors.response.use(
       _isRefreshing = true;
 
       try {
+        // Send refresh token via header as fallback for cross-origin deployments
+        // where the HttpOnly cookie may not be available.
+        const { refreshToken: storedRefreshToken } = useAuthStore.getState();
+        const headers: Record<string, string> = {};
+        if (storedRefreshToken) {
+          headers.Authorization = `Bearer ${storedRefreshToken}`;
+        }
         // The refresh token is in the HttpOnly cookie — no body needed.
         const { data } = await axios.post(
           `${getBaseUrl()}/auth/refresh`,
           {},
-          { withCredentials: true },
+          { withCredentials: true, headers },
         );
 
         const newAccessToken: string = data.access_token;
         useAuthStore.getState().updateAccessToken(newAccessToken);
+        if (data.refresh_token) {
+          useAuthStore.getState().updateRefreshToken(data.refresh_token);
+        }
         _drainQueue(newAccessToken);
 
         // Replay the original request.
