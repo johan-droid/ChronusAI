@@ -148,6 +148,11 @@ export default function Availability() {
     <div className="min-h-screen bg-[#09090B] relative overflow-x-hidden">
       <div className="page-bg" />
       <div className="page-grid-overlay" />
+      
+      {/* Ambient Decorative Blobs */}
+      <div className="avail-ambient-blob top-[-100px] left-[-100px]" />
+      <div className="avail-ambient-blob bottom-[100px] right-[-100px] opacity-40" />
+      <div className="avail-ambient-blob top-[20%] right-[10%] w-[400px] h-[400px] opacity-30" style={{ animationDelay: '-5s' }} />
 
       {/* Main Content */}
       <main className="saas-main px-3 sm:px-4 lg:px-6">
@@ -155,9 +160,10 @@ export default function Availability() {
         <div className="mb-4 sm:mb-6 fade-in-up">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1">Check Availability</h1>
-              <p className="text-xs sm:text-sm text-slate-400 truncate">
-                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 tracking-tight">Check Availability</h1>
+              <p className="text-xs sm:text-sm text-slate-400 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
               </p>
             </div>
 
@@ -222,34 +228,34 @@ export default function Availability() {
           <div className="avail-layout fade-in-up">
             {/* Summary Cards */}
             <div className="avail-summary">
-              <div className="avail-summary-card avail-summary-card--green bg-emerald-500/5 border-emerald-500/20 shadow-lg backdrop-blur-md">
+              <div className="avail-summary-card avail-summary-card--green bg-emerald-500/5 border-emerald-500/20 shadow-lg backdrop-blur-md animate-slide-in-bottom">
                 <div className="avail-summary-icon bg-emerald-500/20 text-emerald-400">
                   <CheckCircle className="h-5 w-5" />
                 </div>
                 <div className="avail-summary-info">
                   <p className="avail-summary-value text-emerald-400">{availableCount}</p>
-                  <p className="avail-summary-label text-emerald-500/60">Available Slots</p>
+                  <p className="avail-summary-label text-emerald-500/60 uppercase tracking-widest font-bold opacity-80">Available</p>
                 </div>
               </div>
-              <div className="avail-summary-card avail-summary-card--red bg-rose-500/5 border-rose-500/20 shadow-lg backdrop-blur-md">
+              <div className="avail-summary-card avail-summary-card--red bg-rose-500/5 border-rose-500/20 shadow-lg backdrop-blur-md animate-slide-in-bottom delay-100">
                 <div className="avail-summary-icon bg-rose-500/20 text-rose-400">
                   <XCircle className="h-5 w-5" />
                 </div>
                 <div className="avail-summary-info">
                   <p className="avail-summary-value text-rose-400">{busyCount}</p>
-                  <p className="avail-summary-label text-rose-500/60">Busy Slots</p>
+                  <p className="avail-summary-label text-rose-500/60 uppercase tracking-widest font-bold opacity-80">Busy Slots</p>
                 </div>
               </div>
-              <div className="avail-summary-card avail-summary-card--blue bg-blue-500/5 border-blue-500/20 shadow-lg backdrop-blur-md">
+              <div className="avail-summary-card avail-summary-card--blue bg-blue-500/5 border-blue-500/20 shadow-lg backdrop-blur-md animate-slide-in-bottom delay-200">
                 <div className="avail-summary-icon bg-blue-500/20 text-blue-400">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div className="avail-summary-info">
                   <p className="avail-summary-value text-blue-400">{availPercent}%</p>
-                  <p className="avail-summary-label text-blue-500/60">Availability</p>
+                  <p className="avail-summary-label text-blue-500/60 uppercase tracking-widest font-bold opacity-80">Efficiency</p>
                 </div>
                 <div className="avail-progress bg-blue-500/10">
-                  <div className="avail-progress-fill bg-blue-500" style={{ width: `${availPercent}%` }} />
+                  <div className="avail-progress-fill bg-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]" style={{ width: `${availPercent}%` }} />
                 </div>
               </div>
             </div>
