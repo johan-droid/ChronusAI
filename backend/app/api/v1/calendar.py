@@ -4,7 +4,7 @@ Calendar API endpoints for Google Calendar integration
 
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from app.db.session import get_db
 from app.models.user import User
 from app.services.google_calendar_service import GoogleCalendarService
@@ -17,8 +17,32 @@ logger = structlog.get_logger()
 
 router = APIRouter(prefix="/calendar", tags=["calendar"])
 
+
+def _get_oauth_access_token(request: Request) -> str:
+    """Read OAuth access token attached by middleware for calendar API calls."""
+    access_token = getattr(request.state, "oauth_access_token", None)
+    if not access_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Google OAuth token is missing or expired. Please reconnect Google Calendar."
+        )
+    return str(access_token)
+
+
+def _raise_calendar_error(exc: Exception, default_detail: str) -> None:
+    """Normalize provider/auth failures into user-facing HTTP errors."""
+    error_text = str(exc)
+    auth_markers = ("Invalid Credentials", "UNAUTHENTICATED", "401", "authError")
+    if any(marker in error_text for marker in auth_markers):
+        raise HTTPException(
+            status_code=401,
+            detail="Google authentication expired or is invalid. Please reconnect your Google account."
+        )
+    raise HTTPException(status_code=500, detail=default_detail)
+
 @router.get("/test-connection")
 async def test_connection(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -30,7 +54,8 @@ async def test_connection(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         result = await service.test_connection()
         
         if result["status"] == "error":
@@ -49,13 +74,11 @@ async def test_connection(
         raise
     except Exception as e:
         logger.error("calendar_connection_test_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to test calendar connection"
-        )
+        _raise_calendar_error(e, "Failed to test calendar connection")
 
 @router.get("/calendars")
 async def get_calendars(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -67,7 +90,8 @@ async def get_calendars(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         calendars = await service.get_calendar_list()
         
         return {
@@ -88,13 +112,11 @@ async def get_calendars(
         raise
     except Exception as e:
         logger.error("get_calendars_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to retrieve calendars"
-        )
+        _raise_calendar_error(e, "Failed to retrieve calendars")
 
 @router.get("/events")
 async def get_events(
+    request: Request,
     calendar_id: str = Query(default="primary", description="Calendar ID to fetch events from"),
     start_time: Optional[datetime] = Query(default=None, description="Start time for events (ISO format)"),
     end_time: Optional[datetime] = Query(default=None, description="End time for events (ISO format)"),
@@ -110,7 +132,8 @@ async def get_events(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         events = await service.get_events(calendar_id, start_time, end_time, max_results)
         
         return {
@@ -136,13 +159,11 @@ async def get_events(
         raise
     except Exception as e:
         logger.error("get_events_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to retrieve events"
-        )
+        _raise_calendar_error(e, "Failed to retrieve events")
 
 @router.get("/availability")
 async def get_availability(
+    request: Request,
     calendar_ids: Optional[List[str]] = Query(default=None, description="Calendar IDs to check"),
     start_time: Optional[datetime] = Query(default=None, description="Start time for availability check (ISO format)"),
     end_time: Optional[datetime] = Query(default=None, description="End time for availability check (ISO format)"),
@@ -158,7 +179,8 @@ async def get_availability(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         available_slots = await service.get_availability(calendar_ids, start_time, end_time, duration_minutes)
         
         return {
@@ -183,13 +205,11 @@ async def get_availability(
         raise
     except Exception as e:
         logger.error("get_availability_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to retrieve availability"
-        )
+        _raise_calendar_error(e, "Failed to retrieve availability")
 
 @router.get("/free-busy")
 async def get_free_busy(
+    request: Request,
     calendar_ids: List[str] = Query(..., description="Calendar IDs to check"),
     start_time: datetime = Query(..., description="Start time for free/busy check (ISO format)"),
     end_time: datetime = Query(..., description="End time for free/busy check (ISO format)"),
@@ -204,7 +224,8 @@ async def get_free_busy(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         busy_slots = await service.get_free_busy(calendar_ids, start_time, end_time)
         
         return {
@@ -229,13 +250,11 @@ async def get_free_busy(
         raise
     except Exception as e:
         logger.error("get_free_busy_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to retrieve free/busy information"
-        )
+        _raise_calendar_error(e, "Failed to retrieve free/busy information")
 
 @router.post("/events")
 async def create_event(
+    request: Request,
     meeting: MeetingCreate,
     calendar_id: str = Query(default="primary", description="Calendar ID to create event in"),
     current_user: User = Depends(get_current_user),
@@ -249,7 +268,8 @@ async def create_event(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         event = await service.create_event(meeting, calendar_id)
         
         return {
@@ -271,13 +291,11 @@ async def create_event(
         raise
     except Exception as e:
         logger.error("create_event_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to create event"
-        )
+        _raise_calendar_error(e, "Failed to create event")
 
 @router.put("/events/{event_id}")
 async def update_event(
+    request: Request,
     event_id: str,
     meeting: MeetingCreate,
     calendar_id: str = Query(default="primary", description="Calendar ID to update event in"),
@@ -292,7 +310,8 @@ async def update_event(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         event = await service.update_event(event_id, meeting, calendar_id)
         
         return {
@@ -314,13 +333,11 @@ async def update_event(
         raise
     except Exception as e:
         logger.error("update_event_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to update event"
-        )
+        _raise_calendar_error(e, "Failed to update event")
 
 @router.delete("/events/{event_id}")
 async def delete_event(
+    request: Request,
     event_id: str,
     calendar_id: str = Query(default="primary", description="Calendar ID to delete event from"),
     current_user: User = Depends(get_current_user),
@@ -334,7 +351,8 @@ async def delete_event(
                 detail="Google Calendar integration is only available for Google-authenticated users"
             )
         
-        service = GoogleCalendarService(str(current_user.id), db)
+        access_token = _get_oauth_access_token(request)
+        service = GoogleCalendarService(access_token, str(current_user.timezone or "UTC"))
         success = await service.delete_event(event_id, calendar_id)
         
         if not success:
@@ -349,7 +367,4 @@ async def delete_event(
         raise
     except Exception as e:
         logger.error("delete_event_failed", error=str(e), user_id=current_user.id)
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to delete event"
-        )
+        _raise_calendar_error(e, "Failed to delete event")
