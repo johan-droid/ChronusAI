@@ -96,6 +96,11 @@ export default function Availability() {
 
   const totalSlots = availableCount + busyCount;
   const availPercent = totalSlots > 0 ? Math.round((availableCount / totalSlots) * 100) : 0;
+  const formattedDate = new Date(selectedDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  });
 
   // Date navigation helpers
   const goToPrevDay = () => {
@@ -163,15 +168,19 @@ export default function Availability() {
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white mb-1 tracking-tight">Check Availability</h1>
               <p className="text-xs sm:text-sm text-slate-400 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                {formattedDate}
               </p>
+              <div className="avail-headline-meta mt-2">
+                <span className="avail-headline-pill">{totalSlots} total slots</span>
+                <span className="avail-headline-pill">{availPercent}% free</span>
+              </div>
             </div>
 
             {/* Mobile-Optimized Date Controls */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="avail-date-toolbar flex items-center gap-1.5 sm:gap-2">
               <button
                 onClick={goToPrevDay}
-                className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+                className="avail-date-btn p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
                 title="Previous day"
               >
                 <span className="sm:hidden">←</span>
@@ -182,12 +191,12 @@ export default function Availability() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-blue-500/50"
+                className="avail-date-input px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white text-xs sm:text-sm focus:outline-none focus:border-blue-500/50"
               />
 
               <button
                 onClick={goToNextDay}
-                className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+                className="avail-date-btn p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
                 title="Next day"
               >
                 <span className="sm:hidden">→</span>
@@ -196,14 +205,14 @@ export default function Availability() {
 
               <button
                 onClick={goToToday}
-                className="px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium hover:bg-blue-500/30 active:scale-95 transition-all touch-manipulation"
+                className="avail-date-btn px-2 py-2 sm:px-3 sm:py-2 rounded-lg bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs sm:text-sm font-medium hover:bg-blue-500/30 active:scale-95 transition-all touch-manipulation"
               >
                 Today
               </button>
 
               <button
                 onClick={fetchAvailability}
-                className="p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
+                className="avail-date-btn p-2 sm:px-3 sm:py-2 rounded-lg bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all touch-manipulation"
                 title="Refresh"
               >
                 <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />

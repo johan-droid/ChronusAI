@@ -1138,6 +1138,40 @@
     margin-bottom: 1.5rem;
 }
 
+.avail-headline-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.avail-headline-pill {
+    font-size: .625rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 999px;
+    padding: .3rem .6rem;
+}
+
+.avail-date-toolbar {
+    padding: .35rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(8, 8, 16, 0.5);
+    box-shadow: 0 12px 28px -16px rgba(0, 0, 0, 0.6);
+}
+
+.avail-date-btn {
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.avail-date-btn:hover {
+    transform: translateY(-1px);
+}
+
 .avail-layout {
     display: flex;
     flex-direction: column;
@@ -1252,6 +1286,19 @@
     border-radius: 24px;
     padding: 1.5rem;
     transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.avail-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    pointer-events: none;
 }
 
 .avail-section:hover {
@@ -1332,6 +1379,7 @@
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     position: relative;
     overflow: hidden;
+    min-height: 42px;
 }
 
 .avail-slot--free {
@@ -1388,6 +1436,7 @@
 
 .avail-slot-time {
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
 
 .avail-slot-label {
@@ -2078,6 +2127,15 @@
         font-size: .5625rem;
     }
 
+    .avail-headline-meta {
+        gap: .35rem;
+    }
+
+    .avail-headline-pill {
+        font-size: .5625rem;
+        padding: .25rem .5rem;
+    }
+
     /* Date controls */
     .avail-date-controls {
         gap: .375rem;
@@ -2088,6 +2146,11 @@
         padding: 0 10px;
         font-size: .75rem;
         border-radius: 8px;
+    }
+
+    .avail-date-toolbar {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .avail-date-input {
