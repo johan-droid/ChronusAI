@@ -80,7 +80,7 @@ class Settings(BaseSettings):
     reminder_schedule_minutes: Optional[Union[List[int], str]] = None
 
     # CORS
-    cors_origins: List[str] = []
+    cors_origins: Optional[Union[List[str], str]] = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -164,6 +164,12 @@ class Settings(BaseSettings):
                     self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
 
         # ── CORS ─────────────────────────────────────────────────────────
+        if isinstance(self.cors_origins, str):
+            parts = [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+            self.cors_origins = parts
+        elif not isinstance(self.cors_origins, list) or self.cors_origins is None:
+            self.cors_origins = []
+
         if self.frontend_url and str(self.frontend_url) not in self.cors_origins:
             self.cors_origins.append(str(self.frontend_url))
 
