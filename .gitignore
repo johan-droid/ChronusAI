@@ -231,6 +231,19 @@ chronosai.db
 *.dump
 *.backup
 
+# Supabase CLI artifacts
+.supabase/
+supabase/.branches/
+supabase/.temp/
+supabase/.env
+supabase/.env.local
+supabase/.db/
+supabase/.docker/
+supabase/.logs/
+supabase/.cache/
+supabase/.settings
+supabase/seed.sql
+
 # Redis dump
 dump.rdb
 

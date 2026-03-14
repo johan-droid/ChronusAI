@@ -1,8 +1,13 @@
 {
+    "env": {
+        "VITE_API_URL": "https://chronosai-api.onrender.com",
+        "VITE_SUPABASE_URL": "@supabase-url",
+        "VITE_SUPABASE_ANON_KEY": "@supabase-anon-key"
+    },
     "rewrites": [
         {
             "source": "/api/v1/(.*)",
-            "destination": "https://chronosai.onrender.com/api/v1/$1"
+            "destination": "https://chronosai-api.onrender.com/api/v1/$1"
         },
         {
             "source": "/(.*)",

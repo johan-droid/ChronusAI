@@ -5,7 +5,10 @@ services:
     restart: unless-stopped
     env_file: ./backend/.env
     environment:
-      DATABASE_URL: postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD}@postgres:5432/scheduler_db
+      DATABASE_URL: "${DATABASE_URL:-postgresql+asyncpg://scheduler_user:${POSTGRES_PASSWORD}@postgres:5432/scheduler_db}"
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8000/api/v1/auth/google/callback}

@@ -59,10 +59,28 @@ async def lifespan(app: FastAPI):
     
     # Start aggressive self-ping for Render free tier (always run to prevent sleep)
     import os
-    render_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("BACKEND_URL") or "https://chronusai.onrender.com"
-    self_pinger = SelfPinger(url=render_url, interval=30)  # Aggressive 30-second pings
-    self_pinger.start()
-    logger.info("Aggressive self-ping service started", url=render_url)
+    raw_ping_url = (
+        os.getenv("SELF_PING_URL")
+        or os.getenv("APP_URL")
+        or os.getenv("RENDER_EXTERNAL_URL")
+        or os.getenv("BACKEND_URL")
+    )
+    self_ping_url = None
+    if raw_ping_url:
+        self_ping_url = raw_ping_url.rstrip("/") if raw_ping_url.startswith("http") else f"https://{raw_ping_url.strip('/')}"
+    else:
+        self_ping_url = "https://chronosai.onrender.com"
+
+    interval_seconds = max(10, int(os.getenv("SELF_PING_INTERVAL", "30")))
+    self_ping_enabled = os.getenv("SELF_PING_ENABLED", "true").lower() not in {"false", "0", "no"}
+
+    self_pinger = None
+    if self_ping_enabled:
+        self_pinger = SelfPinger(url=self_ping_url, interval=interval_seconds)
+        self_pinger.start()
+        logger.info("Aggressive self-ping service started", url=self_ping_url, interval=interval_seconds)
+    else:
+        logger.info("Self-ping disabled via SELF_PING_ENABLED")
     
     # Start database cleanup task (runs every 24 hours)
     cleanup_task = asyncio.create_task(run_cleanup_task(interval_hours=24))
@@ -79,7 +97,8 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("Shutting down ChronosAI API")
-    self_pinger.stop()
+    if self_pinger:
+        self_pinger.stop()
     try:
         shutdown_scheduler()
     except Exception:
