@@ -5,10 +5,17 @@ on:
     branches: ["main"]
     paths:
       - 'frontend/**'
+      - 'docker-compose.yml'
+      - 'frontend/Dockerfile'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: ["main"]
     paths:
       - 'frontend/**'
+      - 'docker-compose.yml'
+      - 'frontend/Dockerfile'
+      - '.github/workflows/frontend-ci.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read

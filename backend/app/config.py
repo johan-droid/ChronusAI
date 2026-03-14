@@ -141,7 +141,7 @@ class Settings(BaseSettings):
                         os.getenv("DIGITALOCEAN") is not None or self.app_env == "production"
 
         if is_production:
-            app_url = os.getenv("APP_URL") or os.getenv("BASE_URL")
+            app_url = os.getenv("APP_URL") or os.getenv("BASE_URL") or os.getenv("BACKEND_PUBLIC_URL")
 
             if app_url:
                 app_url_str = str(app_url).rstrip("/")
@@ -153,15 +153,8 @@ class Settings(BaseSettings):
                     self.zoom_redirect_uri = AnyHttpUrl(f"{app_url_str}/api/v1/auth/zoom/callback")
                 if "localhost" in str(self.frontend_url):
                     self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or app_url_str)
-            else:
-                if not self.google_redirect_uri or "localhost" in str(self.google_redirect_uri):
-                    self.google_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/google/callback")
-                if not self.microsoft_redirect_uri or "localhost" in str(self.microsoft_redirect_uri):
-                    self.microsoft_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/outlook/callback")
-                if not self.zoom_redirect_uri or "localhost" in str(self.zoom_redirect_uri):
-                    self.zoom_redirect_uri = AnyHttpUrl("https://chronusai.onrender.com/api/v1/auth/zoom/callback")
-                if "localhost" in str(self.frontend_url):
-                    self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL") or "https://chronusai.onrender.com")
+            elif os.getenv("FRONTEND_URL") and "localhost" in str(self.frontend_url):
+                self.frontend_url = AnyHttpUrl(os.getenv("FRONTEND_URL"))
 
         # ── CORS ─────────────────────────────────────────────────────────
         if isinstance(self.cors_origins, str):
@@ -173,11 +166,10 @@ class Settings(BaseSettings):
         if self.frontend_url and str(self.frontend_url) not in self.cors_origins:
             self.cors_origins.append(str(self.frontend_url))
 
-        if is_production:
-            production_urls = ["https://chronusai.onrender.com"]
-            for url in production_urls:
-                if url not in self.cors_origins:
-                    self.cors_origins.append(url)
+        if is_production and os.getenv("FRONTEND_URL"):
+            frontend_origin = os.getenv("FRONTEND_URL").rstrip("/")
+            if frontend_origin not in self.cors_origins:
+                self.cors_origins.append(frontend_origin)
 
 
 @lru_cache(maxsize=1)

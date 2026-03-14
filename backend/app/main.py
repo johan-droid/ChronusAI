@@ -58,29 +58,33 @@ async def rate_limit_exceeded_handler(request: Request, exc: Exception) -> JSONR
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up ChronosAI API")
-    
-    # Start aggressive self-ping for Render free tier (always run to prevent sleep)
+
     import os
     raw_ping_url = (
         os.getenv("SELF_PING_URL")
         or os.getenv("APP_URL")
+        or os.getenv("BACKEND_PUBLIC_URL")
         or os.getenv("RENDER_EXTERNAL_URL")
         or os.getenv("BACKEND_URL")
     )
     self_ping_url = None
     if raw_ping_url:
         self_ping_url = raw_ping_url.rstrip("/") if raw_ping_url.startswith("http") else f"https://{raw_ping_url.strip('/')}"
-    else:
-        self_ping_url = "https://chronosai.onrender.com"
 
     interval_seconds = max(10, int(os.getenv("SELF_PING_INTERVAL", "30")))
-    self_ping_enabled = os.getenv("SELF_PING_ENABLED", "true").lower() not in {"false", "0", "no"}
+    self_ping_enabled_env = os.getenv("SELF_PING_ENABLED")
+    if self_ping_enabled_env is None:
+        self_ping_enabled = bool(self_ping_url)
+    else:
+        self_ping_enabled = self_ping_enabled_env.lower() not in {"false", "0", "no"}
 
     self_pinger = None
-    if self_ping_enabled:
+    if self_ping_enabled and self_ping_url:
         self_pinger = SelfPinger(url=self_ping_url, interval=interval_seconds)
         self_pinger.start()
-        logger.info("Aggressive self-ping service started", url=self_ping_url, interval=interval_seconds)
+        logger.info("Self-ping service started", url=self_ping_url, interval=interval_seconds)
+    elif self_ping_enabled and not self_ping_url:
+        logger.warning("Self-ping enabled but no target URL configured; skipping self-ping startup")
     else:
         logger.info("Self-ping disabled via SELF_PING_ENABLED")
     
