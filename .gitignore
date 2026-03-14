@@ -11,6 +11,9 @@
 .env.production
 .env.test
 .env.*.local
+.env.*
+!.env.example
+!.env.production
 
 # Production secrets and credentials
 production.env
@@ -442,6 +445,9 @@ backend/.env.local
 backend/.env.*.local
 backend/.env.production
 backend/.env.staging
+backend/.env.*
+!backend/.env.example
+!backend/.env.production
 
 # Frontend local .env variants
 frontend/.env
@@ -449,6 +455,19 @@ frontend/.env.local
 frontend/.env.*.local
 frontend/.env.production
 frontend/.env.staging
+frontend/.env.*
+!frontend/.env.example
+
+# meeting-scheduler-agent local .env variants
+meeting-scheduler-agent/.env
+meeting-scheduler-agent/.env.local
+meeting-scheduler-agent/.env.*
+meeting-scheduler-agent/backend/.env
+meeting-scheduler-agent/backend/.env.local
+meeting-scheduler-agent/backend/.env.*
+meeting-scheduler-agent/frontend/.env
+meeting-scheduler-agent/frontend/.env.local
+meeting-scheduler-agent/frontend/.env.*
 
 # Render, Railway, Vercel local metadata
 .render-buildpacks

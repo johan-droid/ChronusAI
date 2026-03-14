@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     def async_database_url(self) -> str:
         """Convert database URL to async driver."""
         url = self.database_url
+        if ".supabase.com" in url and "sslmode=" not in url:
+            url = f"{url}{'&' if '?' in url else '?'}sslmode=require"
         if url.startswith("postgresql://"):
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         if url.startswith("postgres://"):
