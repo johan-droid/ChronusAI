@@ -37,6 +37,18 @@ def _normalise_jobstore_url(raw_url: str) -> str:
     elif driver.endswith("+aiosqlite"):
         sa_url = sa_url.set(drivername="sqlite")
 
+    # APScheduler's SQLAlchemyJobStore uses a synchronous engine (psycopg/psycopg2).
+    # Supabase pooler requires SSL for sync connections, so enforce sslmode=require
+    # when not explicitly provided.
+    backend = sa_url.get_backend_name()
+    host = (sa_url.host or "").lower()
+    if backend == "postgresql" and "pooler.supabase.com" in host:
+        existing_query = dict(sa_url.query)
+        lowered_keys = {str(k).lower() for k in existing_query.keys()}
+        if "sslmode" not in lowered_keys:
+            existing_query["sslmode"] = "require"
+            sa_url = sa_url.set(query=existing_query)
+
     return str(sa_url)
 
 

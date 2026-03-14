@@ -94,7 +94,7 @@ class Settings(BaseSettings):
     def database_connection_hint(self) -> Optional[str]:
         """Return a non-fatal hint for common managed Postgres misconfigurations."""
         url = self._to_async_driver_url(self.database_url)
-        if not url.startswith("postgresql+asyncpg://"):
+        if not url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
             return None
 
         parts = urlsplit(url)
