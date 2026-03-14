@@ -3,14 +3,17 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="google.genai")
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="slowapi")
 
+import os
+from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+import asyncio
+import time
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse
-import uvicorn
-from contextlib import asynccontextmanager
 import structlog
-import time
-from datetime import datetime, timezone
+import uvicorn
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
@@ -20,7 +23,6 @@ from app.core.rate_limit import limiter
 from app.core.middleware import TokenRefreshMiddleware, SecurityValidationMiddleware
 from app.core.self_ping import SelfPinger
 from app.services.cleanup_service import run_cleanup_task
-import asyncio
 from app.services.scheduler import start_scheduler, shutdown_scheduler
 
 # Configure structured logging
@@ -123,15 +125,23 @@ app.add_middleware(SecurityValidationMiddleware)  # Add security validation firs
 app.add_middleware(TokenRefreshMiddleware)
 
 # CORS middleware - Enhanced for production
+base_origins = {
+    str(settings.frontend_url),
+    "https://chronos-ai-theta.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    *settings.cors_origins,
+}
+
+# Add backend host variants in case frontend fetches via direct domain
+for env_key in ["APP_URL", "RENDER_EXTERNAL_URL", "BACKEND_URL"]:
+    val = os.getenv(env_key)
+    if val:
+        base_origins.add(str(val).rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        str(settings.frontend_url),
-        "https://chronos-ai-theta.vercel.app",
-        "http://localhost:5173",
-        "http://localhost:3000",
-        *settings.cors_origins
-    ],
+    allow_origins=sorted(base_origins),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[
