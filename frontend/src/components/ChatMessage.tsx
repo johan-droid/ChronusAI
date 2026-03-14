@@ -15,14 +15,14 @@ function renderMd(text: string): React.ReactNode[] {
       <span key={key}>
         {parts.map((p, j) => {
           if (p.startsWith('`') && p.endsWith('`'))
-            return <code key={j} className="px-1.5 py-0.5 rounded-md bg-white/[0.06] text-indigo-300/90 text-[13px] font-mono">{p.slice(1, -1)}</code>;
+            return <code key={j} className="px-1.5 py-0.5 rounded-md bg-slate-200/10 text-sky-200 text-[13px] font-mono">{p.slice(1, -1)}</code>;
           if (p.startsWith('**') && p.endsWith('**'))
             return <strong key={j} className="font-semibold text-white/95">{p.slice(2, -2)}</strong>;
           if (p.startsWith('*') && p.endsWith('*'))
             return <em key={j} className="italic text-white/80">{p.slice(1, -1)}</em>;
           const linkMatch = p.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
           if (linkMatch)
-            return <a key={j} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2 decoration-indigo-400/30 transition-colors">{linkMatch[1]}</a>;
+            return <a key={j} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-sky-300 hover:text-sky-200 underline underline-offset-2 decoration-sky-300/40 transition-colors">{linkMatch[1]}</a>;
           return p;
         })}
       </span>
@@ -57,7 +57,7 @@ function renderMd(text: string): React.ReactNode[] {
       if (i < lines.length) i++;
       nodes.push(
         <pre key={`code-${i}`} className="mt-2 mb-2 p-3.5 rounded-xl bg-white/[0.04] border border-white/[0.06] overflow-x-auto">
-          <code className="text-[13px] text-indigo-200/80 font-mono leading-relaxed">{codeLines.join('\n')}</code>
+          <code className="text-[13px] text-sky-200/85 font-mono leading-relaxed">{codeLines.join('\n')}</code>
         </pre>
       );
       continue;
@@ -74,7 +74,7 @@ function renderMd(text: string): React.ReactNode[] {
         <ul key={`ul-${i}`} className="mt-1.5 mb-1.5 space-y-1.5 pl-1">
           {items.map((item, idx) => (
             <li key={idx} className="flex gap-2.5 items-start">
-              <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-indigo-400/40 shrink-0" />
+              <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-sky-300/50 shrink-0" />
               <span className="leading-relaxed">{inlineFormat(item, idx)}</span>
             </li>
           ))}
@@ -94,7 +94,7 @@ function renderMd(text: string): React.ReactNode[] {
         <ol key={`ol-${i}`} className="mt-1.5 mb-1.5 space-y-1.5 pl-1 list-none">
           {items.map((item, idx) => (
             <li key={idx} className="flex gap-2.5 items-start">
-              <span className="shrink-0 text-indigo-400/50 font-semibold text-[13px] w-5 text-right mt-px">{idx + 1}.</span>
+              <span className="shrink-0 text-sky-300/70 font-semibold text-[13px] w-5 text-right mt-px">{idx + 1}.</span>
               <span className="leading-relaxed">{inlineFormat(item, idx)}</span>
             </li>
           ))}
@@ -185,11 +185,11 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
         <div className="chat-shimmer rounded-2xl px-5 py-4">
           <div className="flex items-center gap-2.5">
             <div className="flex gap-1.5">
-              <span className="w-2 h-2 bg-indigo-400/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-2 h-2 bg-indigo-400/35 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2 h-2 bg-indigo-400/20 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              <span className="w-2 h-2 bg-sky-300/70 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <span className="w-2 h-2 bg-sky-300/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <span className="w-2 h-2 bg-sky-300/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
-            <span className="text-[13px] text-slate-500 ml-0.5">Thinking…</span>
+            <span className="text-[13px] text-slate-400 ml-0.5">Thinking…</span>
           </div>
         </div>
       </motion.div>
@@ -208,7 +208,7 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
 
           {/* User message */}
           {isUser && (
-            <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-br-md px-4 py-3 bg-gradient-to-br from-indigo-500/20 to-purple-500/15 border border-indigo-500/20 text-white/95 shadow-lg shadow-indigo-500/5">
+            <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-br-md px-4 py-3 bg-gradient-to-br from-sky-500/22 to-cyan-500/14 border border-sky-300/30 text-slate-50 shadow-[0_10px_24px_rgba(2,132,199,0.2)]">
               <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{message.content}</p>
             </div>
           )}
@@ -217,21 +217,21 @@ export default function ChatMessage({ message, isTyping = false }: ChatMessagePr
           {!isUser && (
             <>
               <div className="flex items-center gap-1.5 mb-1.5 ml-0.5">
-                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500/15 to-purple-500/15 border border-indigo-500/15 flex items-center justify-center">
-                  <Zap className="h-2.5 w-2.5 text-indigo-400/60" />
+                <div className="w-5 h-5 rounded-md bg-gradient-to-br from-sky-500/20 to-cyan-400/15 border border-sky-300/20 flex items-center justify-center">
+                  <Zap className="h-2.5 w-2.5 text-sky-300/80" />
                 </div>
-                <span className="text-[10px] font-semibold text-indigo-300/40 uppercase tracking-widest">ChronosAI</span>
+                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">ChronosAI</span>
               </div>
 
               <div className={`max-w-[90%] sm:max-w-[80%] rounded-2xl rounded-bl-md px-4 py-3.5 ${
-                isTyping ? 'chat-shimmer' : 'bg-white/[0.025] border border-white/[0.06] text-white/85'
+                isTyping ? 'chat-shimmer' : 'bg-slate-900/60 border border-slate-200/10 text-slate-100/90'
               }`}>
                 {isTyping ? (
                   <div className="flex items-center gap-2">
                     <div className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-indigo-400/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1.5 h-1.5 bg-indigo-400/30 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1.5 h-1.5 bg-indigo-400/20 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <span className="w-1.5 h-1.5 bg-sky-300/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 bg-sky-300/45 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 bg-sky-300/30 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                     <span className="text-slate-500 text-sm">Thinking…</span>
                   </div>
