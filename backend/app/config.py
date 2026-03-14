@@ -23,6 +23,7 @@ class Settings(BaseSettings):
 
     # Database
     database_url: str
+    sql_echo: Optional[bool] = None
 
     @property
     def async_database_url(self) -> str:

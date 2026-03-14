@@ -12,8 +12,10 @@ Key optimisations:
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
+import re
 from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Any, Dict, List
@@ -64,6 +66,89 @@ class _LRUCache:
 
 _intent_cache = _LRUCache()
 _response_cache = _LRUCache()
+
+
+def _strip_code_fences(text: str) -> str:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```[a-zA-Z0-9_-]*\\s*", "", cleaned)
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    return cleaned.strip()
+
+
+def _extract_json_object(text: str) -> str:
+    """Extract the first balanced JSON-like object from model output."""
+    src = _strip_code_fences(text)
+    start = src.find("{")
+    if start == -1:
+        return src
+
+    depth = 0
+    in_string = False
+    escape = False
+    quote_char = '"'
+
+    for idx in range(start, len(src)):
+        ch = src[idx]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == quote_char:
+                in_string = False
+            continue
+
+        if ch in ('"', "'"):
+            in_string = True
+            quote_char = ch
+            continue
+
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return src[start : idx + 1]
+
+    return src[start:]
+
+
+def _parse_intent_payload(raw_text: str) -> Dict[str, Any]:
+    """Parse model output into a dict with best-effort repair for near-JSON."""
+    candidate = _extract_json_object(raw_text)
+
+    # 1) strict JSON first
+    try:
+        return json.loads(candidate)
+    except json.JSONDecodeError:
+        pass
+
+    # 2) normalize common model formatting issues
+    normalized = (
+        candidate
+        .replace("\u201c", '"')
+        .replace("\u201d", '"')
+        .replace("\u2018", "'")
+        .replace("\u2019", "'")
+    )
+    normalized = re.sub(r",\\s*([}\\]])", r"\\1", normalized)  # trailing commas
+    normalized = re.sub(r"\\bTrue\\b", "true", normalized)
+    normalized = re.sub(r"\\bFalse\\b", "false", normalized)
+    normalized = re.sub(r"\\bNone\\b", "null", normalized)
+
+    try:
+        return json.loads(normalized)
+    except json.JSONDecodeError:
+        pass
+
+    # 3) Python-literal fallback handles single quotes and minor drift
+    literal_candidate = re.sub(r",\\s*([}\\]])", r"\\1", candidate)
+    parsed_literal = ast.literal_eval(literal_candidate)
+    if not isinstance(parsed_literal, dict):
+        raise ValueError("LLM output did not contain a JSON object")
+    return parsed_literal
 
 
 def _truncate_history(history: List[Dict[str, str]], max_turns: int = MAX_HISTORY_TURNS) -> List[Dict[str, str]]:
@@ -152,17 +237,34 @@ class LLMService:
             if not content:
                 raise ValueError("Empty response from Gemini")
 
-            text = content.strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-            parsed = ParsedIntent(**json.loads(text.strip()))
+            parsed_payload = _parse_intent_payload(content)
+
+            # Defensive normalization for occasional uppercase/unknown intent forms.
+            intent_val = str(parsed_payload.get("intent", "unknown")).strip().lower()
+            allowed_intents = {
+                "schedule",
+                "reschedule",
+                "cancel",
+                "check_availability",
+                "find_time",
+                "list_meetings",
+                "suggest_times",
+                "chat",
+                "unknown",
+            }
+            if intent_val not in allowed_intents:
+                parsed_payload["intent"] = "unknown"
+            else:
+                parsed_payload["intent"] = intent_val
+
+            parsed = ParsedIntent(**parsed_payload)
 
             _intent_cache.put(cache_parts, parsed)
             return parsed
 
         except json.JSONDecodeError as e:
+            raise ValueError(f"LLM returned invalid JSON: {e}")
+        except (SyntaxError, ValueError) as e:
             raise ValueError(f"LLM returned invalid JSON: {e}")
         except Exception as e:
             err = str(e).lower()

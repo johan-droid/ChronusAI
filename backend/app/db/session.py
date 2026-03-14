@@ -12,7 +12,7 @@ class Base(DeclarativeBase):
 
 engine: AsyncEngine = create_async_engine(
     settings.async_database_url,
-    echo=settings.app_env == "development",
+    echo=settings.sql_echo if settings.sql_echo is not None else settings.app_env == "development",
     pool_pre_ping=True,
 )
 
