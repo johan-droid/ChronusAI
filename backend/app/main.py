@@ -59,6 +59,10 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting up ChronosAI API")
 
+    db_hint = settings.database_connection_hint
+    if db_hint:
+        logger.warning("database_configuration_hint", hint=db_hint)
+
     import os
     raw_ping_url = (
         os.getenv("SELF_PING_URL")

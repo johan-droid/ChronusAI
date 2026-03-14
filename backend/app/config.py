@@ -1,7 +1,8 @@
 import os
 import secrets
 from functools import lru_cache
-from typing import List, Optional, Union
+from typing import Any, List, Optional, Union
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import AnyHttpUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,17 +26,88 @@ class Settings(BaseSettings):
     database_url: str
     sql_echo: Optional[bool] = None
 
-    @property
-    def async_database_url(self) -> str:
-        """Convert database URL to async driver."""
-        url = self.database_url
-        if ".supabase.com" in url and "sslmode=" not in url:
-            url = f"{url}{'&' if '?' in url else '?'}sslmode=require"
+    @staticmethod
+    def _to_async_driver_url(url: str) -> str:
         if url.startswith("postgresql://"):
             return url.replace("postgresql://", "postgresql+asyncpg://", 1)
         if url.startswith("postgres://"):
             return url.replace("postgres://", "postgresql+asyncpg://", 1)
         return url
+
+    @staticmethod
+    def _strip_sslmode_query_param(url: str) -> tuple[str, Optional[str]]:
+        parts = urlsplit(url)
+        if not parts.query:
+            return url, None
+
+        sslmode_value: Optional[str] = None
+        filtered_params = []
+        for key, value in parse_qsl(parts.query, keep_blank_values=True):
+            if key.lower() == "sslmode":
+                if sslmode_value is None:
+                    sslmode_value = value
+                continue
+            filtered_params.append((key, value))
+
+        normalized_query = urlencode(filtered_params, doseq=True)
+        normalized_url = urlunsplit((parts.scheme, parts.netloc, parts.path, normalized_query, parts.fragment))
+        return normalized_url, sslmode_value
+
+    @property
+    def async_database_url(self) -> str:
+        """Convert database URL to async driver and remove psycopg-only sslmode parameter."""
+        url = self._to_async_driver_url(self.database_url)
+        if url.startswith("postgresql+asyncpg://"):
+            url, _ = self._strip_sslmode_query_param(url)
+        return url
+
+    @property
+    def async_database_connect_args(self) -> dict[str, Any]:
+        """Build driver-specific connect args for asyncpg.
+
+        Supabase and most managed Postgres providers require SSL. asyncpg expects
+        `ssl`, not `sslmode`, so we translate any sslmode URL parameter here.
+        """
+        url = self._to_async_driver_url(self.database_url)
+        if not url.startswith("postgresql+asyncpg://"):
+            return {}
+
+        connect_args: dict[str, Any] = {}
+        normalized_url, sslmode = self._strip_sslmode_query_param(url)
+
+        # Default to SSL for Supabase pooler if no explicit ssl/sslmode was provided.
+        lowered_url = normalized_url.lower()
+        has_ssl_query = "ssl=" in lowered_url
+        if not sslmode and ".supabase.com" in lowered_url and not has_ssl_query:
+            sslmode = "require"
+
+        if sslmode:
+            sslmode_normalized = sslmode.strip().lower()
+            if sslmode_normalized in {"disable", "false", "0", "no"}:
+                connect_args["ssl"] = False
+            else:
+                connect_args["ssl"] = "require"
+
+        return connect_args
+
+    @property
+    def database_connection_hint(self) -> Optional[str]:
+        """Return a non-fatal hint for common managed Postgres misconfigurations."""
+        url = self._to_async_driver_url(self.database_url)
+        if not url.startswith("postgresql+asyncpg://"):
+            return None
+
+        parts = urlsplit(url)
+        host = (parts.hostname or "").lower()
+        username = parts.username or ""
+
+        if "pooler.supabase.com" in host and "." not in username:
+            return (
+                "Supabase pooler URLs typically require username format "
+                "'postgres.<project_ref>' instead of plain 'postgres'."
+            )
+
+        return None
 
     # Google Gemini 3 Flash Preview (Native SDK)
     gemini_api_key: str
