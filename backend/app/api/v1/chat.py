@@ -135,7 +135,7 @@ async def send_message(
                     raise HTTPException(status_code=402, detail="insufficient_balance")
                 
                 if attempt == max_retries:
-                    logger.error("ai_intent_parsing_exhausted", error=last_error)
+                    logger.warning("ai_intent_parsing_exhausted", error=last_error)
                     return ChatResponse(
                         response="I'm having trouble understanding the specific date or details. Could you please rephrase your request?",
                         intent="ERROR"

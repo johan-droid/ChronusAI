@@ -22,9 +22,12 @@ from typing import Any, Dict, List
 
 import google.genai as genai
 from google.genai import types
+import structlog
 
 from app.config import settings
 from app.schemas.chat import ParsedIntent
+
+logger = structlog.get_logger()
 
 # ---------------------------------------------------------------------------
 # Tunables — read from settings (env-overridable), with fallback defaults
@@ -115,6 +118,88 @@ def _extract_json_object(text: str) -> str:
     return src[start:]
 
 
+def _escape_newlines_in_strings(text: str) -> str:
+    """Escape raw newlines that appear inside quoted JSON strings."""
+    out: list[str] = []
+    in_string = False
+    escape = False
+
+    for ch in text:
+        if in_string:
+            if escape:
+                out.append(ch)
+                escape = False
+                continue
+
+            if ch == "\\":
+                out.append(ch)
+                escape = True
+                continue
+
+            if ch == '"':
+                out.append(ch)
+                in_string = False
+                continue
+
+            if ch == "\n":
+                out.append("\\n")
+                continue
+
+            if ch == "\r":
+                out.append("\\r")
+                continue
+
+            out.append(ch)
+            continue
+
+        out.append(ch)
+        if ch == '"':
+            in_string = True
+
+    return "".join(out)
+
+
+def _balance_json_delimiters(text: str) -> str:
+    """Append missing closing delimiters for truncated JSON-like payloads."""
+    out: list[str] = []
+    stack: list[str] = []
+    in_string = False
+    escape = False
+
+    for ch in text:
+        out.append(ch)
+
+        if in_string:
+            if escape:
+                escape = False
+                continue
+            if ch == "\\":
+                escape = True
+                continue
+            if ch == '"':
+                in_string = False
+            continue
+
+        if ch == '"':
+            in_string = True
+            continue
+
+        if ch in "[{":
+            stack.append(ch)
+        elif ch == "]" and stack and stack[-1] == "[":
+            stack.pop()
+        elif ch == "}" and stack and stack[-1] == "{":
+            stack.pop()
+
+    if in_string:
+        out.append('"')
+
+    for opener in reversed(stack):
+        out.append("]" if opener == "[" else "}")
+
+    return "".join(out)
+
+
 def _parse_intent_payload(raw_text: str) -> Dict[str, Any]:
     """Parse model output into a dict with best-effort repair for near-JSON."""
     candidate = _extract_json_object(raw_text)
@@ -133,6 +218,7 @@ def _parse_intent_payload(raw_text: str) -> Dict[str, Any]:
         .replace("\u2018", "'")
         .replace("\u2019", "'")
     )
+    normalized = _escape_newlines_in_strings(normalized)
     normalized = re.sub(r",\\s*([}\\]])", r"\\1", normalized)  # trailing commas
     normalized = re.sub(r"\\bTrue\\b", "true", normalized)
     normalized = re.sub(r"\\bFalse\\b", "false", normalized)
@@ -143,8 +229,17 @@ def _parse_intent_payload(raw_text: str) -> Dict[str, Any]:
     except json.JSONDecodeError:
         pass
 
-    # 3) Python-literal fallback handles single quotes and minor drift
+    # 3) attempt to recover from truncated output by closing open delimiters
+    balanced = _balance_json_delimiters(normalized)
+    balanced = re.sub(r",\s*([}\]])", r"\1", balanced)
+    try:
+        return json.loads(balanced)
+    except json.JSONDecodeError:
+        pass
+
+    # 4) Python-literal fallback handles single quotes and minor drift
     literal_candidate = re.sub(r",\\s*([}\\]])", r"\\1", candidate)
+    literal_candidate = _balance_json_delimiters(literal_candidate)
     parsed_literal = ast.literal_eval(literal_candidate)
     if not isinstance(parsed_literal, dict):
         raise ValueError("LLM output did not contain a JSON object")
@@ -230,6 +325,7 @@ class LLMService:
                     system_instruction=system_instructions,
                     temperature=0.1,
                     max_output_tokens=PARSE_INTENT_MAX_TOKENS,
+                    response_mime_type="application/json",
                 ),
             )
 
@@ -263,9 +359,19 @@ class LLMService:
             return parsed
 
         except json.JSONDecodeError as e:
-            raise ValueError(f"LLM returned invalid JSON: {e}")
+            logger.warning("llm_intent_json_parse_failed", error=str(e))
+            return ParsedIntent(
+                intent="unknown",
+                response="I need a bit more detail to help with that. Please include date/time and meeting details.",
+                requires_clarification=True,
+            )
         except (SyntaxError, ValueError) as e:
-            raise ValueError(f"LLM returned invalid JSON: {e}")
+            logger.warning("llm_intent_json_parse_failed", error=str(e))
+            return ParsedIntent(
+                intent="unknown",
+                response="I need a bit more detail to help with that. Please include date/time and meeting details.",
+                requires_clarification=True,
+            )
         except Exception as e:
             err = str(e).lower()
             if "402" in err or "insufficient balance" in err:
