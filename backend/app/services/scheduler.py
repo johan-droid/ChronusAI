@@ -4,16 +4,52 @@ import logging
 from datetime import datetime
 from typing import Callable, Any
 
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.executors.pool import ThreadPoolExecutor
-from app.config import settings
 from apscheduler.job import Job
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.engine import make_url
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.schema import CreateSchema
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 _scheduler: AsyncIOScheduler | None = None
+
+JOBSTORE_SCHEMA = "scheduler_jobs"
+JOBSTORE_TABLE = "apscheduler_jobs"
+
+
+def _normalise_jobstore_url(raw_url: str) -> str:
+    """Ensure the SQLAlchemyJobStore always receives a synchronous driver URL."""
+    try:
+        sa_url = make_url(raw_url)
+    except Exception:
+        return raw_url.replace("+asyncpg", "").replace("+aiosqlite", "")
+
+    driver = sa_url.drivername
+    if driver.endswith("+asyncpg"):
+        sa_url = sa_url.set(drivername="postgresql+psycopg")
+    elif driver.endswith("+aiosqlite"):
+        sa_url = sa_url.set(drivername="sqlite")
+
+    return str(sa_url)
+
+
+def _ensure_jobstore_schema(sync_url: str, schema_name: str) -> None:
+    """Create the schema used for APScheduler if it does not already exist."""
+    engine = create_engine(sync_url, pool_pre_ping=True)
+    try:
+        with engine.begin() as conn:
+            inspector = inspect(conn)
+            if schema_name not in inspector.get_schema_names():
+                conn.execute(CreateSchema(schema_name))
+    finally:
+        engine.dispose()
 
 
 def get_scheduler() -> AsyncIOScheduler:
@@ -23,8 +59,24 @@ def get_scheduler() -> AsyncIOScheduler:
         jobstore_url = getattr(settings, 'database_url', None)
         jobstores = {}
         if jobstore_url:
+            sync_jobstore_url = _normalise_jobstore_url(jobstore_url)
+            try:
+                _ensure_jobstore_schema(sync_jobstore_url, JOBSTORE_SCHEMA)
+            except SQLAlchemyError:
+                logger.exception("failed_creating_scheduler_schema", schema=JOBSTORE_SCHEMA)
+            else:
+                logger.info(
+                    "APScheduler jobstore schema ready",
+                    schema=JOBSTORE_SCHEMA,
+                    table=JOBSTORE_TABLE,
+                )
+
             jobstores = {
-                'default': SQLAlchemyJobStore(url=jobstore_url)
+                'default': SQLAlchemyJobStore(
+                    url=sync_jobstore_url,
+                    tablename=JOBSTORE_TABLE,
+                    tableschema=JOBSTORE_SCHEMA,
+                )
             }
 
         executors = {
